@@ -1,0 +1,190 @@
+﻿@model HeThongQuanLyPhongTro.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                Chào mừng <strong>@ViewBag.Username</strong>!
+                Vai trò: <span class="badge bg-primary">@ViewBag.Role</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Card Tổng số phòng -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tổng số phòng</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TongSoPhong</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Phòng đã thuê -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Phòng đã thuê</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.SoPhongDaThue</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-door-closed fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Phòng trống -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Phòng trống</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.SoPhongTrong</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-door-open fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Doanh thu tháng này -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Doanh thu tháng @DateTime.Now.Month</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.DoanhThuThangNay.ToString("N0") đ</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row thứ 2 -->
+    <div class="row">
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Thống kê phòng</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="roomChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">Hợp đồng sắp hết hạn</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.HopDongSapHetHanList.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Phòng</th>
+                                        <th>Khách hàng</th>
+                                        <th>Ngày kết thúc</th>
+                                        <th>Còn lại</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.HopDongSapHetHanList)
+                                    {
+                                        <tr>
+                                            <td>@item.TenPhong</td>
+                                            <td>@item.TenKhachHang</td>
+                                            <td>@item.NgayKetThuc.ToString("dd/MM/yyyy")</td>
+                                            <td class="text-danger">@item.SoNgayConLai ngày</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-success">Không có hợp đồng nào sắp hết hạn!</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nút chức năng cho Admin -->
+    @if (ViewBag.Role == "Admin")
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Quản trị nhanh</h6>
+                    </div>
+                    <div class="card-body">
+                        <a href="@Url.Action("Index", "Phong")" class="btn btn-primary">Quản lý phòng</a>
+                        <a href="@Url.Action("Index", "KhachHang")" class="btn btn-success">Quản lý khách hàng</a>
+                        <a href="@Url.Action("Index", "HopDong")" class="btn btn-info">Quản lý hợp đồng</a>
+                        <a href="@Url.Action("Index", "HoaDon")" class="btn btn-warning">Quản lý hóa đơn</a>
+                        <a href="@Url.Action("Index", "TaiKhoan")" class="btn btn-danger">Quản lý tài khoản</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Thêm Chart.js và Fontawesome -->
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // Biểu đồ thống kê phòng
+        const ctx = document.getElementById('roomChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Phòng đã thuê (@Model.SoPhongDaThue)', 'Phòng trống (@Model.SoPhongTrong)'],
+                datasets: [{
+                    data: [@Model.SoPhongDaThue, @Model.SoPhongTrong],
+                    backgroundColor: ['#28a745', '#ffc107'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+}

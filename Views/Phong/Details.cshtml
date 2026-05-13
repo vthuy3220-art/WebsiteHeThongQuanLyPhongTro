@@ -1,0 +1,140 @@
+﻿@model HeThongQuanLyPhongTro.Models.Phong
+
+@{
+    ViewData["Title"] = "Chi tiết phòng";
+    var images = ViewBag.Images as List<HeThongQuanLyPhongTro.Models.PhongImage> ?? new List<HeThongQuanLyPhongTro.Models.PhongImage>();
+    var isAdmin = Context.Session.GetString("Role") == "Admin";
+    var anhChinh = images.FirstOrDefault(i => i.IsMain) ?? images.FirstOrDefault();
+}
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Cột trái: Gallery ảnh (chiếm 2/3) -->
+        <div class="md:col-span-2">
+            <!-- Ảnh chính lớn -->
+            <div class="bg-gray-100 rounded-lg overflow-hidden mb-4" style="height: 400px;">
+                @if (anhChinh != null)
+                {
+                    <img id="mainImage" src="@anhChinh.ImagePath" alt="Ảnh phòng"
+                         class="w-full h-full object-cover" />
+                }
+                else
+                {
+                    <div class="w-full h-full flex items-center justify-center">
+                        <i class="fas fa-image text-gray-400 text-6xl"></i>
+                    </div>
+                }
+            </div>
+
+            <!-- Danh sách ảnh nhỏ (thumbnail) -->
+            @if (images.Any())
+            {
+                <div class="grid grid-cols-4 gap-2">
+                    @foreach (var img in images)
+                    {
+                        <div class="cursor-pointer border-2 rounded-lg overflow-hidden hover:border-blue-500 transition-all
+                                            @(img.IsMain ? "border-blue-500" : "border-gray-200")"
+                             onclick="document.getElementById('mainImage').src='@img.ImagePath'">
+                            <img src="@img.ImagePath" alt="Ảnh phòng" class="w-full h-20 object-cover" />
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Form upload ảnh (chỉ Admin) -->
+            @if (isAdmin)
+            {
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg border">
+                    <h4 class="font-semibold mb-3">📷 Thêm ảnh mới</h4>
+                    <form asp-action="UploadImage" asp-route-id="@Model.MaPhong" method="post" enctype="multipart/form-data" class="flex gap-3">
+                        <input type="file" name="file" accept="image/*" required class="flex-1 border rounded-lg p-2" />
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="isMain" value="true" id="isMain" class="mr-1" />
+                            <label for="isMain" class="text-sm">Ảnh chính</label>
+                        </div>
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            Upload
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+
+        <!-- Cột phải: Thông tin phòng -->
+        <div class="md:col-span-1">
+            <div class="bg-white rounded-lg shadow p-5 sticky top-4">
+                <h1 class="text-2xl font-bold text-gray-800 mb-4">@Model.TenPhong</h1>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="text-gray-500">Cơ sở:</span>
+                        <span class="font-medium">@Model.CoSo?.TenCoSo</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="text-gray-500">Địa chỉ:</span>
+                        <span class="font-medium">@Model.CoSo?.DiaChi</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="text-gray-500">Giá phòng:</span>
+                        <span class="font-bold text-blue-600 text-lg">@Model.GiaPhong.ToString("N0") đ/tháng</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="text-gray-500">Diện tích:</span>
+                        <span class="font-medium">@Model.DienTich m²</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="text-gray-500">Số người ở:</span>
+                        <span class="font-medium">@(Model.SoLuongNguoiO ?? 1) người</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2">
+                        <span class="text-gray-500">Trạng thái:</span>
+                        @if (Model.TrangThai == "Trống")
+                        {
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                                <i class="fas fa-check-circle"></i> Còn trống
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                <i class="fas fa-lock"></i> Đã thuê
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t">
+                    <p class="text-gray-500 text-sm flex items-center gap-2">
+                        <i class="fas fa-phone-alt text-blue-500"></i> Liên hệ:
+                        <strong class="text-gray-800">0869 189 018</strong>
+                    </p>
+                </div>
+
+                @if (isAdmin)
+                {
+                    <div class="mt-6 flex gap-3">
+                        <a asp-action="Edit" asp-route-id="@Model.MaPhong" class="flex-1 bg-yellow-500 text-white text-center py-2 rounded-lg hover:bg-yellow-600">
+                            <i class="fas fa-edit mr-1"></i> Sửa
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.MaPhong" class="flex-1 bg-red-500 text-white text-center py-2 rounded-lg hover:bg-red-600">
+                            <i class="fas fa-trash mr-1"></i> Xóa
+                        </a>
+                    </div>
+                }
+
+                <div class="mt-4">
+                    <a asp-action="Index" class="block text-center bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
+                        <i class="fas fa-arrow-left mr-1"></i> Quay lại
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function setMainImage(src) {
+        document.getElementById('mainImage').src = src;
+    }
+</script>

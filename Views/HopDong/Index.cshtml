@@ -1,0 +1,90 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.HopDong>
+
+@{
+    ViewData["Title"] = "Quản lý hợp đồng";
+}
+
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Quản lý hợp đồng</h1>
+            <p class="text-gray-500 mt-1">Danh sách hợp đồng thuê phòng</p>
+        </div>
+        <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all flex items-center">
+            <i class="fas fa-file-contract mr-2"></i> Tạo hợp đồng mới
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
+            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+        </div>
+    }
+
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Mã HĐ</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Phòng</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Khách hàng</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Ngày bắt đầu</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Ngày kết thúc</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Tiền cọc</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Trạng thái</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach (var item in Model)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">@item.MaHopDong</td>
+                            <td class="px-6 py-4">@item.PhongNavigation?.TenPhong</td>
+                            <td class="px-6 py-4">@item.KhachHangNavigation?.HoTen</td>
+                            <td class="px-6 py-4">@item.NgayBatDau?.ToString("dd/MM/yyyy")</td>
+                            <td class="px-6 py-4">@item.NgayKetThuc?.ToString("dd/MM/yyyy")</td>
+                            <td class="px-6 py-4">@item.TienCoc?.ToString("N0") đ</td>
+                            <td class="px-6 py-4">
+                                @if (item.TrangThai == "Hiệu lực")
+                                {
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Hiệu lực</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">Đã kết thúc</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex space-x-2">
+                                    <a asp-action="Details" asp-route-id="@item.MaHopDong" class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    @if (item.TrangThai == "Hiệu lực")
+                                    {
+                                        <form asp-action="ChamDut" asp-route-id="@item.MaHopDong" method="post"
+                                              onsubmit="return confirm('Chấm dứt hợp đồng này?')" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-times-circle"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

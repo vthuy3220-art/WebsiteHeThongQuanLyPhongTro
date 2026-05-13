@@ -1,0 +1,45 @@
+﻿@model HeThongQuanLyPhongTro.Models.CoSo
+
+@{
+    ViewData["Title"] = "Xóa cơ sở";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Xác nhận xóa</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Bạn có chắc chắn muốn xóa cơ sở này?
+                    </div>
+
+                    <dl class="row">
+                        <dt class="col-sm-3">Mã cơ sở</dt>
+                        <dd class="col-sm-9">@Model.MaCoSo</dd>
+
+                        <dt class="col-sm-3">Tên cơ sở</dt>
+                        <dd class="col-sm-9">@Model.TenCoSo</dd>
+
+                        <dt class="col-sm-3">Địa chỉ</dt>
+                        <dd class="col-sm-9">@Model.DiaChi</dd>
+
+                        <dt class="col-sm-3">Mô tả</dt>
+                        <dd class="col-sm-9">@Model.MoTa</dd>
+                    </dl>
+
+                    <form asp-action="Delete">
+                        <input type="hidden" asp-for="MaCoSo" />
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+                            <button type="submit" class="btn btn-danger">Xóa</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

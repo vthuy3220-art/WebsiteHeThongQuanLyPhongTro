@@ -1,0 +1,78 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.TienIch>
+
+@{
+    ViewData["Title"] = "Quản lý tiện ích";
+    var phong = ViewBag.Phong as HeThongQuanLyPhongTro.Models.Phong;
+}
+
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-white">Tiện ích phòng: @phong?.TenPhong</h1>
+                    <p class="text-green-100 text-sm">Quản lý các tiện ích trong phòng</p>
+                </div>
+                <a asp-action="Index" class="text-white hover:text-green-200">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <!-- Form thêm tiện ích -->
+            <form asp-action="ThemTienIch" method="post" class="mb-8 p-4 bg-gray-50 rounded-lg">
+                <input type="hidden" name="maPhong" value="@phong?.MaPhong" />
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="text" name="tenTienIch" placeholder="Tên tiện ích" required
+                           class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="text" name="moTa" placeholder="Mô tả"
+                           class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="number" name="soLuong" placeholder="Số lượng" value="1"
+                           class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
+                        <i class="fas fa-plus"></i> Thêm
+                    </button>
+                </div>
+            </form>
+
+            <!-- Danh sách tiện ích -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach (var item in Model)
+                {
+                    <div class="border rounded-lg p-4 hover:shadow-lg transition-all">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                    <h3 class="font-semibold text-lg">@item.TenTienIch</h3>
+                                </div>
+                                @if (!string.IsNullOrEmpty(item.MoTa))
+                                {
+                                    <p class="text-gray-500 text-sm">@item.MoTa</p>
+                                }
+                                <p class="text-sm text-gray-400 mt-1">Số lượng: @item.SoLuong</p>
+                            </div>
+                            <form asp-action="XoaTienIch" method="post">
+                                <input type="hidden" name="maTienIch" value="@item.MaTienIch" />
+                                <input type="hidden" name="maPhong" value="@phong?.MaPhong" />
+                                <button type="submit" class="text-red-500 hover:text-red-700"
+                                        onclick="return confirm('Xóa tiện ích này?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-8">
+                    <i class="fas fa-box-open text-gray-300 text-5xl mb-3"></i>
+                    <p class="text-gray-500">Chưa có tiện ích nào</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

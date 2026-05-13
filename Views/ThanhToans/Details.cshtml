@@ -1,0 +1,53 @@
+﻿@model HeThongQuanLyPhongTro.Models.ThanhToan
+
+@{
+    ViewData["Title"] = "Chi tiết thanh toán";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-white">Chi tiết thanh toán</h1>
+                    <!-- SỬA: Bỏ chữ TT -->
+                    <p class="text-purple-100">Mã thanh toán: <strong>@Model.MaThanhToan</strong></p>
+                </div>
+                <a asp-action="Index" class="text-white hover:text-purple-200">
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <div class="grid grid-cols-2 gap-4">
+                <!-- SỬA: Bỏ chữ TT -->
+                <div><label class="font-bold">Mã thanh toán:</label> @Model.MaThanhToan</div>
+                <div><label class="font-bold">Mã hóa đơn:</label> HD@(Model.HoaDonNavigation?.MaHoaDon)</div>
+                <div><label class="font-bold">Số tiền:</label> <span class="text-green-600 font-bold">@(Model.SoTien?.ToString("N0") ?? "0") đ</span></div>
+                <div><label class="font-bold">Ngày thanh toán:</label> @(Model.NgayThanhToan?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</div>
+                <div><label class="font-bold">Nội dung:</label> @(Model.NoiDungChuyenKhoan ?? "---")</div>
+                <div>
+                    <label class="font-bold">Trạng thái:</label>
+                    @if (Model.TrangThai == "Thành công")
+                    {
+                        <span class="text-green-600">✅ Thành công</span>
+                    }
+                    else
+                    {
+                        <span class="text-red-600">❌ @Model.TrangThai</span>
+                    }
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                <a asp-action="Edit" asp-route-id="@Model.MaThanhToan" class="px-4 py-2 bg-yellow-500 text-white rounded-lg">
+                    <i class="fas fa-edit mr-2"></i> Sửa
+                </a>
+                <a asp-action="Delete" asp-route-id="@Model.MaThanhToan" class="px-4 py-2 bg-red-500 text-white rounded-lg">
+                    <i class="fas fa-trash mr-2"></i> Xóa
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

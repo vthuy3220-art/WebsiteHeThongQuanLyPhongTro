@@ -1,0 +1,120 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.HoaDon>
+
+@{
+    ViewData["Title"] = "Hóa đơn của tôi";
+    var khachHang = ViewBag.KhachHang as HeThongQuanLyPhongTro.Models.KhachHang;
+    var namList = ViewBag.NamList as List<int>;
+}
+
+<div class="space-y-5">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Hóa đơn của tôi</h1>
+            <p class="text-gray-500">Quản lý lịch sử thanh toán</p>
+        </div>
+
+        <!-- Bộ lọc -->
+        <form method="get" class="flex gap-2">
+            <select name="nam" class="px-3 py-2 border rounded-lg text-sm">
+                <option value="">-- Chọn năm --</option>
+                @foreach (var nam in namList ?? new List<int>())
+                {
+                    if (ViewBag.Nam == nam)
+                    {
+                        <option value="@nam" selected>@nam</option>
+                    }
+                    else
+                    {
+                        <option value="@nam">@nam</option>
+                    }
+                }
+            </select>
+            <select name="thang" class="px-3 py-2 border rounded-lg text-sm">
+                <option value="">-- Chọn tháng --</option>
+                @for (int i = 1; i <= 12; i++)
+                {
+                    if (ViewBag.Thang == i)
+                    {
+                        <option value="@i" selected>Tháng @i</option>
+                    }
+                    else
+                    {
+                        <option value="@i">Tháng @i</option>
+                    }
+                }
+            </select>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600">
+                <i class="fas fa-search"></i> Lọc
+            </button>
+            @if (ViewBag.Thang != null || ViewBag.Nam != null)
+            {
+                <a asp-action="HoaDonCuaToi" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-400">
+                    Xóa lọc
+                </a>
+            }
+        </form>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="grid grid-cols-1 gap-4">
+            @foreach (var item in Model)
+            {
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all">
+                    <div class="p-5">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <i class="fas fa-receipt text-2xl @(item.TrangThai == "Đã thanh toán" ? "text-green-500" : "text-red-500")"></i>
+                                    <div>
+                                        <h3 class="font-semibold text-lg">Hóa đơn tháng @item.Thang/@item.Nam</h3>
+                                        <p class="text-sm text-gray-500">Phòng: @item.HopDongNavigation?.PhongNavigation?.TenPhong</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                    <div>
+                                        <span class="text-gray-500">Tổng tiền:</span>
+                                        <p class="font-medium text-blue-600">@item.TongTien?.ToString("N0") đ</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">Trạng thái:</span>
+                                        @if (item.TrangThai == "Đã thanh toán")
+                                        {
+                                            <span class="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                                                Đã thanh toán
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-block px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
+                                                Chưa thanh toán
+                                            </span>
+                                        }
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">Ngày tạo:</span>
+                                        <p>@item.NgayTao?.ToString("dd/MM/yyyy")</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <a asp-action="HoaDonChiTiet" asp-route-id="@item.MaHoaDon"
+                                   class="text-blue-500 hover:text-blue-700">
+                                    <i class="fas fa-chevron-right"></i> Chi tiết
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-xl shadow-sm p-12 text-center">
+            <i class="fas fa-receipt text-gray-300 text-5xl mb-3"></i>
+            <p class="text-gray-500">Không có hóa đơn nào</p>
+        </div>
+    }
+</div>

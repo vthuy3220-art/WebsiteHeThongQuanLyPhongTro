@@ -1,0 +1,53 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.ThanhToan>
+
+@{
+    ViewData["Title"] = "Lịch sử thanh toán";
+    var khachHang = ViewBag.KhachHang as HeThongQuanLyPhongTro.Models.KhachHang;
+}
+
+<div class="space-y-5">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Lịch sử thanh toán</h1>
+            <p class="text-gray-500">Lịch sử các giao dịch đã thanh toán</p>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500">Mã thanh toán</th>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500">Hóa đơn</th>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500">Số tiền</th>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500">Ngày thanh toán</th>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500">Nội dung</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-5 py-3">TT@item.MaThanhToan</td>
+                                <td class="px-5 py-3">HD tháng @item.HoaDonNavigation?.Thang/@item.HoaDonNavigation?.Nam</td>
+                                <td class="px-5 py-3 text-green-600 font-semibold">@item.SoTien?.ToString("N0") đ</td>
+                                <td class="px-5 py-3">@item.NgayThanhToan?.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="px-5 py-3">@item.NoiDungChuyenKhoan</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-xl shadow-sm p-12 text-center">
+            <i class="fas fa-history text-gray-300 text-5xl mb-3"></i>
+            <p class="text-gray-500">Chưa có lịch sử thanh toán</p>
+        </div>
+    }
+</div>

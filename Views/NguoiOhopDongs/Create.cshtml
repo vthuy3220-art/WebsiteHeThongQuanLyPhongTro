@@ -1,0 +1,58 @@
+﻿@model HeThongQuanLyPhongTro.Models.NguoiOHopDong
+
+@{
+    ViewData["Title"] = "Thêm người ở";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow p-6">
+        <h1 class="text-xl font-bold mb-4">Thêm người ở</h1>
+
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-red-500"></div>
+
+            <div class="mb-3">
+                <label asp-for="MaHopDong" class="block font-medium">Hợp đồng</label>
+                <select asp-for="MaHopDong" class="w-full border rounded p-2" asp-items="ViewBag.MaHopDong">
+                    <option value="">-- Chọn hợp đồng --</option>
+                </select>
+                <span asp-validation-for="MaHopDong" class="text-red-500"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="HoTen" class="block font-medium">Họ tên</label>
+                <input asp-for="HoTen" class="w-full border rounded p-2" />
+                <span asp-validation-for="HoTen" class="text-red-500"></span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                    <label asp-for="CCCD" class="block font-medium">CCCD</label>
+                    <input asp-for="CCCD" class="w-full border rounded p-2" />
+                </div>
+                <div>
+                    <label asp-for="SoDienThoai" class="block font-medium">SĐT</label>
+                    <input asp-for="SoDienThoai" class="w-full border rounded p-2" />
+                </div>
+            </div>
+
+            <!-- SỬA: dùng name thay vì asp-for -->
+            <div class="flex items-center mb-4">
+                <input type="checkbox" name="LaNguoiDaiDien" value="true" class="mr-2" />
+                <label>Là người đại diện</label>
+                <input type="hidden" name="LaNguoiDaiDien" value="false" />
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <a asp-action="Index" class="px-4 py-2 border rounded">Hủy</a>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,70 @@
+﻿@model HeThongQuanLyPhongTro.Models.Phong
+
+@{
+    ViewData["Title"] = "Xóa phòng";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+            <h1 class="text-xl font-bold text-white">Xác nhận xóa</h1>
+            <p class="text-red-100 text-sm">Bạn có chắc chắn muốn xóa phòng này?</p>
+        </div>
+
+        <div class="p-6">
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-yellow-400 text-xl mr-3"></i>
+                    <div>
+                        <p class="text-yellow-700">Hành động này không thể khôi phục!</p>
+                        <p class="text-yellow-600 text-sm">Phòng sẽ bị xóa vĩnh viễn khỏi hệ thống.</p>
+                    </div>
+                </div>
+            </div>
+
+            <dl class="space-y-3">
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Mã phòng:</dt>
+                    <dd class="flex-1">@Model.MaPhong</dd>
+                </div>
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Tên phòng:</dt>
+                    <dd class="flex-1 font-semibold">@Model.TenPhong</dd>
+                </div>
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Cơ sở:</dt>
+                    <dd class="flex-1">@Model.CoSo?.TenCoSo</dd>
+                </div>
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Giá phòng:</dt>
+                    <dd class="flex-1">@Model.GiaPhong.ToString("N0") đ</dd>
+                </div>
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Diện tích:</dt>
+                    <dd class="flex-1">@Model.DienTich m²</dd>
+                </div>
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Trạng thái:</dt>
+                    <dd class="flex-1">
+                        @if (Model.TrangThai == "Trống")
+                        {
+                            <span class="text-green-600">Trống</span>
+                        }
+                        else
+                        {
+                            <span class="text-red-600">Đã thuê</span>
+                        }
+                    </dd>
+                </div>
+            </dl>
+
+            <form asp-action="Delete" class="mt-6 flex justify-end space-x-3">
+                <input type="hidden" asp-for="MaPhong" />
+                <a asp-action="Index" class="px-4 py-2 border rounded-lg hover:bg-gray-50 transition-all">Hủy</a>
+                <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+                    <i class="fas fa-trash mr-2"></i> Xóa
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,127 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.HoaDon>
+
+@{
+    ViewData["Title"] = "Quản lý hóa đơn";
+}
+
+<div style="max-width: 1200px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h1 style="font-size: 24px; margin: 0;">Quản lý hóa đơn</h1>
+            <p style="color: #666; margin: 5px 0 0;">Danh sách hóa đơn tiền phòng</p>
+        </div>
+        <a href="@Url.Action("TaoHangLoat", "HoaDon")" style="background: #28a745; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none;">+ Tạo hàng loạt</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div style="background: #d4edda; padding: 10px; margin-bottom: 20px; border-radius: 5px; color: #155724;">
+            ✅ @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="background: #f8d7da; padding: 10px; margin-bottom: 20px; border-radius: 5px; color: #721c24;">
+            ❌ @TempData["Error"]
+        </div>
+    }
+
+    <!-- Bộ lọc -->
+    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
+        <form method="get" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+            <input type="text" name="searchString" value="@ViewBag.SearchString" placeholder="Tìm theo tên KH, phòng..." style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+            <select name="thang" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Tháng --</option>
+                @for (int i = 1; i <= 12; i++)
+                {
+                    if (ViewBag.Thang == i)
+                    {
+                        <option value="@i" selected>Tháng @i</option>
+                    }
+                    else
+                    {
+                        <option value="@i">Tháng @i</option>
+                    }
+                }
+            </select>
+            <select name="nam" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Năm --</option>
+                @foreach (var nam in ViewBag.NamList as List<int> ?? new List<int>())
+                {
+                    if (ViewBag.Nam == nam)
+                    {
+                        <option value="@nam" selected>@nam</option>
+                    }
+                    else
+                    {
+                        <option value="@nam">@nam</option>
+                    }
+                }
+            </select>
+            <select name="trangThai" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                @foreach (var item in ViewBag.TrangThaiList)
+                {
+                    if (ViewBag.TrangThai == item)
+                    {
+                        <option value="@item" selected>@item</option>
+                    }
+                    else
+                    {
+                        <option value="@item">@item</option>
+                    }
+                }
+            </select>
+            <button type="submit" style="background: #007bff; color: white; border: none; padding: 8px; border-radius: 4px;">🔍 Tìm kiếm</button>
+        </form>
+    </div>
+
+    <!-- Bảng hóa đơn -->
+    <div style="background: white; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8f9fa;">
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <th style="padding: 12px; text-align: left;">Mã HĐ</th>
+                    <th style="padding: 12px; text-align: left;">Phòng</th>
+                    <th style="padding: 12px; text-align: left;">Khách hàng</th>
+                    <th style="padding: 12px; text-align: left;">Tháng/Năm</th>
+                    <th style="padding: 12px; text-align: right;">Tổng tiền</th>
+                    <th style="padding: 12px; text-align: center;">Trạng thái</th>
+                    <th style="padding: 12px; text-align: center;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 12px;">@item.MaHoaDon</td>
+                        <td style="padding: 12px;">@(item.HopDongNavigation?.PhongNavigation?.TenPhong ?? "N/A")</td>
+                        <td style="padding: 12px;">@(item.HopDongNavigation?.KhachHangNavigation?.HoTen ?? "N/A")</td>
+                        <td style="padding: 12px;">@item.Thang/@item.Nam</td>
+                        <td style="padding: 12px; text-align: right;">@(item.TongTien?.ToString("N0") ?? "0") đ</td>
+                        <td style="padding: 12px; text-align: center;">
+                            @if (item.TrangThai == "Đã thanh toán")
+                            {
+                                <span style="background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px;">✅ Đã thanh toán</span>
+                            }
+                            else
+                            {
+                                <span style="background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 4px;">⏳ Chưa thanh toán</span>
+                            }
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            <a href="@Url.Action("Details", new { id = item.MaHoaDon })" style="color: #007bff; margin-right: 10px;">Chi tiết</a>
+                            @if (item.TrangThai == "Chưa thanh toán")
+                            {
+                                <a href="@Url.Action("Delete", new { id = item.MaHoaDon })" style="color: #dc3545;">Xóa</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (!Model.Any())
+        {
+            <div style="text-align: center; padding: 40px; color: #666;">Không có hóa đơn nào</div>
+        }
+    </div>
+</div>

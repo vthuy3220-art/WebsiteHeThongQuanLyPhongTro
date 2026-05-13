@@ -1,0 +1,220 @@
+﻿@model HeThongQuanLyPhongTro.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+            <p class="text-gray-500 mt-1">Chào mừng @ViewBag.Username trở lại!</p>
+        </div>
+    </div>
+
+    <!-- Cards với Tooltip -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <!-- Card 1: Tổng số phòng (có tooltip) -->
+        <div class="relative group">
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Tổng số phòng</p>
+                        <p class="text-3xl font-bold text-gray-800">@Model.TongSoPhong</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-building text-blue-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Tooltip -->
+            @if (ViewBag.DanhSachPhong != null)
+            {
+                <div class="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 w-64 bottom-full left-1/2 transform -translate-x-1/2 mb-2 shadow-xl">
+                    <div class="font-bold mb-2 text-center text-blue-400">📋 DANH SÁCH PHÒNG</div>
+                    <div class="max-h-48 overflow-y-auto">
+                        @foreach (var phong in ViewBag.DanhSachPhong)
+                        {
+                            <div class="border-b border-gray-700 py-1 text-xs">
+                                <span class="font-medium">@phong.TenPhong</span>
+                                <span class="text-gray-400 ml-2">- @phong.GiaPhong.ToString("N0") đ</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="text-center text-gray-400 text-xs mt-2">Tổng: @Model.TongSoPhong phòng</div>
+                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                </div>
+            }
+        </div>
+
+        <!-- Card 2: Phòng đã thuê (có tooltip) -->
+        <div class="relative group">
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-green-500 hover:shadow-lg transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Phòng đã thuê</p>
+                        <p class="text-3xl font-bold text-green-600">@Model.SoPhongDaThue</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-door-closed text-green-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Tooltip -->
+            @if (ViewBag.DanhSachPhongDaThue != null)
+            {
+                <div class="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 w-72 bottom-full left-1/2 transform -translate-x-1/2 mb-2 shadow-xl">
+                    <div class="font-bold mb-2 text-center text-green-400">🏠 DANH SÁCH PHÒNG ĐÃ THUÊ</div>
+                    <div class="max-h-48 overflow-y-auto">
+                        @foreach (var phong in ViewBag.DanhSachPhongDaThue)
+                        {
+                            <div class="border-b border-gray-700 py-1 text-xs">
+                                <div class="flex justify-between">
+                                    <span class="font-medium">@phong.TenPhong</span>
+                                    <span class="text-green-400">Đã thuê</span>
+                                </div>
+                                <div class="text-gray-400 text-xs">Khách: @phong.TenKhachHang</div>
+                            </div>
+                        }
+                    </div>
+                    <div class="text-center text-gray-400 text-xs mt-2">Tổng: @Model.SoPhongDaThue phòng</div>
+                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                </div>
+            }
+        </div>
+
+        <!-- Card 3: Phòng trống (có tooltip) -->
+        <div class="relative group">
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-yellow-500 hover:shadow-lg transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Phòng trống</p>
+                        <p class="text-3xl font-bold text-yellow-600">@Model.SoPhongTrong</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-door-open text-yellow-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Tooltip -->
+            @if (ViewBag.DanhSachPhongTrong != null)
+            {
+                <div class="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 w-64 bottom-full left-1/2 transform -translate-x-1/2 mb-2 shadow-xl">
+                    <div class="font-bold mb-2 text-center text-yellow-400">📋 PHÒNG TRỐNG</div>
+                    <div class="max-h-48 overflow-y-auto">
+                        @foreach (var phong in ViewBag.DanhSachPhongTrong)
+                        {
+                            <div class="border-b border-gray-700 py-1 text-xs">
+                                <div class="flex justify-between">
+                                    <span class="font-medium">@phong.TenPhong</span>
+                                    <span class="text-yellow-400">Trống</span>
+                                </div>
+                                <div class="text-gray-400 text-xs">@phong.GiaPhong.ToString("N0") đ/tháng</div>
+                            </div>
+                        }
+                    </div>
+                    <div class="text-center text-gray-400 text-xs mt-2">Còn @Model.SoPhongTrong phòng trống</div>
+                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                </div>
+            }
+        </div>
+
+        <!-- Card 4: Doanh thu (không tooltip) -->
+        <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-purple-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-sm">Doanh thu tháng @DateTime.Now.Month</p>
+                    <p class="text-3xl font-bold text-purple-600">@Model.DoanhThuThangNay.ToString("N0") đ</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-chart-line text-purple-500 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hợp đồng sắp hết hạn -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-orange-50 px-6 py-3 border-b">
+            <h3 class="font-semibold text-orange-700 flex items-center">
+                <i class="fas fa-clock text-orange-500 mr-2"></i>
+                Hợp đồng sắp hết hạn
+            </h3>
+        </div>
+        <div class="p-4">
+            @if (Model.HopDongSapHetHanList.Any())
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr class="border-b">
+                                <th class="px-4 py-2 text-left">Phòng</th>
+                                <th class="px-4 py-2 text-left">Khách hàng</th>
+                                <th class="px-4 py-2 text-left">Ngày kết thúc</th>
+                                <th class="px-4 py-2 text-left">Còn lại</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.HopDongSapHetHanList)
+                            {
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">@item.TenPhong</td>
+                                    <td class="px-4 py-2">@item.TenKhachHang</td>
+                                    <td class="px-4 py-2">@item.NgayKetThuc.ToString("dd/MM/yyyy")</td>
+                                    <td class="px-4 py-2 font-semibold text-red-600">@item.SoNgayConLai ngày</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-6 text-gray-500">Không có hợp đồng nào sắp hết hạn</div>
+            }
+        </div>
+    </div>
+
+    <!-- Bài đăng gần đây -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gray-50 px-6 py-3 border-b flex justify-between items-center">
+            <h3 class="font-semibold text-gray-700 flex items-center">
+                <i class="fas fa-newspaper text-indigo-500 mr-2"></i>
+                Bài đăng gần đây
+            </h3>
+            <a asp-controller="BaiDang" asp-action="Index" class="text-sm text-blue-500 hover:text-blue-700">Xem tất cả</a>
+        </div>
+        <div class="p-4">
+            @if (Model.BaiDangGanDayList.Any())
+            {
+                <div class="grid grid-cols-1 gap-3">
+                    @foreach (var item in Model.BaiDangGanDayList)
+                    {
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <div>
+                                <p class="font-medium truncate max-w-md">@item.TieuDe</p>
+                                <p class="text-xs text-gray-500">@item.TenPhong - @item.NgayDang.ToString("dd/MM/yyyy HH:mm")</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                @if (item.TrangThai == "Hiển thị")
+                                {
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Hiển thị</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Ẩn</span>
+                                }
+                                <a asp-controller="BaiDang" asp-action="Details" asp-route-id="@item.MaBaiDang" class="text-blue-500 text-sm">Xem</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-6 text-gray-500">Chưa có bài đăng nào</div>
+            }
+        </div>
+    </div>
+</div>

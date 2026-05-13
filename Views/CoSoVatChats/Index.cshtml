@@ -1,0 +1,81 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.CoSoVatChat>
+
+@{
+    ViewData["Title"] = "Quản lý cơ sở vật chất";
+}
+
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Quản lý cơ sở vật chất</h1>
+            <p class="text-gray-500 mt-1">Danh sách thiết bị trong các phòng</p>
+        </div>
+        <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+            <i class="fas fa-plus mr-2"></i> Thêm thiết bị
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
+            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        </div>
+    }
+
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Mã</th>
+                        <th class="px-4 py-3 text-left">Phòng</th>
+                        <th class="px-4 py-3 text-left">Cơ sở</th>
+                        <th class="px-4 py-3 text-left">Tên thiết bị</th>
+                        <th class="px-4 py-3 text-center">Số lượng</th>
+                        <th class="px-4 py-3 text-center">Tình trạng</th>
+                        <th class="px-4 py-3 text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-3">@item.MaCSVC</td>
+                            <td class="px-4 py-3">@item.PhongNavigation?.TenPhong</td>
+                            <td class="px-4 py-3">@item.PhongNavigation?.CoSo?.TenCoSo</td>
+                            <td class="px-4 py-3">@item.TenThietBi</td>
+                            <td class="px-4 py-3 text-center">@item.SoLuong</td>
+                            <td class="px-4 py-3 text-center">
+                                @if (item.TinhTrang == "Tốt")
+                                {
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Tốt</span>
+                                }
+                                else if (item.TinhTrang == "Hư")
+                                {
+                                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Hư</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">@item.TinhTrang</span>
+                                }
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <a asp-action="Details" asp-route-id="@item.MaCSVC" class="text-blue-500 mx-1"><i class="fas fa-eye"></i></a>
+                                <a asp-action="Edit" asp-route-id="@item.MaCSVC" class="text-yellow-500 mx-1"><i class="fas fa-edit"></i></a>
+                                <a asp-action="Delete" asp-route-id="@item.MaCSVC" class="text-red-500 mx-1"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (!Model.Any())
+        {
+            <div class="text-center py-12">
+                <i class="fas fa-microchip text-gray-300 text-5xl mb-3"></i>
+                <p class="text-gray-500">Chưa có thiết bị nào</p>
+                <a asp-action="Create" class="inline-block mt-3 text-blue-500">Thêm thiết bị đầu tiên</a>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,71 @@
+﻿@model HeThongQuanLyPhongTro.Models.NguoiOHopDong
+
+@{
+    ViewData["Title"] = "Chi tiết người ở";
+   
+}
+
+
+<body class="bg-gray-100">
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-xl font-bold text-white">Chi tiết người ở</h1>
+                            <p class="text-purple-100 text-sm">Mã người ở: @Model.MaNguoiO</p>
+                        </div>
+                        <a asp-action="Index" class="text-white hover:text-purple-200 transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Thông tin chi tiết -->
+                <div class="p-6">
+                    <div class="bg-gray-50 rounded-lg p-5 mb-6">
+                        <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
+                            <i class="fas fa-user-circle text-purple-500 mr-2"></i>
+                            Thông tin cá nhân
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-500 text-sm">Họ tên</p>
+                                <p class="font-semibold text-lg">@Model.HoTen</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Số điện thoại</p>
+                                <p class="font-semibold">@(Model.SoDienThoai ?? "Chưa cập nhật")</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">CCCD/CMND</p>
+                                <p class="font-semibold">@(Model.CCCD ?? "Chưa cập nhật")</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Mã hợp đồng</p>
+                                <p class="font-semibold text-blue-600">@(Model.HopDongNavigation?.MaHopDong)</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Người đại diện</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nút thao tác -->
+                    <div class="flex justify-end space-x-3 pt-4 border-t">
+                        <a asp-action="Edit" asp-route-id="@Model.MaNguoiO" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all">
+                            <i class="fas fa-edit mr-2"></i> Chỉnh sửa
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.MaNguoiO" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+                            <i class="fas fa-trash mr-2"></i> Xóa
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>

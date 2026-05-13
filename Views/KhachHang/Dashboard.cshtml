@@ -1,0 +1,449 @@
+﻿using HeThongQuanLyPhongTro.Data;
+using HeThongQuanLyPhongTro.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace HeThongQuanLyPhongTro.Controllers
+{
+    public class KhachHangController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public KhachHangController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: Danh sách khách hàng
+        public async Task<IActionResult>
+    Index(string searchString)
+    {
+    if (HttpContext.Session.GetInt32("UserId") == null)
+    {
+    return RedirectToAction("Index", "Login");
+    }
+
+    var khachHangs = _context.KhachHang.AsQueryable();
+
+    if (!string.IsNullOrEmpty(searchString))
+    {
+    khachHangs = khachHangs.Where(k => k.HoTen.Contains(searchString) ||
+    (k.SoDienThoai != null && k.SoDienThoai.Contains(searchString)) ||
+    (k.CCCD != null && k.CCCD.Contains(searchString)));
+    }
+
+    ViewBag.SearchString = searchString;
+    return View(await khachHangs.ToListAsync());
+    }
+
+    // GET: Chi tiết khách hàng
+    public async Task<IActionResult>
+        Details(int? id)
+        {
+        if (HttpContext.Session.GetInt32("UserId") == null)
+        {
+        return RedirectToAction("Index", "Login");
+        }
+
+        if (id == null)
+        {
+        return NotFound();
+        }
+
+        var khachHang = await _context.KhachHang
+        .FirstOrDefaultAsync(m => m.MaKhachHang == id);
+
+        if (khachHang == null)
+        {
+        return NotFound();
+        }
+
+        var hopDongs = await _context.HopDong
+        .Include(h => h.PhongNavigation)
+        .Where(h => h.MaKhachHang == id)
+        .OrderByDescending(h => h.NgayBatDau)
+        .ToListAsync();
+
+        ViewBag.HopDongs = hopDongs;
+        return View(khachHang);
+        }
+
+        // GET: Thêm khách hàng mới
+        public IActionResult Create()
+        {
+        if (HttpContext.Session.GetInt32("UserId") == null)
+        {
+        return RedirectToAction("Index", "Login");
+        }
+        return View();
+        }
+
+        // POST: Thêm khách hàng mới
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult>
+            Create(KhachHang khachHang)
+            {
+            if (ModelState.IsValid)
+            {
+            if (!string.IsNullOrEmpty(khachHang.CCCD))
+            {
+            var exists = await _context.KhachHang
+            .AnyAsync(k => k.CCCD == khachHang.CCCD);
+            if (exists)
+            {
+            ModelState.AddModelError("CCCD", "Số CCCD đã tồn tại trong hệ thống!");
+            return View(khachHang);
+            }
+            }
+
+            if (!string.IsNullOrEmpty(khachHang.SoDienThoai))
+            {
+            var exists = await _context.KhachHang
+            .AnyAsync(k => k.SoDienThoai == khachHang.SoDienThoai);
+            if (exists)
+            {
+            ModelState.AddModelError("SoDienThoai", "Số điện thoại đã tồn tại trong hệ thống!");
+            return View(khachHang);
+            }
+            }
+
+            _context.Add(khachHang);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Thêm khách hàng thành công!";
+            return RedirectToAction(nameof(Index));
+            }
+            return View(khachHang);
+            }
+
+            // GET: Chỉnh sửa khách hàng
+            public async Task<IActionResult>
+                Edit(int? id)
+                {
+                if (HttpContext.Session.GetInt32("UserId") == null)
+                {
+                return RedirectToAction("Index", "Login");
+                }
+
+                if (id == null)
+                {
+                return NotFound();
+                }
+
+                var khachHang = await _context.KhachHang.FindAsync(id);
+                if (khachHang == null)
+                {
+                return NotFound();
+                }
+                return View(khachHang);
+                }
+
+                // POST: Chỉnh sửa khách hàng
+                [HttpPost]
+                [ValidateAntiForgeryToken]
+                public async Task<IActionResult>
+                    Edit(int id, KhachHang khachHang)
+                    {
+                    if (id != khachHang.MaKhachHang)
+                    {
+                    return NotFound();
+                    }
+
+                    if (ModelState.IsValid)
+                    {
+                    try
+                    {
+                    if (!string.IsNullOrEmpty(khachHang.CCCD))
+                    {
+                    var exists = await _context.KhachHang
+                    .AnyAsync(k => k.CCCD == khachHang.CCCD && k.MaKhachHang != id);
+                    if (exists)
+                    {
+                    ModelState.AddModelError("CCCD", "Số CCCD đã tồn tại trong hệ thống!");
+                    return View(khachHang);
+                    }
+                    }
+
+                    if (!string.IsNullOrEmpty(khachHang.SoDienThoai))
+                    {
+                    var exists = await _context.KhachHang
+                    .AnyAsync(k => k.SoDienThoai == khachHang.SoDienThoai && k.MaKhachHang != id);
+                    if (exists)
+                    {
+                    ModelState.AddModelError("SoDienThoai", "Số điện thoại đã tồn tại trong hệ thống!");
+                    return View(khachHang);
+                    }
+                    }
+
+                    _context.Update(khachHang);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "Cập nhật khách hàng thành công!";
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                    if (!KhachHangExists(khachHang.MaKhachHang))
+                    {
+                    return NotFound();
+                    }
+                    else
+                    {
+                    throw;
+                    }
+                    }
+                    return RedirectToAction(nameof(Index));
+                    }
+                    return View(khachHang);
+                    }
+
+                    // GET: Xóa khách hàng
+                    public async Task<IActionResult>
+                        Delete(int? id)
+                        {
+                        if (HttpContext.Session.GetInt32("UserId") == null)
+                        {
+                        return RedirectToAction("Index", "Login");
+                        }
+
+                        if (id == null)
+                        {
+                        return NotFound();
+                        }
+
+                        var khachHang = await _context.KhachHang
+                        .FirstOrDefaultAsync(m => m.MaKhachHang == id);
+                        if (khachHang == null)
+                        {
+                        return NotFound();
+                        }
+
+                        var coHopDong = await _context.HopDong.AnyAsync(h => h.MaKhachHang == id);
+                        if (coHopDong)
+                        {
+                        ViewBag.HasContract = true;
+                        ViewBag.Error = "Khách hàng đang có hợp đồng, không thể xóa!";
+                        }
+
+                        return View(khachHang);
+                        }
+
+                        // POST: Xóa khách hàng
+                        [HttpPost, ActionName("Delete")]
+                        [ValidateAntiForgeryToken]
+                        public async Task<IActionResult>
+                            DeleteConfirmed(int id)
+                            {
+                            var khachHang = await _context.KhachHang.FindAsync(id);
+                            if (khachHang != null)
+                            {
+                            var coHopDong = await _context.HopDong.AnyAsync(h => h.MaKhachHang == id);
+                            if (coHopDong)
+                            {
+                            TempData["Error"] = "Không thể xóa vì khách hàng đang có hợp đồng!";
+                            return RedirectToAction(nameof(Index));
+                            }
+
+                            _context.KhachHang.Remove(khachHang);
+                            await _context.SaveChangesAsync();
+                            TempData["Success"] = "Xóa khách hàng thành công!";
+                            }
+
+                            return RedirectToAction(nameof(Index));
+                            }
+
+                            // Dashboard cho khách hàng
+                            public async Task<IActionResult>
+                                Dashboard()
+                                {
+                                if (HttpContext.Session.GetInt32("UserId") == null)
+                                {
+                                return RedirectToAction("Index", "Login");
+                                }
+
+                                var role = HttpContext.Session.GetString("Role");
+                                if (role != "Khach")
+                                {
+                                return RedirectToAction("Index", "Dashboard");
+                                }
+
+                                var userTaiKhoan = HttpContext.Session.GetInt32("UserId");
+                                var khachHang = await _context.KhachHang
+                                .FirstOrDefaultAsync(k => k.MaTaiKhoan == userTaiKhoan);
+
+                                if (khachHang == null)
+                                {
+                                TempData["Error"] = "Không tìm thấy thông tin khách hàng!";
+                                return RedirectToAction("Index", "Dashboard");
+                                }
+
+                                var model = new KhachHangDashboardViewModel
+                                {
+                                ThongTinKhachHang = khachHang,
+                                HopDongHienTai = await _context.HopDong
+                                .Include(h => h.PhongNavigation)
+                                .ThenInclude(p => p.CoSo)
+                                .FirstOrDefaultAsync(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai == "Hiệu lực"),
+
+                                LichSuHopDong = await _context.HopDong
+                                .Include(h => h.PhongNavigation)
+                                .Where(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai != "Hiệu lực")
+                                .OrderByDescending(h => h.NgayKetThuc)
+                                .ToListAsync(),
+
+                                HoaDonChuaThanhToan = await _context.HoaDon
+                                .Include(h => h.HopDongNavigation)
+                                .ThenInclude(h => h.PhongNavigation)
+                                .Where(h => h.HopDongNavigation != null &&
+                                h.HopDongNavigation.MaKhachHang == khachHang.MaKhachHang &&
+                                h.TrangThai == "Chưa thanh toán")
+                                .OrderBy(h => h.Nam)
+                                .ThenBy(h => h.Thang)
+                                .ToListAsync(),
+
+                                HoaDonDaThanhToan = await _context.HoaDon
+                                .Include(h => h.HopDongNavigation)
+                                .ThenInclude(h => h.PhongNavigation)
+                                .Where(h => h.HopDongNavigation != null &&
+                                h.HopDongNavigation.MaKhachHang == khachHang.MaKhachHang &&
+                                h.TrangThai == "Đã thanh toán")
+                                .OrderByDescending(h => h.Nam)
+                                .ThenByDescending(h => h.Thang)
+                                .Take(12)
+                                .ToListAsync()
+                                };
+
+                                model.TongNo = model.HoaDonChuaThanhToan?.Sum(h => h.TongTien) ?? 0;
+
+                                if (model.HopDongHienTai != null && model.HopDongHienTai.NgayKetThuc != null)
+                                {
+                                model.SoNgayConLai = (model.HopDongHienTai.NgayKetThuc - DateTime.Now).Days;
+                                if (model.SoNgayConLai < 0) model.SoNgayConLai = 0;
+                                }
+
+                                ViewBag.Username = HttpContext.Session.GetString("Username");
+                                return View(model);
+                                }
+
+                                // Hợp đồng của tôi
+                                public async Task<IActionResult>
+                                    HopDongCuaToi()
+                                    {
+                                    if (HttpContext.Session.GetInt32("UserId") == null)
+                                    {
+                                    return RedirectToAction("Index", "Login");
+                                    }
+
+                                    var userTaiKhoan = HttpContext.Session.GetInt32("UserId");
+                                    var khachHang = await _context.KhachHang
+                                    .FirstOrDefaultAsync(k => k.MaTaiKhoan == userTaiKhoan);
+
+                                    if (khachHang == null)
+                                    {
+                                    TempData["Error"] = "Không tìm thấy thông tin khách hàng!";
+                                    return RedirectToAction("Index", "Dashboard");
+                                    }
+
+                                    var hopDongs = await _context.HopDong
+                                    .Include(h => h.PhongNavigation)
+                                    .ThenInclude(p => p.CoSo)
+                                    .Where(h => h.MaKhachHang == khachHang.MaKhachHang)
+                                    .OrderByDescending(h => h.NgayBatDau)
+                                    .ToListAsync();
+
+                                    ViewBag.KhachHang = khachHang;
+                                    return View(hopDongs);
+                                    }
+
+                                    // Chi tiết hợp đồng của tôi
+                                    public async Task<IActionResult>
+                                        HopDongChiTiet(int id)
+                                        {
+                                        if (HttpContext.Session.GetInt32("UserId") == null)
+                                        {
+                                        return RedirectToAction("Index", "Login");
+                                        }
+
+                                        var userTaiKhoan = HttpContext.Session.GetInt32("UserId");
+                                        var khachHang = await _context.KhachHang
+                                        .FirstOrDefaultAsync(k => k.MaTaiKhoan == userTaiKhoan);
+
+                                        if (khachHang == null)
+                                        {
+                                        return RedirectToAction("Index", "Dashboard");
+                                        }
+
+                                        var hopDong = await _context.HopDong
+                                        .Include(h => h.PhongNavigation)
+                                        .ThenInclude(p => p.CoSo)
+                                        .FirstOrDefaultAsync(h => h.MaHopDong == id && h.MaKhachHang == khachHang.MaKhachHang);
+
+                                        if (hopDong == null)
+                                        {
+                                        return NotFound();
+                                        }
+
+                                        var hoaDons = await _context.HoaDon
+                                        .Where(h => h.MaHopDong == id)
+                                        .OrderByDescending(h => h.Nam)
+                                        .ThenByDescending(h => h.Thang)
+                                        .ToListAsync();
+
+                                        ViewBag.HoaDons = hoaDons;
+                                        return View(hopDong);
+                                        }
+
+                                        // Hóa đơn của tôi
+                                        public async Task<IActionResult>
+                                            HoaDonCuaToi(int? thang, int? nam)
+                                            {
+                                            if (HttpContext.Session.GetInt32("UserId") == null)
+                                            {
+                                            return RedirectToAction("Index", "Login");
+                                            }
+
+                                            var userTaiKhoan = HttpContext.Session.GetInt32("UserId");
+                                            var khachHang = await _context.KhachHang
+                                            .FirstOrDefaultAsync(k => k.MaTaiKhoan == userTaiKhoan);
+
+                                            if (khachHang == null)
+                                            {
+                                            TempData["Error"] = "Không tìm thấy thông tin khách hàng!";
+                                            return RedirectToAction("Index", "Dashboard");
+                                            }
+
+                                            var query = _context.HoaDon
+                                            .Include(h => h.HopDongNavigation)
+                                            .ThenInclude(h => h.PhongNavigation)
+                                            .Where(h => h.HopDongNavigation != null &&
+                                            h.HopDongNavigation.MaKhachHang == khachHang.MaKhachHang);
+
+                                            if (thang.HasValue && nam.HasValue)
+                                            {
+                                            query = query.Where(h => h.Thang == thang.Value && h.Nam == nam.Value);
+                                            }
+
+                                            var hoaDons = await query
+                                            .OrderByDescending(h => h.Nam)
+                                            .ThenByDescending(h => h.Thang)
+                                            .ToListAsync();
+
+                                            ViewBag.Thang = thang;
+                                            ViewBag.Nam = nam;
+                                            ViewBag.KhachHang = khachHang;
+
+                                            ViewBag.NamList = await _context.HoaDon
+                                            .Where(h => h.HopDongNavigation != null &&
+                                            h.HopDongNavigation.MaKhachHang == khachHang.MaKhachHang)
+                                            .Select(h => h.Nam)
+                                            .Distinct()
+                                            .OrderByDescending(n => n)
+                                            .ToListAsync();
+
+                                            return View(hoaDons);
+                                            }
+
+                                            private bool KhachHangExists(int id)
+                                            {
+                                            return _context.KhachHang.Any(e => e.MaKhachHang == id);
+                                            }
+                                            }
+                                            }

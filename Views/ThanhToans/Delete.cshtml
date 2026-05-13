@@ -1,0 +1,47 @@
+﻿@model HeThongQuanLyPhongTro.Models.ThanhToan
+
+@{
+    ViewData["Title"] = "Xóa thanh toán";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-white">Xóa thanh toán</h1>
+                    <!-- SỬA: Bỏ chữ TT -->
+                    <p class="text-red-100">Mã thanh toán: <strong>@Model.MaThanhToan</strong></p>
+                </div>
+                <a asp-action="Index" class="text-white hover:text-red-200">
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-400 text-xl mr-3"></i>
+                    <p class="text-yellow-700">Bạn có chắc chắn muốn xóa giao dịch này?</p>
+                </div>
+            </div>
+
+            <dl class="grid grid-cols-2 gap-3 mb-6">
+                <!-- SỬA: Bỏ chữ TT -->
+                <div class="bg-gray-50 p-3 rounded"><dt class="text-gray-500">Mã thanh toán</dt><dd class="font-semibold">@Model.MaThanhToan</dd></div>
+                <div class="bg-gray-50 p-3 rounded"><dt class="text-gray-500">Số tiền</dt><dd class="font-semibold text-red-600">@(Model.SoTien?.ToString("N0") ?? "0") đ</dd></div>
+                <div class="bg-gray-50 p-3 rounded"><dt class="text-gray-500">Ngày thanh toán</dt><dd>@(Model.NgayThanhToan?.ToString("dd/MM/yyyy") ?? "N/A")</dd></div>
+                <div class="bg-gray-50 p-3 rounded"><dt class="text-gray-500">Trạng thái</dt><dd>@Model.TrangThai</dd></div>
+            </dl>
+
+            <form asp-action="Delete" class="flex justify-end space-x-3">
+                <input type="hidden" name="id" value="@Model.MaThanhToan" />
+                <a asp-action="Index" class="px-4 py-2 border rounded-lg">Hủy</a>
+                <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg">
+                    <i class="fas fa-trash mr-2"></i> Xóa
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

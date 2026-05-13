@@ -1,0 +1,153 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.BaiDang>
+
+@{
+    ViewData["Title"] = "Phòng Trọ Xinh - Tìm phòng trọ giá rẻ";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+
+    <!-- Header -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-home text-2xl text-blue-500"></i>
+                    <span class="text-xl font-bold text-gray-800">Phòng Trọ Xinh</span>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#home" class="text-gray-600 hover:text-blue-500">Trang chủ</a>
+                    <a href="#phong-trong" class="text-gray-600 hover:text-blue-500">Phòng trống</a>
+                    <a href="#bai-dang" class="text-gray-600 hover:text-blue-500">Bài đăng</a>
+                    <a href="#lien-he" class="text-gray-600 hover:text-blue-500">Liên hệ</a>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="@Url.Action("Index", "Login")" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                        <i class="fas fa-sign-in-alt mr-1"></i> Đăng nhập
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-20">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Tìm Phòng Trọ Ưng Ý Nhất!</h1>
+            <p class="text-xl mb-8">Hàng ngàn phòng trọ chất lượng, giá tốt nhất thị trường</p>
+
+            <!-- Form tìm kiếm -->
+            <form method="get" class="max-w-4xl mx-auto bg-white rounded-lg p-4 flex flex-wrap gap-2">
+                <input type="text" name="searchString" value="@ViewBag.SearchString"
+                       placeholder="Nhập tên phòng, khu vực..."
+                       class="flex-1 px-4 py-2 border rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="number" name="giaTu" value="@ViewBag.GiaTu" placeholder="Giá từ (VNĐ)"
+                       class="w-40 px-4 py-2 border rounded-lg text-gray-800">
+                <input type="number" name="giaDen" value="@ViewBag.GiaDen" placeholder="Giá đến (VNĐ)"
+                       class="w-40 px-4 py-2 border rounded-lg text-gray-800">
+                <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-search mr-2"></i> Tìm kiếm
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Phòng nổi bật -->
+    <section class="container mx-auto px-4 py-12">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏠 Phòng Nổi Bật</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var phong in ViewBag.PhongNoiBat as List<HeThongQuanLyPhongTro.Models.Phong> ?? new List<HeThongQuanLyPhongTro.Models.Phong>())
+            {
+                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all">
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-lg">@phong.TenPhong</h3>
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                                <i class="fas fa-check-circle"></i> Còn trống
+                            </span>
+                        </div>
+                        <p class="text-gray-500 text-sm mb-2">
+                            <i class="fas fa-building mr-1"></i> @phong.CoSo?.TenCoSo
+                        </p>
+                        <p class="text-blue-600 font-bold text-xl mb-3">@phong.GiaPhong.ToString("N0") đ/tháng</p>
+                        <p class="text-gray-600 text-sm mb-3">Diện tích: @phong.DienTich m²</p>
+                        <a href="@Url.Action("ChiTietPhong", "Home", new { id = phong.MaPhong })"
+                           class="block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
+                            Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Bài đăng mới nhất -->
+    <section id="bai-dang" class="bg-white py-12">
+        <div class="container mx-auto px-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">📢 Bài Đăng Mới Nhất</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach (var item in Model)
+                {
+                    <div class="bg-gray-50 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all">
+                        @if (!string.IsNullOrEmpty(item.HinhAnh))
+                        {
+                            <img src="@item.HinhAnh" alt="@item.TieuDe" class="w-full h-48 object-cover">
+                        }
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg mb-2 line-clamp-1">@item.TieuDe</h3>
+                            <p class="text-gray-500 text-sm mb-2">
+                                <i class="fas fa-door-open mr-1"></i> @item.PhongNavigation?.TenPhong
+                            </p>
+                            <p class="text-blue-600 font-bold text-lg mb-2">
+                                @item.PhongNavigation?.GiaPhong.ToString("N0") đ/tháng
+                            </p>
+                            <p class="text-gray-500 text-sm mb-3 line-clamp-2">@item.MoTa</p>
+                            <a href="@Url.Action("ChiTietBaiDang", "Home", new { id = item.MaBaiDang })"
+                               class="inline-block text-blue-500 hover:text-blue-700">
+                                Xem chi tiết <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="font-bold text-lg mb-3">Phòng Trọ Xinh</h3>
+                    <p class="text-gray-400">Nơi bạn tìm thấy ngôi nhà thứ hai của mình</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-3">Liên hệ</h3>
+                    <p class="text-gray-400"><i class="fas fa-phone mr-2"></i> 0869189018</p>
+                    <p class="text-gray-400"><i class="fas fa-envelope mr-2"></i> contact@phongtro.com</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-3">Theo dõi</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook text-2xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-zalo text-2xl"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-gray-500 text-sm mt-8">
+                © 2020 Phòng Trọ Xinh - All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

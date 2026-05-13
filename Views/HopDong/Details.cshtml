@@ -1,0 +1,194 @@
+﻿@model HeThongQuanLyPhongTro.Models.HopDong
+
+@{
+    ViewData["Title"] = "Chi tiết hợp đồng";
+    var nguoiOList = ViewBag.NguoiOList as List<HeThongQuanLyPhongTro.Models.NguoiOHopDong>;
+    var hoaDons = ViewBag.HoaDons as List<HeThongQuanLyPhongTro.Models.HoaDon>;
+}
+<div class="flex justify-end space-x-3 mb-4">
+    <a href="@Url.Action("XuatPdf", "HopDong", new { id = Model.MaHopDong })"
+       target="_blank"
+       class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+        <i class="fas fa-file-pdf mr-2"></i> Xuất PDF hợp đồng
+    </a>
+</div>
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-white">Chi tiết hợp đồng</h1>
+                    <p class="text-purple-100">Mã hợp đồng: <strong class="text-yellow-200">@Model.MaHopDong</strong></p>
+                </div>
+                <a asp-action="Index" class="text-white hover:text-purple-200">
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <!-- Thông tin hợp đồng -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-gray-500 text-sm">🔢 Mã hợp đồng</p>
+                    <p class="font-bold text-lg text-blue-600">@Model.MaHopDong</p>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-gray-500 text-sm">📅 Ngày bắt đầu</p>
+                    <p class="font-semibold">@(Model.NgayBatDau?.ToString("dd/MM/yyyy") ?? "Chưa có")</p>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-gray-500 text-sm">📅 Ngày kết thúc</p>
+                    <p class="font-semibold">@(Model.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "Chưa có")</p>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-gray-500 text-sm">💰 Tiền cọc</p>
+                    <p class="font-semibold text-green-600">@(Model.TienCoc?.ToString("N0") ?? "0") đ</p>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-gray-500 text-sm">📋 Trạng thái</p>
+                    @if (Model.TrangThai == "Hiệu lực")
+                    {
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                            <i class="fas fa-check-circle"></i> Hiệu lực
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                            <i class="fas fa-times-circle"></i> @Model.TrangThai
+                        </span>
+                    }
+                </div>
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-gray-500 text-sm">🏠 Phòng</p>
+                    <p class="font-semibold">@(Model.PhongNavigation?.TenPhong ?? "N/A")</p>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-gray-500 text-sm">🏢 Cơ sở</p>
+                    <p class="font-semibold">@(Model.PhongNavigation?.CoSo?.TenCoSo ?? "N/A")</p>
+                </div>
+            </div>
+
+            <!-- Thông tin khách hàng (người đại diện) -->
+            <div class="border rounded-lg p-4 mb-6">
+                <h3 class="font-bold text-lg mb-3 flex items-center">
+                    <i class="fas fa-user-circle text-blue-500 mr-2"></i>
+                    Thông tin khách hàng (Người đại diện)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div><span class="text-gray-500">Họ tên:</span> <span class="font-semibold">@(Model.KhachHangNavigation?.HoTen ?? "N/A")</span></div>
+                    <div><span class="text-gray-500">Số điện thoại:</span> <span class="font-semibold">@(Model.KhachHangNavigation?.SoDienThoai ?? "N/A")</span></div>
+                    <div><span class="text-gray-500">Email:</span> <span class="font-semibold">@(Model.KhachHangNavigation?.Email ?? "N/A")</span></div>
+                    <div><span class="text-gray-500">CCCD/CMND:</span> <span class="font-semibold">@(Model.KhachHangNavigation?.CCCD ?? "N/A")</span></div>
+                    <div class="md:col-span-2"><span class="text-gray-500">Địa chỉ:</span> <span class="font-semibold">@(Model.KhachHangNavigation?.DiaChi ?? "N/A")</span></div>
+                </div>
+            </div>
+
+            <!-- Danh sách người ở -->
+            <div class="border rounded-lg p-4 mb-6">
+                <h3 class="font-bold text-lg mb-3 flex items-center">
+                    <i class="fas fa-users text-green-500 mr-2"></i>
+                    Danh sách người ở
+                </h3>
+                @if (nguoiOList != null && nguoiOList.Any())
+                {
+                    <table class="w-full border">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-2 text-left">STT</th>
+                                <th class="p-2 text-left">Họ tên</th>
+                                <th class="p-2 text-left">CCCD</th>
+                                <th class="p-2 text-left">Số điện thoại</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int stt = 1;
+                                foreach (var n in nguoiOList)
+                                {
+                                    <tr class="border-t">
+                                        <td class="p-2">@stt</td>
+                                        <td class="p-2">@n.HoTen</td>
+                                        <td class="p-2">@n.CCCD</td>
+                                        <td class="p-2">@n.SoDienThoai</td>
+                                    </tr>
+                                    stt++;
+                                }
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-gray-500">
+                        <i class="fas fa-user-friends text-3xl mb-2"></i>
+                        <p>Chưa có người ở nào</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Danh sách hóa đơn -->
+            <div class="border rounded-lg p-4">
+                <h3 class="font-bold text-lg mb-3 flex items-center">
+                    <i class="fas fa-receipt text-purple-500 mr-2"></i>
+                    Danh sách hóa đơn
+                </h3>
+                @if (hoaDons != null && hoaDons.Any())
+                {
+                    <table class="w-full border">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-2 text-left">Tháng/Năm</th>
+                                <th class="p-2 text-right">Số tiền</th>
+                                <th class="p-2 text-center">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var hd in hoaDons)
+                            {
+                                <tr class="border-t">
+                                    <td class="p-2">@hd.Thang/@hd.Nam</td>
+                                    <td class="p-2 text-right">@(hd.TongTien?.ToString("N0") ?? "0") đ</td>
+                                    <td class="p-2 text-center">
+                                        @if (hd.TrangThai == "Đã thanh toán")
+                                        {
+                                            <span class="text-green-600">✓ Đã thanh toán</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-red-600">Chưa thanh toán</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-gray-500">
+                        <p>Chưa có hóa đơn nào</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Nút thao tác -->
+            <div class="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                @if (Model.TrangThai == "Hiệu lực")
+                {
+                    <form asp-action="ChamDut" asp-route-id="@Model.MaHopDong" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                                onclick="return confirm('Chấm dứt hợp đồng này?')">
+                            <i class="fas fa-times-circle mr-2"></i> Chấm dứt hợp đồng
+                        </button>
+                    </form>
+                }
+                <a asp-action="Index" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

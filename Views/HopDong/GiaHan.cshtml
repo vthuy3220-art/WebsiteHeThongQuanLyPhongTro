@@ -1,0 +1,50 @@
+﻿@model HeThongQuanLyPhongTro.Models.HopDong
+
+@{
+    ViewData["Title"] = "Gia hạn hợp đồng";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+            <h1 class="text-xl font-bold text-white">Gia hạn hợp đồng</h1>
+            <p class="text-green-100 text-sm">Mã hợp đồng: HĐ@Model.MaHopDong</p>
+        </div>
+
+        <div class="p-6">
+            <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><span class="text-gray-600">Phòng:</span> <span class="font-semibold">@(Model.PhongNavigation?.TenPhong ?? "N/A")</span></div>
+                    <div><span class="text-gray-600">Khách hàng:</span> <span class="font-semibold">@(Model.KhachHangNavigation?.HoTen ?? "N/A")</span></div>
+                    <div>
+                        <span class="text-gray-600">Ngày kết thúc hiện tại:</span>
+                        <span class="font-semibold text-orange-600">
+                            @(Model.NgayKetThuc.HasValue? Model.NgayKetThuc.Value.ToString("dd/MM/yyyy") : "Chưa có")
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="GiaHan" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaHopDong" />
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ngày kết thúc mới <span class="text-red-500">*</span></label>
+                    <input type="date" name="ngayKetThucMoi"
+                           value="@(Model.NgayKetThuc.HasValue? Model.NgayKetThuc.Value.AddMonths(6).ToString("yyyy-MM-dd") : DateTime.Now.AddMonths(6).ToString("yyyy-MM-dd"))"
+                           min="@(Model.NgayKetThuc.HasValue? Model.NgayKetThuc.Value.AddDays(1).ToString("yyyy-MM-dd") : DateTime.Now.ToString("yyyy-MM-dd"))"
+                           class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    <p class="text-xs text-gray-500 mt-1">Chọn ngày kết thúc mới cho hợp đồng</p>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <a asp-action="Index" class="px-4 py-2 border rounded-lg hover:bg-gray-50 transition-all">Hủy</a>
+                    <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all">
+                        <i class="fas fa-save mr-2"></i> Xác nhận gia hạn
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

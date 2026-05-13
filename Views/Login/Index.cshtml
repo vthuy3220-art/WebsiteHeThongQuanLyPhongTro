@@ -1,0 +1,39 @@
+﻿<div class="min-h-screen flex items-center justify-center bg-gray-100">
+
+    <div class="bg-white p-8 rounded shadow w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center">
+            Đăng Nhập Hệ Thống
+        </h2>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="bg-red-100 text-red-600 p-3 rounded mb-4">
+                @ViewBag.Error
+            </div>
+        }
+
+        <form method="post" class="space-y-4">
+
+            <div>
+                <label>Tên đăng nhập</label>
+                <input type="text"
+                       name="tenDangNhap"
+                       class="w-full border rounded px-3 py-2" />
+            </div>
+
+            <div>
+                <label>Mật khẩu</label>
+                <input type="password"
+                       name="matKhau"
+                       class="w-full border rounded px-3 py-2" />
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-blue-500 text-white py-2 rounded">
+                Đăng Nhập
+            </button>
+
+        </form>
+    </div>
+
+</div>

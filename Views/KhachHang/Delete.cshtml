@@ -1,0 +1,71 @@
+﻿@model HeThongQuanLyPhongTro.Models.KhachHang
+
+@{
+    ViewData["Title"] = "Xóa khách hàng";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-white">Xóa khách hàng</h1>
+                    <p class="text-red-100">Mã KH: @Model.MaKhachHang</p>
+                </div>
+                <a asp-action="Index" class="text-white hover:text-red-200">
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="p-6">
+            @if (ViewBag.HasContract == true)
+            {
+                <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+                    <p class="text-red-700">@ViewBag.Error</p>
+                </div>
+            }
+            else
+            {
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                    <p class="text-yellow-700">Bạn có chắc chắn muốn xóa khách hàng này?</p>
+                    <p class="text-yellow-600 text-sm">Hành động này không thể khôi phục!</p>
+                </div>
+            }
+
+            <dl class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                <div class="bg-gray-50 p-3 rounded">
+                    <dt class="text-gray-500 text-sm">Họ tên</dt>
+                    <dd class="font-semibold">@Model.HoTen</dd>
+                </div>
+                <div class="bg-gray-50 p-3 rounded">
+                    <dt class="text-gray-500 text-sm">Số điện thoại</dt>
+                    <dd>@Model.SoDienThoai</dd>
+                </div>
+                <div class="bg-gray-50 p-3 rounded">
+                    <dt class="text-gray-500 text-sm">CCCD</dt>
+                    <dd>@Model.CCCD</dd>
+                </div>
+                <div class="bg-gray-50 p-3 rounded">
+                    <dt class="text-gray-500 text-sm">Email</dt>
+                    <dd>@Model.Email</dd>
+                </div>
+                <div class="bg-gray-50 p-3 rounded md:col-span-2">
+                    <dt class="text-gray-500 text-sm">Địa chỉ</dt>
+                    <dd>@Model.DiaChi</dd>
+                </div>
+            </dl>
+
+            <form asp-action="Delete" class="flex justify-end space-x-3">
+                <input type="hidden" name="id" value="@Model.MaKhachHang" />
+                <a asp-action="Index" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</a>
+                @if (ViewBag.HasContract != true)
+                {
+                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                        <i class="fas fa-trash mr-2"></i> Xóa
+                    </button>
+                }
+            </form>
+        </div>
+    </div>
+</div>

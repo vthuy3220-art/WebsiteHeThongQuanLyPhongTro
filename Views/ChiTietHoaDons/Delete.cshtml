@@ -1,0 +1,71 @@
+﻿@model HeThongQuanLyPhongTro.Models.ChiTietHoaDon
+
+@{
+    ViewData["Title"] = "Xóa khoản thu";}
+<body class="bg-gray-100">
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-xl font-bold text-white">Xóa khoản thu</h1>
+                            <p class="text-red-100 text-sm">Mã chi tiết: @Model.MaChiTiet</p>
+                        </div>
+                        <a asp-action="Index" class="text-white hover:text-red-200 transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                        </a>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-yellow-400 text-xl mr-3"></i>
+                            <div>
+                                <p class="text-yellow-700 font-semibold">Bạn có chắc chắn muốn xóa khoản thu này?</p>
+                                <p class="text-yellow-600 text-sm">Hành động này không thể khôi phục!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-5 mb-6">
+                        <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
+                            <i class="fas fa-trash text-red-500 mr-2"></i>
+                            Thông tin khoản thu sẽ bị xóa
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-500 text-sm">Loại khoản thu</p>
+                                <p class="font-semibold">@Model.LoaiKhoanThu</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Số lượng</p>
+                                <p class="font-semibold">@(Model.SoLuong ?? 0)</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Đơn giá</p>
+                                <p class="font-semibold">@(Model.DonGia?.ToString("N0") ?? "0") đ</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Thành tiền</p>
+                                <p class="font-semibold text-red-600">@(Model.ThanhTien?.ToString("N0") ?? "0") đ</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form asp-action="Delete" class="flex justify-end space-x-3">
+                        <input type="hidden" name="id" value="@Model.MaChiTiet" />
+                        <a asp-action="Index" class="px-4 py-2 border rounded-lg hover:bg-gray-50 transition-all">Hủy</a>
+                        <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+                            <i class="fas fa-trash mr-2"></i> Xóa
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>

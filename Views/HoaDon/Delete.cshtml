@@ -1,0 +1,32 @@
+﻿@model HeThongQuanLyPhongTro.Models.HoaDon
+
+@{
+    ViewData["Title"] = "Xóa hóa đơn";
+}
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="background: white; border-radius: 8px; border: 1px solid #ddd; overflow: hidden;">
+        <div style="background: #dc3545; color: white; padding: 15px;">
+            <h2 style="margin: 0;">Xóa hóa đơn</h2>
+        </div>
+        <div style="padding: 20px;">
+            <div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                ⚠️ Bạn có chắc chắn muốn xóa hóa đơn này? Hành động không thể hoàn tác.
+            </div>
+            <table style="width: 100%; margin-bottom: 20px;">
+                <tr><td style="padding: 8px 0;"><strong>Mã hóa đơn:</strong></td><td>@Model.MaHoaDon</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Phòng:</strong></td><td>@(Model.HopDongNavigation?.PhongNavigation?.TenPhong ?? "N/A")</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Tháng/Năm:</strong></td><td>@Model.Thang/@Model.Nam</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Tổng tiền:</strong></td><td style="color: red;">@(Model.TongTien?.ToString("N0") ?? "0") đ</td></tr>
+            </table>
+            <form asp-action="Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaHoaDon" />
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <a href="@Url.Action("Index")" style="background: #6c757d; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none;">Hủy</a>
+                    <button type="submit" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px;">Xóa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

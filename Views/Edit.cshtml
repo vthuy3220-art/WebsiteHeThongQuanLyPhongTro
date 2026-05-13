@@ -1,0 +1,53 @@
+﻿@model HeThongQuanLyPhongTro.Models.CoSo
+
+@{
+    ViewData["Title"] = "Chỉnh sửa cơ sở";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">Chỉnh sửa cơ sở</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="MaCoSo" />
+
+                        <div class="mb-3">
+                            <label asp-for="TenCoSo" class="form-label">Tên cơ sở <span class="text-danger">*</span></label>
+                            <input asp-for="TenCoSo" class="form-control" />
+                            <span asp-validation-for="TenCoSo" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DiaChi" class="form-label">Địa chỉ</label>
+                            <input asp-for="DiaChi" class="form-control" />
+                            <span asp-validation-for="DiaChi" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="MoTa" class="form-label">Mô tả</label>
+                            <textarea asp-for="MoTa" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="MoTa" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+                            <button type="submit" class="btn btn-warning">Cập nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

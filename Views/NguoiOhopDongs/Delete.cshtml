@@ -1,0 +1,36 @@
+﻿@model HeThongQuanLyPhongTro.Models.NguoiOHopDong
+
+@{
+    ViewData["Title"] = "Xóa người ở";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow p-6">
+        <div class="bg-red-500 text-white p-3 rounded-t">
+            <h1 class="text-xl font-bold">Xóa người ở</h1>
+        </div>
+
+        <div class="p-4">
+            <div class="bg-yellow-50 p-3 rounded mb-4">
+                <p>⚠️ Bạn có chắc chắn muốn xóa người ở này?</p>
+            </div>
+
+            <dl class="grid grid-cols-2 gap-3 mb-4">
+                <dt class="font-bold">Họ tên:</dt>
+                <dd>@Model.HoTen</dd>
+                <dt class="font-bold">CCCD:</dt>
+                <dd>@Model.CCCD</dd>
+                <dt class="font-bold">SĐT:</dt>
+                <dd>@Model.SoDienThoai</dd>
+                <dt class="font-bold">Hợp đồng:</dt>
+                <dd>@Model.HopDongNavigation?.MaHopDong</dd>
+            </dl>
+
+            <form asp-action="Delete" class="flex justify-end space-x-3">
+                <input type="hidden" name="id" value="@Model.MaNguoiO" />
+                <a asp-action="Index" class="px-4 py-2 border rounded">Hủy</a>
+                <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded">Xóa</button>
+            </form>
+        </div>
+    </div>
+</div>

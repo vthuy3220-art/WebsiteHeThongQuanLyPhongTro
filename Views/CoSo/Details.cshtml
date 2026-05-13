@@ -1,0 +1,75 @@
+﻿@model HeThongQuanLyPhongTro.Models.CoSo
+
+@{
+    ViewData["Title"] = "Chi tiết cơ sở";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="card shadow">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Chi tiết cơ sở</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Mã cơ sở</dt>
+                <dd class="col-sm-9">@Model.MaCoSo</dd>
+
+                <dt class="col-sm-3">Tên cơ sở</dt>
+                <dd class="col-sm-9">@Model.TenCoSo</dd>
+
+                <dt class="col-sm-3">Địa chỉ</dt>
+                <dd class="col-sm-9">@Model.DiaChi</dd>
+
+                <dt class="col-sm-3">Mô tả</dt>
+                <dd class="col-sm-9">@Model.MoTa</dd>
+            </dl>
+
+            <hr />
+            <h6>Danh sách phòng thuộc cơ sở này:</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Mã phòng</th>
+                            <th>Tên phòng</th>
+                            <th>Giá phòng</th>
+                            <th>Diện tích</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var phong in ViewBag.DanhSachPhong as List<HeThongQuanLyPhongTro.Models.Phong> ?? new List<HeThongQuanLyPhongTro.Models.Phong>())
+                        {
+                            <tr>
+                                <td>@phong.MaPhong</td>
+                                <td>@phong.TenPhong</td>
+                                <td>@phong.GiaPhong.ToString("N0") đ</td>
+                                <td>@phong.DienTich m²</td>
+                                <td>
+                                    @if (phong.TrangThai == "Trống")
+                                    {
+                                        <span class="badge bg-success">Trống</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Đã thuê</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if ((ViewBag.DanhSachPhong as List<HeThongQuanLyPhongTro.Models.Phong>)?.Count == 0)
+                {
+                    <p class="text-muted">Chưa có phòng nào trong cơ sở này.</p>
+                }
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <a asp-action="Edit" asp-route-id="@Model.MaCoSo" class="btn btn-warning me-2">Sửa</a>
+                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </div>
+    </div>
+</div>
