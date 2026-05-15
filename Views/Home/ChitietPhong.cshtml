@@ -2,7 +2,10 @@
 
 @{
     Layout = null;
-    ViewData["Title"] = Model != null ? Model.TenPhong : "Chi tiết phòng";
+    ViewData["Title"] = Model?.TenPhong ?? "Chi tiết phòng";
+    var images = ViewBag.Images as List<HeThongQuanLyPhongTro.Models.PhongImage> ?? new List<HeThongQuanLyPhongTro.Models.PhongImage>();
+    var baiDang = ViewBag.BaiDang as HeThongQuanLyPhongTro.Models.BaiDang;
+    var anhChinh = images.FirstOrDefault(i => i.IsMain) ?? images.FirstOrDefault();
 }
 
 <!DOCTYPE html>
@@ -13,9 +16,47 @@
     <title>@ViewData["Title"]</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .gallery-img {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .gallery-img:hover {
+                opacity: 0.8;
+                transform: scale(1.02);
+            }
+
+        .main-image {
+            height: 400px;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thumbnail {
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+            .thumbnail:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+        .active-thumb {
+            border: 2px solid #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
 
+    <!-- Header -->
     <nav class="bg-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3">
             <div class="flex justify-between items-center">
@@ -24,14 +65,14 @@
                     <span class="text-xl font-bold text-gray-800">Phòng Trọ Xinh</span>
                 </a>
                 <a href="@Url.Action("Index", "Home")" class="text-gray-600 hover:text-blue-500">
-                    <i class="fas fa-arrow-left mr-1"></i> Quay lại
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
                 </a>
             </div>
         </div>
     </nav>
 
     <div class="container mx-auto px-4 py-8">
-        <div class="max-w-4xl mx-auto">
+        <div class="max-w-6xl mx-auto">
             @if (Model == null)
             {
                 <div class="bg-red-100 text-red-700 p-4 rounded-lg text-center">
@@ -42,63 +83,127 @@
             }
             else
             {
-                <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-40 flex items-center justify-center">
-                        <i class="fas fa-building text-white text-7xl opacity-50"></i>
-                    </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                    <div class="p-6">
-                        <h1 class="text-2xl font-bold text-gray-800 mb-4">@(Model.TenPhong ?? "Không có tên")</h1>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <p class="text-gray-500 text-sm">Cơ sở</p>
-                                <p class="font-semibold">@(Model.CoSo?.TenCoSo ?? "N/A")</p>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <p class="text-gray-500 text-sm">Địa chỉ</p>
-                                <p class="font-semibold">@(Model.CoSo?.DiaChi ?? "N/A")</p>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <p class="text-gray-500 text-sm">Giá phòng</p>
-                                <p class="text-2xl font-bold text-blue-600">@(Model.GiaPhong.ToString("N0")) đ/tháng</p>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <p class="text-gray-500 text-sm">Diện tích</p>
-                                <p class="font-semibold">@(Model.DienTich.ToString()) m²</p>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <p class="text-gray-500 text-sm">Trạng thái</p>
-                                @if (Model.TrangThai == "Trống")
+                    <!-- Cột trái: GALLERY ẢNH (NHIỀU ẢNH) -->
+                    <div>
+                        <!-- Ảnh chính lớn -->
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-4">
+                            <div class="main-image">
+                                @if (anhChinh != null)
                                 {
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                                        <i class="fas fa-check-circle"></i> Còn trống
-                                    </span>
+                                    <img id="mainImage" src="@anhChinh.ImagePath" class="w-full h-full object-cover" />
                                 }
                                 else
                                 {
-                                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
-                                        <i class="fas fa-lock"></i> Đã thuê
-                                    </span>
+                                    <i class="fas fa-image text-gray-400 text-6xl"></i>
                                 }
                             </div>
                         </div>
 
-                        <div class="mt-6 bg-yellow-50 rounded-lg p-4">
-                            <p class="text-yellow-800">
-                                <i class="fas fa-phone-alt mr-2"></i>
-                                Liên hệ ngay: <strong>0869189018</strong>
-                            </p>
-                            <p class="text-yellow-800 mt-2">
-                                <i class="fas fa-envelope mr-2"></i>
-                                Email: <strong>phongtro@gmail.com</strong>
-                            </p>
+                        <!-- Danh sách ảnh nhỏ (thumbnail) - NHIỀU ẢNH -->
+                        @if (images.Count > 0)
+                        {
+                            <div class="grid grid-cols-4 gap-3">
+                                @foreach (var img in images)
+                                {
+                                    <div class="cursor-pointer" onclick="changeImage('@img.ImagePath', this)">
+                                        <img src="@img.ImagePath" class="thumbnail w-full object-cover @(img.IsMain ? "active-thumb" : "")" />
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-gray-500 py-4">
+                                <i class="fas fa-image text-4xl mb-2"></i>
+                                <p>Chưa có ảnh của phòng</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Cột phải: THÔNG TIN PHÒNG + MÔ TẢ BÀI ĐĂNG -->
+                    <div>
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                            <div class="p-6">
+                                <h1 class="text-2xl font-bold text-gray-800 mb-4">@Model.TenPhong</h1>
+
+                                <div class="space-y-3 mb-6">
+                                    <div class="flex justify-between py-2 border-b">
+                                        <span class="text-gray-500">Cơ sở</span>
+                                        <span class="font-semibold">@(Model.CoSo?.TenCoSo ?? "N/A")</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 border-b">
+                                        <span class="text-gray-500">Địa chỉ</span>
+                                        <span class="font-semibold">@(Model.CoSo?.DiaChi ?? "N/A")</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 border-b">
+                                        <span class="text-gray-500">Giá phòng</span>
+                                        <span class="text-2xl font-bold text-blue-600">@Model.GiaPhong.ToString("N0") đ/tháng</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 border-b">
+                                        <span class="text-gray-500">Diện tích</span>
+                                        <span class="font-semibold">@Model.DienTich m²</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 border-b">
+                                        <span class="text-gray-500">Trạng thái</span>
+                                        @if (Model.TrangThai == "Trống")
+                                        {
+                                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                                                <i class="fas fa-check-circle"></i> Còn trống
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                                <i class="fas fa-lock"></i> Đã thuê
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- MÔ TẢ CHI TIẾT TỪ BÀI ĐĂNG -->
+                                @if (baiDang != null)
+                                {
+                                    <div class="mt-4 pt-4 border-t">
+                                        <h3 class="font-bold text-lg text-gray-800 mb-3 flex items-center">
+                                            <i class="fas fa-file-alt text-blue-500 mr-2"></i>
+                                            Mô tả chi tiết
+                                        </h3>
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <p class="text-gray-700 whitespace-pre-line">@baiDang.MoTa</p>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Liên hệ -->
+                                <div class="mt-6 bg-yellow-50 rounded-lg p-4">
+                                    <p class="text-yellow-800 flex items-center">
+                                        <i class="fas fa-phone-alt mr-2"></i>
+                                        Liên hệ ngay: <strong class="ml-1">0869 189 018</strong>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             }
         </div>
     </div>
+
+    <script>
+        function changeImage(src, element) {
+            document.getElementById('mainImage').src = src;
+
+            // Xóa active class khỏi tất cả thumbnails
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.classList.remove('active-thumb');
+            });
+
+            // Thêm active class cho thumbnail được click
+            element.querySelector('.thumbnail').classList.add('active-thumb');
+        }
+    </script>
 
 </body>
 </html>

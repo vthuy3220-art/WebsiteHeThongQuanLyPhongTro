@@ -2,6 +2,8 @@ using HeThongQuanLyPhongTro.Data;
 using HeThongQuanLyPhongTro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -15,66 +17,62 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // Trang chủ
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, int? maCoSo, int? giaTu, int? giaDen)
         {
-            var baiDangs = _context.BaiDang
+            // Lấy danh sách cơ sở
+            var danhSachCoSo = await _context.CoSo.ToListAsync();
+            ViewBag.DanhSachCoSo = danhSachCoSo;
+            ViewBag.MaCoSo = maCoSo;
+            ViewBag.GiaTu = giaTu;
+            ViewBag.GiaDen = giaDen;
+            ViewBag.SearchString = searchString;
+
+            // Lấy danh sách phòng trống
+            var phongs = _context.Phong
+                .Include(p => p.CoSo)
+                .Where(p => p.TrangThai == "Trống")
+                .AsQueryable();
+
+            if (maCoSo.HasValue && maCoSo.Value > 0)
+            {
+                phongs = phongs.Where(p => p.MaCoSo == maCoSo.Value);
+            }
+            if (giaTu.HasValue)
+            {
+                phongs = phongs.Where(p => p.GiaPhong >= giaTu.Value);
+            }
+            if (giaDen.HasValue)
+            {
+                phongs = phongs.Where(p => p.GiaPhong <= giaDen.Value);
+            }
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                phongs = phongs.Where(p => p.TenPhong.Contains(searchString) ||
+                                           (p.CoSo != null && p.CoSo.TenCoSo.Contains(searchString)));
+            }
+
+            var danhSachPhong = await phongs.ToListAsync();
+
+            // THÊM: Lấy ảnh đại diện cho từng phòng
+            var phongImages = await _context.PhongImages.ToListAsync();
+            var dictAnh = phongImages.GroupBy(i => i.MaPhong)
+                .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.ImagePath);
+
+            ViewBag.TongSo = danhSachPhong.Count;
+            ViewBag.PhongNoiBat = danhSachPhong;
+            ViewBag.DictAnh = dictAnh;
+
+            // Lấy bài đăng
+            var baiDangs = await _context.BaiDang
                 .Include(b => b.PhongNavigation)
                 .ThenInclude(p => p.CoSo)
                 .Where(b => b.TrangThai == "Hiển thị")
                 .OrderByDescending(b => b.NgayDang)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                baiDangs = baiDangs.Where(b =>
-                    (b.TieuDe != null && b.TieuDe.Contains(searchString)) ||
-                    (b.PhongNavigation != null && b.PhongNavigation.TenPhong.Contains(searchString)));
-            }
-
-            ViewBag.SearchString = searchString;
-
-            // Lấy phòng nổi bật
-            ViewBag.PhongNoiBat = await _context.Phong
-                .Include(p => p.CoSo)
-                .Where(p => p.TrangThai == "Trống")
-                .Take(6)
                 .ToListAsync();
 
-            return View(await baiDangs.ToListAsync());
+            return View(baiDangs);
         }
-
-        // Chi tiết bài đăng - QUAN TRỌNG
-        public async Task<IActionResult> ChiTietBaiDang(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var baiDang = await _context.BaiDang
-                .Include(b => b.PhongNavigation)
-                .ThenInclude(p => p.CoSo)
-                .FirstOrDefaultAsync(b => b.MaBaiDang == id && b.TrangThai == "Hiển thị");
-
-            if (baiDang == null)
-            {
-                return NotFound();
-            }
-
-            // Bài đăng liên quan
-            var baiDangLienQuan = await _context.BaiDang
-                .Include(b => b.PhongNavigation)
-                .Where(b => b.TrangThai == "Hiển thị" && b.MaBaiDang != id)
-                .OrderByDescending(b => b.NgayDang)
-                .Take(3)
-                .ToListAsync();
-
-            ViewBag.BaiDangLienQuan = baiDangLienQuan;
-            return View(baiDang);
-        }
-
-        // Chi tiết phòng - QUAN TRỌNG
-        // GET: /Home/ChiTietPhong/5
+        // Chi tiết phòng
         public async Task<IActionResult> ChiTietPhong(int? id)
         {
             if (id == null) return NotFound();
@@ -85,25 +83,32 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (phong == null) return NotFound();
 
-            // Load ảnh của phòng từ bảng PhongImage
             var images = await _context.PhongImages
                 .Where(i => i.MaPhong == id)
                 .OrderByDescending(i => i.IsMain)
                 .ThenByDescending(i => i.NgayUpload)
                 .ToListAsync();
 
+            var baiDang = await _context.BaiDang
+                .FirstOrDefaultAsync(b => b.MaPhong == id && b.TrangThai == "Hiển thị");
+
             ViewBag.Images = images;
-            return View(phong);  // Quan trọng: trả về Model Phong
+            ViewBag.BaiDang = baiDang;
+
+            return View(phong);
         }
 
-        // Danh sách phòng trống
-        public async Task<IActionResult> DanhSachPhongTrong()
+        // Chi tiết bài đăng (chuyển sang chi tiết phòng)
+        public async Task<IActionResult> ChiTietBaiDang(int? id)
         {
-            var phongs = await _context.Phong
-                .Include(p => p.CoSo)
-                .Where(p => p.TrangThai == "Trống")
-                .ToListAsync();
-            return View(phongs);
+            if (id == null) return NotFound();
+
+            var baiDang = await _context.BaiDang
+                .FirstOrDefaultAsync(b => b.MaBaiDang == id);
+
+            if (baiDang == null) return NotFound();
+
+            return RedirectToAction("ChiTietPhong", new { id = baiDang.MaPhong });
         }
     }
 }
