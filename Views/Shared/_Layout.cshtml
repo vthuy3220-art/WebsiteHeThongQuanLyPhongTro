@@ -81,7 +81,7 @@
                     <a asp-controller="Phong" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
                         <i class="fas fa-door-open w-5 h-5 mr-3 text-gray-400"></i><span>Phòng trọ</span>
                     </a>
-                    <a asp-controller="KhachHang" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <a asp-controller="KhachHang" asp-action="QuanLy" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
                         <i class="fas fa-users w-5 h-5 mr-3 text-gray-400"></i><span>Khách hàng</span>
                     </a>
                     <a asp-controller="HopDong" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
@@ -208,33 +208,49 @@
     }
     else if (role == "Khach")
     {
-        <!-- LAYOUT KHÁCH HÀNG -->
         <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
             <nav class="bg-white shadow-lg sticky top-0 z-50">
-                <div class="container mx-auto px-6 py-4">
-                    <div class="flex justify-between items-center">
+                <div class="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
                                 <i class="fas fa-home text-white text-xl"></i>
                             </div>
                             <div>
                                 <h1 class="text-xl font-bold text-gray-800">Phòng Trọ Xinh</h1>
-                                <p class="text-xs text-gray-500">Xin chào, @username</p>
+                                <p class="text-xs text-gray-500">Xin chào, <span class="font-semibold text-blue-600">@username</span></p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-6">
-                            <a asp-controller="Dashboard" asp-action="Index" class="text-gray-600 hover:text-blue-500">Dashboard</a>
-                            <a asp-controller="KhachHang" asp-action="HopDongCuaToi" class="text-gray-600 hover:text-blue-500">Hợp đồng</a>
-                            <a asp-controller="KhachHang" asp-action="HoaDonCuaToi" class="text-gray-600 hover:text-blue-500">Hóa đơn</a>
-                            <a asp-controller="Login" asp-action="Logout" class="text-red-600 hover:text-red-700">Đăng xuất</a>
+
+                        <div class="flex flex-wrap justify-center gap-4 sm:gap-6">
+                            <a asp-controller="KhachHang" asp-action="Dashboard" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
+                                <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                            </a>
+                            <a asp-controller="KhachHang" asp-action="HopDongCuaToi" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
+                                <i class="fas fa-file-contract mr-1"></i> Hợp đồng
+                            </a>
+                            <a asp-controller="KhachHang" asp-action="HoaDonCuaToi" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
+                                <i class="fas fa-receipt mr-1"></i> Hóa đơn
+                            </a>
+                            <a asp-controller="KhachHang" asp-action="LichSuThanhToan" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
+                                <i class="fas fa-history mr-1"></i> Lịch sử thanh toán
+                            </a>
+                            <a asp-controller="KhachHang" asp-action="DoiMatKhau" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
+                                <i class="fas fa-key mr-1"></i> Đổi mật khẩu
+                            </a>
+                            <a asp-controller="Login" asp-action="Logout" class="text-red-600 hover:text-red-700 transition-colors duration-200">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất
+                            </a>
                         </div>
                     </div>
                 </div>
             </nav>
-            <div class="container mx-auto px-6 py-8">
+
+            <div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
                 @RenderBody()
             </div>
         </div>
+    
     }
     else
     {

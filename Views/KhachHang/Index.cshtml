@@ -1,105 +1,148 @@
-﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.KhachHang>
+﻿@model HeThongQuanLyPhongTro.Models.KhachHangDashboardViewModel
 
 @{
-    ViewData["Title"] = "Quản lý khách hàng";
+    ViewData["Title"] = "Dashboard";
+    Layout = "_Layout";
 }
 
 <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Quản lý khách hàng</h1>
-            <p class="text-gray-500 mt-1">Danh sách khách hàng thuê phòng</p>
+    <!-- Welcome Card -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">Xin chào, @Model.ThongTinKhachHang?.HoTen!</h1>
+                <p class="text-blue-100 mt-1">Chào mừng bạn trở lại với Phòng Trọ Xinh</p>
+            </div>
+            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-home text-3xl"></i>
+            </div>
         </div>
-        <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all flex items-center">
-            <i class="fas fa-user-plus mr-2"></i> Thêm khách hàng
-        </a>
     </div>
 
-    <!-- Alert Messages -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
-            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
-        </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
-            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
-        </div>
-    }
-
-    <!-- Search -->
-    <div class="bg-white rounded-xl shadow-md p-4">
-        <form method="get" class="flex gap-4">
-            <div class="flex-1">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                    <input type="text" name="searchString" value="@ViewBag.SearchString"
-                           placeholder="Tìm theo tên, SĐT, CCCD..."
-                           class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <!-- Thống kê nhanh -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-md p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Hợp đồng hiện tại</p>
+                    <p class="text-2xl font-bold text-gray-800">@(Model.HopDongHienTai != null ? "Đang thuê" : "Chưa có")</p>
+                </div>
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-file-contract text-green-500"></i>
                 </div>
             </div>
-            <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-all">
-                <i class="fas fa-search mr-2"></i> Tìm kiếm
-            </button>
-        </form>
-    </div>
-
-    <!-- Table -->
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã KH</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Họ tên</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SĐT</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CCCD</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach (var item in Model)
-                    {
-                        <tr class="hover:bg-gray-50 transition-all">
-                            <td class="px-6 py-4">@item.MaKhachHang</td>
-                            <td class="px-6 py-4 font-medium">@item.HoTen</td>
-                            <td class="px-6 py-4">@item.SoDienThoai</td>
-                            <td class="px-6 py-4">@item.CCCD</td>
-                            <td class="px-6 py-4">@item.Email</td>
-                            <td class="px-6 py-4">
-                                <div class="flex space-x-2">
-                                    <a asp-action="Details" asp-route-id="@item.MaKhachHang"
-                                       class="text-blue-500 hover:text-blue-700" title="Chi tiết">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a asp-action="Edit" asp-route-id="@item.MaKhachHang"
-                                       class="text-yellow-500 hover:text-yellow-700" title="Sửa">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a asp-action="Delete" asp-route-id="@item.MaKhachHang"
-                                       class="text-red-500 hover:text-red-700" title="Xóa">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
         </div>
 
-        @if (!Model.Any())
-        {
-            <div class="text-center py-12">
-                <i class="fas fa-users text-gray-300 text-5xl mb-3"></i>
-                <p class="text-gray-500">Chưa có khách hàng nào</p>
-                <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline">Thêm khách hàng đầu tiên</a>
+        <div class="bg-white rounded-xl shadow-md p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Số ngày còn lại</p>
+                    <p class="text-2xl font-bold text-gray-800">@Model.SoNgayConLai ngày</p>
+                </div>
+                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-calendar-day text-yellow-500"></i>
+                </div>
             </div>
-        }
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Tổng nợ</p>
+                    <p class="text-2xl font-bold @(Model.TongNo > 0 ? "text-red-600" : "text-green-600")">
+                        @String.Format("{0:N0}", Model.TongNo) VNĐ
+                    </p>
+                </div>
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-money-bill-wave text-red-500"></i>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Hợp đồng hiện tại -->
+    @if (Model.HopDongHienTai != null)
+    {
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-file-signature"></i> Hợp đồng đang thuê
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Mã hợp đồng:</span>
+                        <span class="font-semibold text-gray-800">@Model.HopDongHienTai.MaHopDong</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Mã phòng:</span>
+                        <span class="font-semibold text-gray-800">@Model.HopDongHienTai.MaPhong</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Ngày bắt đầu:</span>
+                        <span class="font-semibold">@(Model.HopDongHienTai.NgayBatDau?.ToString("dd/MM/yyyy") ?? "N/A")</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Ngày kết thúc:</span>
+                        <span class="font-semibold">@(Model.HopDongHienTai.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "N/A")</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Tiền cọc:</span>
+                        <span class="font-semibold text-blue-600">@String.Format("{0:N0}", Model.HopDongHienTai.TienCoc) VNĐ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-xl shadow-md p-8 text-center">
+            <i class="fas fa-file-contract text-gray-300 text-5xl mb-3"></i>
+            <p class="text-gray-500">Bạn chưa có hợp đồng thuê trọ nào</p>
+        </div>
+    }
+
+    <!-- Hóa đơn chưa thanh toán -->
+    @if (Model.HoaDonChuaThanhToan != null && Model.HoaDonChuaThanhToan.Any())
+    {
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-orange-400">
+            <div class="bg-orange-50 px-6 py-4">
+                <h2 class="text-lg font-bold text-orange-700 flex items-center gap-2">
+                    <i class="fas fa-exclamation-triangle"></i> Hóa đơn chưa thanh toán (@Model.HoaDonChuaThanhToan.Count)
+                </h2>
+            </div>
+            <div class="p-6">
+                @foreach (var hoaDon in Model.HoaDonChuaThanhToan)
+                {
+            <div class="border-b last:border-0 pb-3 mb-3 last:pb-0 last:mb-0">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <p class="font-semibold">Mã HD: @hoaDon.MaHoaDon</p>
+                        <p class="text-sm text-gray-500">Tháng @hoaDon.Thang/@hoaDon.Nam</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-red-600">@String.Format("{0:N0}", hoaDon.TongTien) VNĐ</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <a asp-action="HoaDonChiTiet" asp-route-id="@hoaDon.MaHoaDon" class="px-3 py-1 bg-gray-200 rounded-lg text-sm hover:bg-gray-300">
+                            Chi tiết
+                        </a>
+                        <a asp-action="ThanhToan" asp-route-id="@hoaDon.MaHoaDon" class="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600">
+                            Thanh toán
+                        </a>
+                    </div>
+                </div>
+            </div>
+                        }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-xl shadow-md p-8 text-center border border-green-200">
+            <i class="fas fa-check-circle text-green-500 text-4xl mb-2"></i>
+            <p class="text-gray-600">✅ Bạn không có hóa đơn nào chưa thanh toán</p>
+        </div>
+    }
 </div>

@@ -1,105 +1,90 @@
 ﻿@model HeThongQuanLyPhongTro.Models.TaiKhoan
 
 @{
-    ViewData["Title"] = "Thêm tài khoản";
-    var khachHang = ViewBag.KhachHangList as List<HeThongQuanLyPhongTro.Models.KhachHang>;
-    var phongList = ViewBag.PhongList as List<HeThongQuanLyPhongTro.Models.Phong>;
+    ViewData["Title"] = "Tạo tài khoản";
+    Layout = "_Layout";
 }
 
-<body class="bg-gray-100">
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-green-500 to-teal-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-user-plus"></i> Tạo tài khoản mới
+            </h2>
+        </div>
 
-    <div class="container mx-auto px-4 py-8">
-        <div class="max-w-2xl mx-auto">
-            <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-                    <h1 class="text-xl font-bold text-white">Thêm tài khoản mới</h1>
-                    <p class="text-blue-100 text-sm">Tạo tài khoản và gắn với khách hàng/phòng</p>
+        <div class="p-6">
+            @if (TempData["Success"] != null)
+            {
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 mb-4 rounded">
+                    <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+                </div>
+            }
+
+            <form asp-action="Create" method="post">
+                <div class="mb-4">
+                    <label asp-for="TenDangNhap" class="block text-gray-700 font-medium mb-2">Tên đăng nhập</label>
+                    <input asp-for="TenDangNhap" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                    <span asp-validation-for="TenDangNhap" class="text-red-500 text-sm"></span>
                 </div>
 
-                <form asp-action="Create" method="post" class="p-6 space-y-4">
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="bg-red-100 text-red-700 p-3 rounded-lg text-sm"></div>
+                <div class="mb-4">
+                    <label asp-for="MatKhau" class="block text-gray-700 font-medium mb-2">Mật khẩu</label>
+                    <input asp-for="MatKhau" type="password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                    <span asp-validation-for="MatKhau" class="text-red-500 text-sm"></span>
+                </div>
 
-                    <!-- Tên đăng nhập -->
-                    <div>
-                        <label asp-for="TenDangNhap" class="block text-sm font-medium text-gray-700 mb-2">Tên đăng nhập <span class="text-red-500">*</span></label>
-                        <input asp-for="TenDangNhap" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                        <span asp-validation-for="TenDangNhap" class="text-red-500 text-sm"></span>
-                    </div>
+                <div class="mb-4">
+                    <label asp-for="VaiTro" class="block text-gray-700 font-medium mb-2">Vai trò</label>
+                    <select asp-for="VaiTro" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="Admin">Admin</option>
+                        <option value="Khach" selected>Khách hàng</option>
+                    </select>
+                    <span asp-validation-for="VaiTro" class="text-red-500 text-sm"></span>
+                </div>
 
-                    <!-- Mật khẩu -->
-                    <div>
-                        <label asp-for="MatKhau" class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu <span class="text-red-500">*</span></label>
-                        <input asp-for="MatKhau" type="password" class="w-full px-3 py-2 border rounded-lg" />
-                        <span asp-validation-for="MatKhau" class="text-red-500 text-sm"></span>
-                    </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Liên kết với khách hàng (tùy chọn)</label>
+                    <select name="MaKhachHang" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Chọn khách hàng (hoặc bỏ trống) --</option>
+                        @if (ViewBag.KhachHangList != null)
+                        {
+                            foreach (var kh in ViewBag.KhachHangList)
+                            {
+                                <option value="@kh.MaKhachHang">@kh.HoTen - @kh.SoDienThoai</option>
+                            }
+                        }
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Chọn khách hàng để họ có thể đăng nhập xem phòng/hợp đồng</p>
+                </div>
 
-                    <!-- Vai trò -->
-                    <div>
-                        <label asp-for="VaiTro" class="block text-sm font-medium text-gray-700 mb-2">Vai trò</label>
-                        <select asp-for="VaiTro" id="VaiTro" class="w-full px-3 py-2 border rounded-lg">
-                            <option value="Admin">Admin</option>
-                            <option value="Khach">Khách hàng</option>
-                        </select>
-                    </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-all">
+                        <i class="fas fa-save mr-2"></i> Tạo tài khoản
+                    </button>
+                    <a asp-action="Index" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-center py-2 rounded-lg transition-all">
+                        <i class="fas fa-arrow-left mr-2"></i> Hủy
+                    </a>
+                </div>
+            </form>
 
-                    <!-- Khu vực chọn khách hàng (chỉ hiện khi chọn Khách) -->
-                    <div id="khachHangSection" style="display: none;">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Chọn khách hàng</label>
-                            <select id="MaKhachHang" name="MaKhachHang" class="w-full px-3 py-2 border rounded-lg">
-                                <option value="">-- Chọn khách hàng --</option>
-                                @if (khachHang != null)
-                                {
-                                    @foreach (var kh in khachHang)
-                                    {
-                                        <option value="@kh.MaKhachHang">@kh.HoTen - @kh.SoDienThoai</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-                        <div class="mt-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Chọn phòng cho khách</label>
-                            <select id="MaPhong" name="MaPhong" class="w-full px-3 py-2 border rounded-lg">
-                                <option value="">-- Chọn phòng trống --</option>
-                                @if (phongList != null)
-                                {
-                                    @foreach (var p in phongList.Where(p => p.TrangThai == "Trống"))
-                                    {
-                                        <option value="@p.MaPhong">@p.TenPhong - @p.CoSo?.TenCoSo - @p.GiaPhong.ToString("N0") đ</option>
-                                    }
-                                }
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Chọn phòng trống để gắn cho khách này</p>
-                        </div>
-                    </div>
+            <hr class="my-6" />
 
-                    <div class="bg-yellow-50 rounded-lg p-4">
-                        <p class="text-sm text-yellow-700">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Nếu chọn "Khách hàng", bạn cần chọn khách hàng và phòng tương ứng.
-                        </p>
-                    </div>
-
-                    <div class="flex justify-end space-x-3 pt-4">
-                        <a asp-action="Index" class="px-4 py-2 border rounded-lg">Hủy</a>
-                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Tạo tài khoản</button>
-                    </div>
-                </form>
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h4 class="font-semibold text-blue-800 mb-2">📌 Hướng dẫn:</h4>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>1. Tạo tài khoản cho khách hàng</li>
+                    <li>2. Chọn khách hàng từ danh sách để liên kết</li>
+                    <li>3. Khách hàng dùng tài khoản này để đăng nhập</li>
+                    <li>4. Sau khi đăng nhập, khách thấy được phòng/hợp đồng của mình</li>
+                </ul>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // Hiển thị/ẩn phần chọn khách hàng
-        document.getElementById('VaiTro').addEventListener('change', function() {
-            var khachSection = document.getElementById('khachHangSection');
-            if (this.value === 'Khach') {
-                khachSection.style.display = 'block';
-            } else {
-                khachSection.style.display = 'none';
-            }
-        });
-    </script>
-
-</body>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

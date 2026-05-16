@@ -1,449 +1,138 @@
-﻿using HeThongQuanLyPhongTro.Data;
-using HeThongQuanLyPhongTro.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿@model HeThongQuanLyPhongTro.Models.KhachHangDashboardViewModel
 
-namespace HeThongQuanLyPhongTro.Controllers
-{
-    public class KhachHangController : Controller
-    {
-        private readonly ApplicationDbContext _context;
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_Layout";
+}
 
-        public KhachHangController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+<div class="space-y-6">
+    <!-- Welcome Card -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">Xin chào, @Model.ThongTinKhachHang?.HoTen!</h1>
+                <p class="text-blue-100 mt-1">Chào mừng bạn trở lại với Phòng Trọ Xinh</p>
+            </div>
+            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-home text-3xl"></i>
+            </div>
+        </div>
+    </div>
 
-        // GET: Danh sách khách hàng
-        public async Task<IActionResult>
-    Index(string searchString)
+    <!-- Thống kê nhanh -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-md p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Hợp đồng hiện tại</p>
+                    <p class="text-2xl font-bold text-gray-800">@(Model.HopDongHienTai != null ? "Đang thuê" : "Chưa có")</p>
+                </div>
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-file-contract text-green-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Số ngày còn lại</p>
+                    <p class="text-2xl font-bold text-gray-800">@Model.SoNgayConLai ngày</p>
+                </div>
+                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-calendar-day text-yellow-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Tổng nợ</p>
+                    <p class="text-2xl font-bold @(Model.TongNo > 0 ? "text-red-600" : "text-green-600")">
+                        @String.Format("{0:N0}", Model.TongNo) VNĐ
+                    </p>
+                </div>
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-money-bill-wave text-red-500"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hợp đồng hiện tại -->
+    @if (Model.HopDongHienTai != null)
     {
-    if (HttpContext.Session.GetInt32("UserId") == null)
-    {
-    return RedirectToAction("Index", "Login");
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-file-signature"></i> Hợp đồng đang thuê
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Mã hợp đồng:</span>
+                        <span class="font-semibold text-gray-800">@Model.HopDongHienTai.MaHopDong</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Mã phòng:</span>
+                        <span class="font-semibold text-gray-800">@Model.HopDongHienTai.MaPhong</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Ngày bắt đầu:</span>
+                        <span class="font-semibold">@(Model.HopDongHienTai.NgayBatDau?.ToString("dd/MM/yyyy") ?? "N/A")</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Ngày kết thúc:</span>
+                        <span class="font-semibold">@(Model.HopDongHienTai.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "N/A")</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Tiền cọc:</span>
+                        <span class="font-semibold text-blue-600">@String.Format("{0:N0}", Model.HopDongHienTai.TienCoc) VNĐ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     }
 
-    var khachHangs = _context.KhachHang.AsQueryable();
-
-    if (!string.IsNullOrEmpty(searchString))
+    <!-- Hóa đơn chưa thanh toán -->
+    @if (Model.HoaDonChuaThanhToan != null && Model.HoaDonChuaThanhToan.Any())
     {
-    khachHangs = khachHangs.Where(k => k.HoTen.Contains(searchString) ||
-    (k.SoDienThoai != null && k.SoDienThoai.Contains(searchString)) ||
-    (k.CCCD != null && k.CCCD.Contains(searchString)));
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-orange-400">
+            <div class="bg-orange-50 px-6 py-4">
+                <h2 class="text-lg font-bold text-orange-700 flex items-center gap-2">
+                    <i class="fas fa-exclamation-triangle"></i> Hóa đơn chưa thanh toán (@Model.HoaDonChuaThanhToan.Count)
+                </h2>
+            </div>
+            <div class="p-6">
+                @foreach (var hoaDon in Model.HoaDonChuaThanhToan)
+                {
+            <div class="border-b last:border-0 pb-3 mb-3 last:pb-0 last:mb-0">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <p class="font-semibold">Mã HD: @hoaDon.MaHoaDon</p>
+                        <p class="text-sm text-gray-500">Tháng @hoaDon.Thang/@hoaDon.Nam</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-red-600">@String.Format("{0:N0}", hoaDon.TongTien) VNĐ</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <a asp-action="HoaDonChiTiet" asp-route-id="@hoaDon.MaHoaDon" class="px-3 py-1 bg-gray-200 rounded-lg text-sm hover:bg-gray-300">
+                            Chi tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+                        }
+            </div>
+        </div>
     }
-
-    ViewBag.SearchString = searchString;
-    return View(await khachHangs.ToListAsync());
+    else
+    {
+        <div class="bg-white rounded-xl shadow-md p-8 text-center border border-green-200">
+            <i class="fas fa-check-circle text-green-500 text-4xl mb-2"></i>
+            <p class="text-gray-600">✅ Bạn không có hóa đơn nào chưa thanh toán</p>
+        </div>
     }
-
-    // GET: Chi tiết khách hàng
-    public async Task<IActionResult>
-        Details(int? id)
-        {
-        if (HttpContext.Session.GetInt32("UserId") == null)
-        {
-        return RedirectToAction("Index", "Login");
-        }
-
-        if (id == null)
-        {
-        return NotFound();
-        }
-
-        var khachHang = await _context.KhachHang
-        .FirstOrDefaultAsync(m => m.MaKhachHang == id);
-
-        if (khachHang == null)
-        {
-        return NotFound();
-        }
-
-        var hopDongs = await _context.HopDong
-        .Include(h => h.PhongNavigation)
-        .Where(h => h.MaKhachHang == id)
-        .OrderByDescending(h => h.NgayBatDau)
-        .ToListAsync();
-
-        ViewBag.HopDongs = hopDongs;
-        return View(khachHang);
-        }
-
-        // GET: Thêm khách hàng mới
-        public IActionResult Create()
-        {
-        if (HttpContext.Session.GetInt32("UserId") == null)
-        {
-        return RedirectToAction("Index", "Login");
-        }
-        return View();
-        }
-
-        // POST: Thêm khách hàng mới
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult>
-            Create(KhachHang khachHang)
-            {
-            if (ModelState.IsValid)
-            {
-            if (!string.IsNullOrEmpty(khachHang.CCCD))
-            {
-            var exists = await _context.KhachHang
-            .AnyAsync(k => k.CCCD == khachHang.CCCD);
-            if (exists)
-            {
-            ModelState.AddModelError("CCCD", "Số CCCD đã tồn tại trong hệ thống!");
-            return View(khachHang);
-            }
-            }
-
-            if (!string.IsNullOrEmpty(khachHang.SoDienThoai))
-            {
-            var exists = await _context.KhachHang
-            .AnyAsync(k => k.SoDienThoai == khachHang.SoDienThoai);
-            if (exists)
-            {
-            ModelState.AddModelError("SoDienThoai", "Số điện thoại đã tồn tại trong hệ thống!");
-            return View(khachHang);
-            }
-            }
-
-            _context.Add(khachHang);
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Thêm khách hàng thành công!";
-            return RedirectToAction(nameof(Index));
-            }
-            return View(khachHang);
-            }
-
-            // GET: Chỉnh sửa khách hàng
-            public async Task<IActionResult>
-                Edit(int? id)
-                {
-                if (HttpContext.Session.GetInt32("UserId") == null)
-                {
-                return RedirectToAction("Index", "Login");
-                }
-
-                if (id == null)
-                {
-                return NotFound();
-                }
-
-                var khachHang = await _context.KhachHang.FindAsync(id);
-                if (khachHang == null)
-                {
-                return NotFound();
-                }
-                return View(khachHang);
-                }
-
-                // POST: Chỉnh sửa khách hàng
-                [HttpPost]
-                [ValidateAntiForgeryToken]
-                public async Task<IActionResult>
-                    Edit(int id, KhachHang khachHang)
-                    {
-                    if (id != khachHang.MaKhachHang)
-                    {
-                    return NotFound();
-                    }
-
-                    if (ModelState.IsValid)
-                    {
-                    try
-                    {
-                    if (!string.IsNullOrEmpty(khachHang.CCCD))
-                    {
-                    var exists = await _context.KhachHang
-                    .AnyAsync(k => k.CCCD == khachHang.CCCD && k.MaKhachHang != id);
-                    if (exists)
-                    {
-                    ModelState.AddModelError("CCCD", "Số CCCD đã tồn tại trong hệ thống!");
-                    return View(khachHang);
-                    }
-                    }
-
-                    if (!string.IsNullOrEmpty(khachHang.SoDienThoai))
-                    {
-                    var exists = await _context.KhachHang
-                    .AnyAsync(k => k.SoDienThoai == khachHang.SoDienThoai && k.MaKhachHang != id);
-                    if (exists)
-                    {
-                    ModelState.AddModelError("SoDienThoai", "Số điện thoại đã tồn tại trong hệ thống!");
-                    return View(khachHang);
-                    }
-                    }
-
-                    _context.Update(khachHang);
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = "Cập nhật khách hàng thành công!";
-                    }
-                    catch (DbUpdateConcurrencyException)
-                    {
-                    if (!KhachHangExists(khachHang.MaKhachHang))
-                    {
-                    return NotFound();
-                    }
-                    else
-                    {
-                    throw;
-                    }
-                    }
-                    return RedirectToAction(nameof(Index));
-                    }
-                    return View(khachHang);
-                    }
-
-                    // GET: Xóa khách hàng
-                    public async Task<IActionResult>
-                        Delete(int? id)
-                        {
-                        if (HttpContext.Session.GetInt32("UserId") == null)
-                        {
-                        return RedirectToAction("Index", "Login");
-                        }
-
-                        if (id == null)
-                        {
-                        return NotFound();
-                        }
-
-                        var khachHang = await _context.KhachHang
-                        .FirstOrDefaultAsync(m => m.MaKhachHang == id);
-                        if (khachHang == null)
-                        {
-                        return NotFound();
-                        }
-
-                        var coHopDong = await _context.HopDong.AnyAsync(h => h.MaKhachHang == id);
-                        if (coHopDong)
-                        {
-                        ViewBag.HasContract = true;
-                        ViewBag.Error = "Khách hàng đang có hợp đồng, không thể xóa!";
-                        }
-
-                        return View(khachHang);
-                        }
-
-                        // POST: Xóa khách hàng
-                        [HttpPost, ActionName("Delete")]
-                        [ValidateAntiForgeryToken]
-                        public async Task<IActionResult>
-                            DeleteConfirmed(int id)
-                            {
-                            var khachHang = await _context.KhachHang.FindAsync(id);
-                            if (khachHang != null)
-                            {
-                            var coHopDong = await _context.HopDong.AnyAsync(h => h.MaKhachHang == id);
-                            if (coHopDong)
-                            {
-                            TempData["Error"] = "Không thể xóa vì khách hàng đang có hợp đồng!";
-                            return RedirectToAction(nameof(Index));
-                            }
-
-                            _context.KhachHang.Remove(khachHang);
-                            await _context.SaveChangesAsync();
-                            TempData["Success"] = "Xóa khách hàng thành công!";
-                            }
-
-                            return RedirectToAction(nameof(Index));
-                            }
-
-                            // Dashboard cho khách hàng
-                            public async Task<IActionResult>
-                                Dashboard()
-                                {
-                                if (HttpContext.Session.GetInt32("UserId") == null)
-                                {
-                                return RedirectToAction("Index", "Login");
-                                }
-
-                                var role = HttpContext.Session.GetString("Role");
-                                if (role != "Khach")
-                                {
-                                return RedirectToAction("Index", "Dashboard");
-                                }
-
-                                var userTaiKhoan = HttpContext.Session.GetInt32("UserId");
-                                var khachHang = await _context.KhachHang
-                                .FirstOrDefaultAsync(k => k.MaTaiKhoan == userTaiKhoan);
-
-                                if (khachHang == null)
-                                {
-                                TempData["Error"] = "Không tìm thấy thông tin khách hàng!";
-                                return RedirectToAction("Index", "Dashboard");
-                                }
-
-                                var model = new KhachHangDashboardViewModel
-                                {
-                                ThongTinKhachHang = khachHang,
-                                HopDongHienTai = await _context.HopDong
-                                .Include(h => h.PhongNavigation)
-                                .ThenInclude(p => p.CoSo)
-                                .FirstOrDefaultAsync(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai == "Hiệu lực"),
-
-                                LichSuHopDong = await _context.HopDong
-                                .Include(h => h.PhongNavigation)
-                                .Where(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai != "Hiệu lực")
-                                .OrderByDescending(h => h.NgayKetThuc)
-                                .ToListAsync(),
-
-                                HoaDonChuaThanhToan = await _context.HoaDon
-                                .Include(h => h.HopDongNavigation)
-                                .ThenInclude(h => h.PhongNavigation)
-                                .Where(h => h.HopDongNavigation != null &&
-                                h.HopDongNavigation.MaKhachHang == khachHang.MaKhachHang &&
-                                h.TrangThai == "Chưa thanh toán")
-                                .OrderBy(h => h.Nam)
-                                .ThenBy(h => h.Thang)
-                                .ToListAsync(),
-
-                                HoaDonDaThanhToan = await _context.HoaDon
-                                .Include(h => h.HopDongNavigation)
-                                .ThenInclude(h => h.PhongNavigation)
-                                .Where(h => h.HopDongNavigation != null &&
-                                h.HopDongNavigation.MaKhachHang == khachHang.MaKhachHang &&
-                                h.TrangThai == "Đã thanh toán")
-                                .OrderByDescending(h => h.Nam)
-                                .ThenByDescending(h => h.Thang)
-                                .Take(12)
-                                .ToListAsync()
-                                };
-
-                                model.TongNo = model.HoaDonChuaThanhToan?.Sum(h => h.TongTien) ?? 0;
-
-                                if (model.HopDongHienTai != null && model.HopDongHienTai.NgayKetThuc != null)
-                                {
-                                model.SoNgayConLai = (model.HopDongHienTai.NgayKetThuc - DateTime.Now).Days;
-                                if (model.SoNgayConLai < 0) model.SoNgayConLai = 0;
-                                }
-
-                                ViewBag.Username = HttpContext.Session.GetString("Username");
-                                return View(model);
-                                }
-
-                                // Hợp đồng của tôi
-                                public async Task<IActionResult>
-                                    HopDongCuaToi()
-                                    {
-                                    if (HttpContext.Session.GetInt32("UserId") == null)
-                                    {
-                                    return RedirectToAction("Index", "Login");
-                                    }
-
-                                    var userTaiKhoan = HttpContext.Session.GetInt32("UserId");
-                                    var khachHang = await _context.KhachHang
-                                    .FirstOrDefaultAsync(k => k.MaTaiKhoan == userTaiKhoan);
-
-                                    if (khachHang == null)
-                                    {
-                                    TempData["Error"] = "Không tìm thấy thông tin khách hàng!";
-                                    return RedirectToAction("Index", "Dashboard");
-                                    }
-
-                                    var hopDongs = await _context.HopDong
-                                    .Include(h => h.PhongNavigation)
-                                    .ThenInclude(p => p.CoSo)
-                                    .Where(h => h.MaKhachHang == khachHang.MaKhachHang)
-                                    .OrderByDescending(h => h.NgayBatDau)
-                                    .ToListAsync();
-
-                                    ViewBag.KhachHang = khachHang;
-                                    return View(hopDongs);
-                                    }
-
-                                    // Chi tiết hợp đồng của tôi
-                                    public async Task<IActionResult>
-                                        HopDongChiTiet(int id)
-                                        {
-                                        if (HttpContext.Session.GetInt32("UserId") == null)
-                                        {
-                                        return RedirectToAction("Index", "Login");
-                                        }
-
-                                        var userTaiKhoan = HttpContext.Session.GetInt32("UserId");
-                                        var khachHang = await _context.KhachHang
-                                        .FirstOrDefaultAsync(k => k.MaTaiKhoan == userTaiKhoan);
-
-                                        if (khachHang == null)
-                                        {
-                                        return RedirectToAction("Index", "Dashboard");
-                                        }
-
-                                        var hopDong = await _context.HopDong
-                                        .Include(h => h.PhongNavigation)
-                                        .ThenInclude(p => p.CoSo)
-                                        .FirstOrDefaultAsync(h => h.MaHopDong == id && h.MaKhachHang == khachHang.MaKhachHang);
-
-                                        if (hopDong == null)
-                                        {
-                                        return NotFound();
-                                        }
-
-                                        var hoaDons = await _context.HoaDon
-                                        .Where(h => h.MaHopDong == id)
-                                        .OrderByDescending(h => h.Nam)
-                                        .ThenByDescending(h => h.Thang)
-                                        .ToListAsync();
-
-                                        ViewBag.HoaDons = hoaDons;
-                                        return View(hopDong);
-                                        }
-
-                                        // Hóa đơn của tôi
-                                        public async Task<IActionResult>
-                                            HoaDonCuaToi(int? thang, int? nam)
-                                            {
-                                            if (HttpContext.Session.GetInt32("UserId") == null)
-                                            {
-                                            return RedirectToAction("Index", "Login");
-                                            }
-
-                                            var userTaiKhoan = HttpContext.Session.GetInt32("UserId");
-                                            var khachHang = await _context.KhachHang
-                                            .FirstOrDefaultAsync(k => k.MaTaiKhoan == userTaiKhoan);
-
-                                            if (khachHang == null)
-                                            {
-                                            TempData["Error"] = "Không tìm thấy thông tin khách hàng!";
-                                            return RedirectToAction("Index", "Dashboard");
-                                            }
-
-                                            var query = _context.HoaDon
-                                            .Include(h => h.HopDongNavigation)
-                                            .ThenInclude(h => h.PhongNavigation)
-                                            .Where(h => h.HopDongNavigation != null &&
-                                            h.HopDongNavigation.MaKhachHang == khachHang.MaKhachHang);
-
-                                            if (thang.HasValue && nam.HasValue)
-                                            {
-                                            query = query.Where(h => h.Thang == thang.Value && h.Nam == nam.Value);
-                                            }
-
-                                            var hoaDons = await query
-                                            .OrderByDescending(h => h.Nam)
-                                            .ThenByDescending(h => h.Thang)
-                                            .ToListAsync();
-
-                                            ViewBag.Thang = thang;
-                                            ViewBag.Nam = nam;
-                                            ViewBag.KhachHang = khachHang;
-
-                                            ViewBag.NamList = await _context.HoaDon
-                                            .Where(h => h.HopDongNavigation != null &&
-                                            h.HopDongNavigation.MaKhachHang == khachHang.MaKhachHang)
-                                            .Select(h => h.Nam)
-                                            .Distinct()
-                                            .OrderByDescending(n => n)
-                                            .ToListAsync();
-
-                                            return View(hoaDons);
-                                            }
-
-                                            private bool KhachHangExists(int id)
-                                            {
-                                            return _context.KhachHang.Any(e => e.MaKhachHang == id);
-                                            }
-                                            }
-                                            }
+</div>

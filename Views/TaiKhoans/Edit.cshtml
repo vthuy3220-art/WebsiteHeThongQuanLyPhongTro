@@ -1,96 +1,68 @@
-﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.TaiKhoan>
+﻿@model HeThongQuanLyPhongTro.Models.TaiKhoan
 
 @{
-    ViewData["Title"] = "Quản lý tài khoản";
+    ViewData["Title"] = "Chỉnh sửa tài khoản";
+    Layout = "_Layout";
 }
-<body class="bg-gray-100">
 
-    <div class="container mx-auto px-4 py-8">
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-            <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 flex justify-between items-center">
-                <div>
-                    <h1 class="text-xl font-bold text-white">Quản lý tài khoản</h1>
-                    <p class="text-blue-100 text-sm">Danh sách tài khoản đăng nhập hệ thống</p>
-                </div>
-                <a asp-action="Create" class="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-all">
-                    <i class="fas fa-plus mr-2"></i> Thêm tài khoản
-                </a>
-            </div>
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-yellow-500 to-orange-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-edit"></i> Chỉnh sửa tài khoản
+            </h2>
+        </div>
 
-            <div class="p-6">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Mã</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Tên đăng nhập</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Vai trò</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Trạng thái</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            @foreach (var item in Model)
-                            {
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-3">@item.MaTaiKhoan</td>
-                                    <td class="px-4 py-3 font-medium">@item.TenDangNhap</td>
-                                    <td class="px-4 py-3">
-                                        @if (item.VaiTro == "Admin")
-                                        {
-                                            <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
-                                                <i class="fas fa-crown"></i> Admin
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                                                <i class="fas fa-user"></i> Khách
-                                            </span>
-                                        }
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        @if (item.TrangThai == "Hoạt động")
-                                        {
-                                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                                                <i class="fas fa-check-circle"></i> Hoạt động
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
-                                                <i class="fas fa-ban"></i> Khóa
-                                            </span>
-                                        }
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
-                                        <a asp-action="Details" asp-route-id="@item.MaTaiKhoan" class="text-blue-500 hover:text-blue-700 mx-1" title="Chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a asp-action="Edit" asp-route-id="@item.MaTaiKhoan" class="text-yellow-500 hover:text-yellow-700 mx-1" title="Sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a asp-action="Delete" asp-route-id="@item.MaTaiKhoan" class="text-red-500 hover:text-red-700 mx-1" title="Xóa">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+        <div class="p-6">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="MaTaiKhoan" />
+
+                <div class="mb-4">
+                    <label asp-for="TenDangNhap" class="block text-gray-700 font-medium mb-2">Tên đăng nhập</label>
+                    <input asp-for="TenDangNhap" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <span asp-validation-for="TenDangNhap" class="text-red-500 text-sm"></span>
                 </div>
 
-                @if (!Model.Any())
-                {
-                    <div class="text-center py-12">
-                        <i class="fas fa-users text-gray-300 text-5xl mb-3"></i>
-                        <p class="text-gray-500">Chưa có tài khoản nào</p>
-                        <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline">Thêm tài khoản đầu tiên</a>
-                    </div>
-                }
-            </div>
+                <div class="mb-4">
+                    <label asp-for="MatKhau" class="block text-gray-700 font-medium mb-2">Mật khẩu</label>
+                    <input asp-for="MatKhau" type="password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <span asp-validation-for="MatKhau" class="text-red-500 text-sm"></span>
+                    <p class="text-xs text-gray-500 mt-1">Để trống nếu không muốn đổi mật khẩu</p>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="VaiTro" class="block text-gray-700 font-medium mb-2">Vai trò</label>
+                    <select asp-for="VaiTro" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="Admin">Admin</option>
+                        <option value="Khach">Khách hàng</option>
+                    </select>
+                    <span asp-validation-for="VaiTro" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div class="mb-6">
+                    <label asp-for="TrangThai" class="block text-gray-700 font-medium mb-2">Trạng thái</label>
+                    <select asp-for="TrangThai" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="Hoạt động">Hoạt động</option>
+                        <option value="Khóa">Khóa</option>
+                    </select>
+                    <span asp-validation-for="TrangThai" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-all">
+                        <i class="fas fa-save mr-2"></i> Lưu
+                    </button>
+                    <a asp-action="Index" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-center py-2 rounded-lg transition-all">
+                        <i class="fas fa-arrow-left mr-2"></i> Hủy
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-</body>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

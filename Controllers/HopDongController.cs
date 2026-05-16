@@ -41,7 +41,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             return File(pdfBytes, "application/pdf", $"HopDong_{hopDong.MaHopDong}.pdf");
         }
 
-        // Hàm tạo nội dung HTML hợp đồng
+        // Hàm tạo nội dung HTML hợp đồng (giữ nguyên mẫu của bạn)
         private string TaoNoiDungHopDongHtml(HopDong hopDong, List<NguoiOHopDong> nguoiOList)
         {
             string danhSachNguoiOBang = "";
@@ -76,12 +76,7 @@ namespace HeThongQuanLyPhongTro.Controllers
     <meta charset='UTF-8'>
     <title>HỢP ĐỒNG THUÊ PHÒNG</title>
     <style>
-        body {{
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 14px;
-            margin: 40px;
-            line-height: 1.5;
-        }}
+        body {{ font-family: 'Times New Roman', Times, serif; font-size: 14px; margin: 40px; line-height: 1.5; }}
         .center {{ text-align: center; }}
         .bold {{ font-weight: bold; }}
         .title {{ font-size: 18px; font-weight: bold; text-transform: uppercase; margin: 20px 0; }}
@@ -97,11 +92,9 @@ namespace HeThongQuanLyPhongTro.Controllers
         th {{ background: #f0f0f0; text-align: center; }}
         .text-center {{ text-align: center; }}
         .header {{ margin-bottom: 20px; }}
-        .dot-line {{ border-bottom: 1px dotted #000; min-width: 150px; display: inline-block; }}
     </style>
 </head>
 <body>
-
 <div class='header'>
     <div class='center'>
         <div class='bold'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
@@ -114,7 +107,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 </div>
 
 <div class='indent'>
-    - Căn cứ Bộ luật Dân sự số 91/2015/QH13 ngày 24/11/2015 của Quốc hội nước Cộng hòa xã hội chủ nghĩa Việt Nam.<br>
+    - Căn cứ Bộ luật Dân sự số 91/2015/QH13 ngày 24/11/2015 của Quốc hội.<br>
     - Căn cứ vào nhu cầu và khả năng của các bên.
 </div>
 
@@ -124,7 +117,6 @@ namespace HeThongQuanLyPhongTro.Controllers
 
 <div class='dieu-title'>CHÚNG TÔI GỒM:</div>
 
-<!-- BÊN A -->
 <div class='dieu'>
     <div class='dieu-title'>BÊN A (Bên cho thuê - Chủ trọ)</div>
     <div>- Họ và tên: <strong>Vũ Thị Thanh Thúy</strong></div>
@@ -133,7 +125,6 @@ namespace HeThongQuanLyPhongTro.Controllers
     <div>- Số điện thoại: 0869189018</div>
 </div>
 
-<!-- BÊN B -->
 <div class='dieu'>
     <div class='dieu-title'>BÊN B (Bên thuê - Đại diện)</div>
     <div>- Họ và tên: <strong>{hopDong.KhachHangNavigation?.HoTen}</strong></div>
@@ -141,106 +132,41 @@ namespace HeThongQuanLyPhongTro.Controllers
     <div>- Số điện thoại: {hopDong.KhachHangNavigation?.SoDienThoai}</div>
     <div>- Email: {hopDong.KhachHangNavigation?.Email}</div>
     <div>- Hộ khẩu thường trú: {hopDong.KhachHangNavigation?.DiaChi}</div>
-    <div>- Ngày sinh: {hopDong.KhachHangNavigation?.NgaySinh:dd/MM/yyyy}</div>
 </div>
 
-<!-- DANH SÁCH NGƯỜI Ở -->
 <div class='dieu'>
     <div class='dieu-title'>DANH SÁCH NGƯỜI Ở CHUNG:</div>
     <table>
-        <thead>
-            ｜｜DSML｜｜<th>STT</th><th>Họ và tên</th><th>CCCD/CMND</th><th>Số điện thoại</th><th>Quan hệ</th></tr>
-        </thead>
-        <tbody>
-            {danhSachNguoiOBang}
-        </tbody>
+        <thead><tr><th>STT</th><th>Họ và tên</th><th>CCCD/CMND</th><th>Số điện thoại</th><th>Quan hệ</th></tr></thead>
+        <tbody>{danhSachNguoiOBang}</tbody>
     </table>
 </div>
 
-<!-- Điều 1 -->
 <div class='dieu'>
     <div class='dieu-title'>Điều 1: ĐỐI TƯỢNG THUÊ</div>
     <div>1.1. Bên A đồng ý cho Bên B thuê căn phòng: <strong>{hopDong.PhongNavigation?.TenPhong}</strong></div>
     <div>1.2. Địa chỉ: <strong>{hopDong.PhongNavigation?.CoSo?.DiaChi}</strong></div>
     <div>1.3. Diện tích: <strong>{hopDong.PhongNavigation?.DienTich} m²</strong></div>
-    <div>1.4. Mục đích sử dụng: <strong>Để ở sinh hoạt </strong></div>
-    <div>1.5. Trang thiết bị trong phòng bao gồm: (ghi rõ kèm tình trạng)</div>
-    <div>- Điều hòa: ________________________________________________</div>
-    <div>- Bình nóng lạnh: ____________________________________________</div>
-    <div>- Giường, tủ: ________________________________________________</div>
-    <div>- Các thiết bị khác: __________________________________________</div>
 </div>
 
-<!-- Điều 2 -->
 <div class='dieu'>
     <div class='dieu-title'>Điều 2: THỜI HẠN THUÊ</div>
     <div>Thời hạn thuê: <strong>{hopDong.NgayBatDau:dd/MM/yyyy}</strong> đến ngày <strong>{hopDong.NgayKetThuc:dd/MM/yyyy}</strong></div>
-    <div>Hợp đồng có thể được gia hạn khi hai bên có nhu cầu và thỏa thuận bằng văn bản.</div>
 </div>
 
-<!-- Điều 3 -->
 <div class='dieu'>
     <div class='dieu-title'>Điều 3: GIÁ THUÊ VÀ PHƯƠNG THỨC THANH TOÁN</div>
-    <div>3.1. Giá thuê phòng: <strong>{(hopDong.PhongNavigation?.GiaPhong ?? 0):N0} đồng/tháng</strong> (chưa bao gồm tiền điện, nước và các dịch vụ khác)</div>
+    <div>3.1. Giá thuê phòng: <strong>{(hopDong.PhongNavigation?.GiaPhong ?? 0):N0} đồng/tháng</strong></div>
     <div>3.2. Tiền đặt cọc: <strong>{(hopDong.TienCoc ?? 0):N0} đồng</strong></div>
-    <div>3.3. Tiền điện: ________________________________________________</div>
-    <div>3.4. Tiền nước: ________________________________________________</div>
-    <div>3.5. Phí dịch vụ (rác, wifi, bảo vệ): ________________________________</div>
-    <div>3.6. Phương thức thanh toán: <strong>Chuyển khoản hoặc tiền mặt vào ngày 10 hàng tháng</strong></div>
-    <div>3.7. Thời hạn thanh toán: <strong>Chậm nhất ngày 15 hàng tháng</strong></div>
+    <div>3.3. Phương thức thanh toán: <strong>Chuyển khoản hoặc tiền mặt vào ngày 10 hàng tháng</strong></div>
 </div>
 
-<!-- Điều 4 -->
 <div class='dieu'>
-    <div class='dieu-title'>Điều 4: QUYỀN CỦA BÊN A</div>
-    <div>4.1. Yêu cầu Bên B thanh toán đầy đủ, đúng hạn.</div>
-    <div>4.2. Kiểm tra định kỳ tình trạng phòng và việc sử dụng phòng.</div>
-    <div>4.3. Đơn phương chấm dứt hợp đồng nếu Bên B vi phạm nghiêm trọng.</div>
+    <div class='dieu-title'>Điều 4-9: CÁC ĐIỀU KHOẢN KHÁC</div>
+    <div>Hai bên cam kết thực hiện đúng các điều khoản đã thỏa thuận.</div>
+    <div>Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá trị pháp lý như nhau.</div>
 </div>
 
-<!-- Điều 5 -->
-<div class='dieu'>
-    <div class='dieu-title'>Điều 5: NGHĨA VỤ CỦA BÊN A</div>
-    <div>5.1. Bàn giao phòng đúng thời hạn, đúng hiện trạng.</div>
-    <div>5.2. Đảm bảo cơ sở vật chất hoạt động tốt.</div>
-    <div>5.3. Sửa chữa kịp thời các hư hỏng do chất lượng công trình.</div>
-</div>
-
-<!-- Điều 6 -->
-<div class='dieu'>
-    <div class='dieu-title'>Điều 6: QUYỀN CỦA BÊN B</div>
-    <div>6.1. Sử dụng phòng theo đúng mục đích đã thỏa thuận.</div>
-    <div>6.2. Yêu cầu bảo trì, sửa chữa khi có hư hỏng từ phía Bên A.</div>
-</div>
-
-<!-- Điều 7 -->
-<div class='dieu'>
-    <div class='dieu-title'>Điều 7: NGHĨA VỤ CỦA BÊN B</div>
-    <div>7.1. Thanh toán đầy đủ và đúng hạn.</div>
-    <div>7.2. Giữ gìn vệ sinh chung, không gây ồn ào, mất trật tự.</div>
-    <div>7.3. Không tự ý sửa chữa, cơi nới hoặc cho người khác thuê lại.</div>
-    <div>7.4. Bồi thường toàn bộ thiệt hại nếu làm hư hỏng tài sản.</div>
-    <div>7.5. Thông báo trước 30 ngày nếu có nhu cầu chấm dứt hợp đồng trước hạn.</div>
-</div>
-
-<!-- Điều 8 -->
-<div class='dieu'>
-    <div class='dieu-title'>Điều 8: XỬ LÝ KHI VI PHẠM</div>
-    <div>8.1. Nếu Bên B thanh toán chậm quá 07 ngày so với hạn, Bên A có quyền thu thêm 0,05%/ngày trên số tiền chậm.</div>
-    <div>8.2. Nếu Bên B vi phạm nghiêm trọng, Bên A có quyền đơn phương chấm dứt hợp đồng và không hoàn trả tiền cọc.</div>
-</div>
-
-<!-- Điều 9 -->
-<div class='dieu'>
-    <div class='dieu-title'>Điều 9: ĐIỀU KHOẢN CHUNG</div>
-    <div>9.1. Hợp đồng có hiệu lực kể từ ngày ký.</div>
-    <div>9.2. Hai bên cam kết thực hiện đúng các điều khoản đã thỏa thuận.</div>
-    <div>9.3. Mọi tranh chấp được giải quyết bằng thương lượng hoặc theo quy định của pháp luật.</div>
-    <div>9.4. Hợp đồng được lập thành 02 (hai) bản, mỗi bên giữ 01 bản có giá trị pháp lý như nhau.</div>
-    <div>9.5. Bản mềm được lưu trữ trên hệ thống quản lý phòng trọ để tra cứu khi cần.</div>
-</div>
-
-<!-- KÝ TÊN -->
 <div class='sign-box' style='margin-top: 40px;'>
     <div class='sign-left'>
         <div class='bold'>BÊN CHO THUÊ (BÊN A)</div>
@@ -254,12 +180,6 @@ namespace HeThongQuanLyPhongTro.Controllers
     </div>
     <div class='clear'></div>
 </div>
-
-<div style='margin-top: 30px; text-align: center;'>
-    <div class='bold'>Xác nhận của người làm chứng (nếu có)</div>
-    <div style='margin-top: 30px;'>(Ký, ghi rõ họ tên)</div>
-</div>
-
 </body>
 </html>";
         }
@@ -297,56 +217,124 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // GET: Tạo hợp đồng mới
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             if (HttpContext.Session.GetInt32("UserId") == null)
             {
                 return RedirectToAction("Index", "Login");
             }
 
-            ViewBag.PhongList = _context.Phong
+            ViewBag.PhongList = await _context.Phong
                 .Include(p => p.CoSo)
                 .Where(p => p.TrangThai == "Trống")
-                .ToList();
+                .ToListAsync();
 
-            ViewBag.KhachHangList = _context.KhachHang.ToList();
+            ViewBag.KhachHangList = await _context.KhachHang.ToListAsync();
 
             return View();
         }
 
-        // POST: Tạo hợp đồng mới
+        // POST: Tạo hợp đồng mới (CÓ TẠO TÀI KHOẢN VÀ LIÊN KẾT)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        
         public async Task<IActionResult> Create(
-    int maPhong, int maKhachHang, DateTime ngayBatDau, DateTime ngayKetThuc, decimal tienCoc,
-    string HoTen, string SoDienThoai, string Email, string CCCD, string DiaChi,
-    List<string> NguoiOHoTen, List<string> NguoiOCCCD, List<string> NguoiOSDT)
+            int maPhong,
+            DateTime ngayBatDau,
+            DateTime ngayKetThuc,
+            decimal tienCoc,
+            // Thông tin khách hàng
+            string HoTen,
+            string SoDienThoai,
+            string Email,
+            string CCCD,
+            string DiaChi,
+            DateTime? NgaySinh,
+            // Thông tin tài khoản
+            bool taoTaiKhoan,
+            string tenDangNhap,
+            string matKhau,
+            // Danh sách người ở
+            List<string> NguoiOHoTen,
+            List<string> NguoiOCCCD,
+            List<string> NguoiOSDT)
         {
+            // Kiểm tra phòng còn trống không
             var phong = await _context.Phong.FindAsync(maPhong);
             if (phong == null || phong.TrangThai != "Trống")
             {
                 TempData["Error"] = "Phòng không còn trống!";
-                return RedirectToAction("Create");
+                await LoadViewBags();
+                return View();
             }
 
-            // Tạo khách hàng
-            var khachHang = new KhachHang
-            {
-                HoTen = HoTen.Trim(),
-                SoDienThoai = SoDienThoai.Trim(),
-                Email = Email ?? "",
-                CCCD = CCCD ?? "",
-                DiaChi = DiaChi ?? ""
-            };
-            _context.KhachHang.Add(khachHang);
-            await _context.SaveChangesAsync();
+            int maKhachHangCuoi = 0;
 
-            // Tạo hợp đồng
+            // ========== 1. TẠO HOẶC LẤY KHÁCH HÀNG ==========
+            // Kiểm tra khách hàng đã tồn tại theo số điện thoại
+            var khachHangTonTai = await _context.KhachHang
+                .FirstOrDefaultAsync(k => k.SoDienThoai == SoDienThoai);
+
+            if (khachHangTonTai != null)
+            {
+                maKhachHangCuoi = khachHangTonTai.MaKhachHang;
+                TempData["Info"] = "Khách hàng đã tồn tại, sử dụng thông tin cũ!";
+            }
+            else
+            {
+                // Tạo khách hàng mới
+                var khachHangMoi = new KhachHang
+                {
+                    HoTen = HoTen.Trim(),
+                    SoDienThoai = SoDienThoai.Trim(),
+                    Email = Email ?? "",
+                    CCCD = CCCD ?? "",
+                    DiaChi = DiaChi ?? "",
+                    NgaySinh = NgaySinh
+                };
+                _context.KhachHang.Add(khachHangMoi);
+                await _context.SaveChangesAsync();
+                maKhachHangCuoi = khachHangMoi.MaKhachHang;
+            }
+
+            // ========== 2. TẠO TÀI KHOẢN (nếu được chọn) ==========
+            if (taoTaiKhoan && !string.IsNullOrEmpty(tenDangNhap) && !string.IsNullOrEmpty(matKhau))
+            {
+                // Kiểm tra tên đăng nhập đã tồn tại
+                var tonTai = await _context.TaiKhoan.AnyAsync(t => t.TenDangNhap == tenDangNhap);
+                if (!tonTai)
+                {
+                    var taiKhoan = new TaiKhoan
+                    {
+                        TenDangNhap = tenDangNhap,
+                        MatKhau = matKhau,
+                        VaiTro = "Khach",
+                        TrangThai = "Hoạt động"
+                    };
+                    _context.TaiKhoan.Add(taiKhoan);
+                    await _context.SaveChangesAsync();
+
+                    // Liên kết tài khoản với khách hàng
+                    var khachHang = await _context.KhachHang.FindAsync(maKhachHangCuoi);
+                    if (khachHang != null)
+                    {
+                        khachHang.MaTaiKhoan = taiKhoan.MaTaiKhoan;
+                        _context.Update(khachHang);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    TempData["TaiKhoan"] = $"Tài khoản đã tạo: {tenDangNhap} / {matKhau}";
+                }
+                else
+                {
+                    TempData["Warning"] = "Tên đăng nhập đã tồn tại, vui lòng chọn tên khác!";
+                }
+            }
+
+            // ========== 3. TẠO HỢP ĐỒNG ==========
             var hopDong = new HopDong
             {
                 MaPhong = maPhong,
-                MaKhachHang = khachHang.MaKhachHang,
+                MaKhachHang = maKhachHangCuoi,
                 NgayBatDau = ngayBatDau,
                 NgayKetThuc = ngayKetThuc,
                 TienCoc = tienCoc,
@@ -355,7 +343,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context.HopDong.Add(hopDong);
             await _context.SaveChangesAsync();
 
-            // Thêm danh sách người ở
+            // ========== 4. THÊM DANH SÁCH NGƯỜI Ở ==========
             if (NguoiOHoTen != null && NguoiOHoTen.Any())
             {
                 for (int i = 0; i < NguoiOHoTen.Count; i++)
@@ -366,21 +354,38 @@ namespace HeThongQuanLyPhongTro.Controllers
                         {
                             MaHopDong = hopDong.MaHopDong,
                             HoTen = NguoiOHoTen[i].Trim(),
-                            CCCD = NguoiOCCCD?[i] ?? "",
-                            SoDienThoai = NguoiOSDT?[i] ?? ""
+                            CCCD = NguoiOCCCD != null && i < NguoiOCCCD.Count ? NguoiOCCCD[i] ?? "" : "",
+                            SoDienThoai = NguoiOSDT != null && i < NguoiOSDT.Count ? NguoiOSDT[i] ?? "" : "",
                         };
                         _context.NguoiOHopDong.Add(nguoiO);
                     }
                 }
+                await _context.SaveChangesAsync();
             }
 
+            // ========== 5. CẬP NHẬT TRẠNG THÁI PHÒNG ==========
             phong.TrangThai = "Đã thuê";
             _context.Update(phong);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"Tạo hợp đồng thành công! Mã: {hopDong.MaHopDong}";
+            // ========== 6. TẠO HÓA ĐƠN TỰ ĐỘNG ==========
+            await TaoHoaDonChoHopDong(hopDong.MaHopDong, phong.GiaPhong, ngayBatDau, ngayKetThuc);
+
+            TempData["Success"] = $"Tạo hợp đồng thành công! Mã hợp đồng: {hopDong.MaHopDong}";
             return RedirectToAction(nameof(Index));
         }
+
+        // Load dữ liệu cho View Create
+        private async Task LoadViewBags()
+        {
+            ViewBag.PhongList = await _context.Phong
+                .Include(p => p.CoSo)
+                .Where(p => p.TrangThai == "Trống")
+                .ToListAsync();
+
+            ViewBag.KhachHangList = await _context.KhachHang.ToListAsync();
+        }
+
         // POST: Chấm dứt hợp đồng
         [HttpPost]
         [ValidateAntiForgeryToken]

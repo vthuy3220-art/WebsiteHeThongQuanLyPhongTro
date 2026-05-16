@@ -1,4 +1,7 @@
-﻿namespace HeThongQuanLyPhongTro.Models
+﻿using System;
+using System.Collections.Generic;
+
+namespace HeThongQuanLyPhongTro.Models
 {
     public class KhachHangDashboardViewModel
     {

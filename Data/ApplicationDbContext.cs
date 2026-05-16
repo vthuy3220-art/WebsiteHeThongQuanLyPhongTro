@@ -35,11 +35,19 @@ namespace HeThongQuanLyPhongTro.Data
             modelBuilder.Entity<KhachHang>().ToTable("KhachHang");
             modelBuilder.Entity<CoSo>().ToTable("CoSo");
             modelBuilder.Entity<Phong>().ToTable("Phong");
-            modelBuilder.Entity<HopDong>().ToTable("HopDong");
-            modelBuilder.Entity<NguoiOHopDong>().ToTable("NguoiOHopDong");
-            modelBuilder.Entity<HoaDon>().ToTable("HoaDon");
             modelBuilder.Entity<ChiTietHoaDon>().ToTable("ChiTietHoaDon");
-            modelBuilder.Entity<ThanhToan>().ToTable("ThanhToan");
+
+            modelBuilder.Entity<NguoiOHopDong>()
+         .ToTable(tb => tb.UseSqlOutputClause(false));
+
+            modelBuilder.Entity<HopDong>()
+                .ToTable(tb => tb.UseSqlOutputClause(false));
+
+            modelBuilder.Entity<HoaDon>()
+                .ToTable(tb => tb.UseSqlOutputClause(false));
+
+            modelBuilder.Entity<ThanhToan>()
+                .ToTable(tb => tb.UseSqlOutputClause(false));
             modelBuilder.Entity<BaiDang>().ToTable("BaiDang");
             modelBuilder.Entity<CoSoVatChat>().ToTable("CoSoVatChat");
             modelBuilder.Entity<PhongImage>().ToTable("PhongImage");
