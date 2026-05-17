@@ -1,12 +1,15 @@
+using HeThongQuanLyPhongTro;
 using HeThongQuanLyPhongTro.Data;
+using HeThongQuanLyPhongTro.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
-// Đăng ký DbContext
+builder.Services.AddScoped<ThongBaoService>();
+// Thêm dòng này vào Program.cs
+// Thêm background service chạy mỗi ngày
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
