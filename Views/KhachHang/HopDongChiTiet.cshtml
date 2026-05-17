@@ -2,107 +2,131 @@
 
 @{
     ViewData["Title"] = "Chi tiết hợp đồng";
+    Layout = "_Layout";
+    var nguoiOList = ViewBag.NguoiOList as List<HeThongQuanLyPhongTro.Models.NguoiOHopDong>;
     var hoaDons = ViewBag.HoaDons as List<HeThongQuanLyPhongTro.Models.HoaDon>;
 }
 
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Thông tin hợp đồng -->
     <div class="bg-white rounded-xl shadow-md overflow-hidden">
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-xl font-bold text-white">Chi tiết hợp đồng</h1>
-                    <p class="text-blue-100">Mã hợp đồng: HĐ@Model.MaHopDong</p>
-                </div>
-                <a asp-action="HopDongCuaToi" class="text-white hover:text-blue-200">
-                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
-                </a>
-            </div>
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
+            <h2 class="text-xl font-bold text-white">📄 Chi tiết hợp đồng</h2>
         </div>
-
         <div class="p-6">
-            <!-- Thông tin hợp đồng -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-gray-500 text-sm">Phòng thuê</p>
-                    <p class="font-semibold text-lg">@Model.PhongNavigation?.TenPhong</p>
-                    <p class="text-sm text-gray-500">Cơ sở: @Model.PhongNavigation?.CoSo?.TenCoSo</p>
-                    <p class="text-sm text-gray-500">Địa chỉ: @Model.PhongNavigation?.CoSo?.DiaChi</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><span class="font-semibold">Mã hợp đồng:</span> @Model.MaHopDong</div>
+                <div><span class="font-semibold">Phòng:</span> @Model.PhongNavigation?.TenPhong</div>
+                <div><span class="font-semibold">Ngày bắt đầu:</span> @(Model.NgayBatDau?.ToString("dd/MM/yyyy") ?? "N/A")</div>
+                <div><span class="font-semibold">Ngày kết thúc:</span> @(Model.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "N/A")</div>
+                <div><span class="font-semibold">Tiền cọc:</span> @String.Format("{0:N0}", Model.TienCoc) đ</div>
+                <div>
+                    <span class="font-semibold">Trạng thái:</span>
+                    @if (Model.TrangThai == "Hiệu lực")
+                    {
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Hiệu lực</span>
+                    }
+                    else
+                    {
+                        <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Đã kết thúc</span>
+                    }
                 </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-gray-500 text-sm">Khách hàng</p>
-                    <p class="font-semibold text-lg">@Model.KhachHangNavigation?.HoTen</p>
-                    <p class="text-sm text-gray-500">SĐT: @Model.KhachHangNavigation?.SoDienThoai</p>
-                    <p class="text-sm text-gray-500">CCCD: @Model.KhachHangNavigation?.CCCD</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-gray-500 text-sm">Thời gian thuê</p>
-                    <p class="font-semibold">@Model.NgayBatDau?.ToString("dd/MM/yyyy") - @Model.NgayKetThuc?.ToString("dd/MM/yyyy")</p>
-                    <p class="text-sm text-gray-500">Giá phòng: @Model.PhongNavigation?.GiaPhong.ToString("N0") đ/tháng</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-gray-500 text-sm">Tiền cọc</p>
-                    <p class="font-semibold text-blue-600">@Model.TienCoc?.ToString("N0") đ</p>
-                    <p class="text-sm text-gray-500">Trạng thái: @(Model.TrangThai == "Hiệu lực" ? "Đang hiệu lực" : "Đã kết thúc")</p>
-                </div>
-            </div>
-
-            <!-- Danh sách hóa đơn -->
-            <div class="mt-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-receipt text-green-500 mr-2"></i>
-                    Lịch sử hóa đơn
-                </h3>
-
-                @if (hoaDons != null && hoaDons.Any())
-                {
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Tháng/Năm</th>
-                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Tổng tiền</th>
-                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Trạng thái</th>
-                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Ngày tạo</th>
-                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var hd in hoaDons)
-                                {
-                                    <tr>
-                                        <td class="px-4 py-2">Tháng @hd.Thang/@hd.Nam</td>
-                                        <td class="px-4 py-2">@hd.TongTien?.ToString("N0") đ</td>
-                                        <td class="px-4 py-2">
-                                            @if (hd.TrangThai == "Đã thanh toán")
-                                            {
-                                                <span class="text-green-600">✓ Đã thanh toán</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-red-600">Chưa thanh toán</span>
-                                            }
-                                        </td>
-                                        <td class="px-4 py-2">@hd.NgayTao?.ToString("dd/MM/yyyy")</td>
-                                        <td class="px-4 py-2">
-                                            <a asp-action="HoaDonChiTiet" asp-route-id="@hd.MaHoaDon"
-                                               class="text-blue-500 hover:text-blue-700 text-sm">
-                                                Xem chi tiết
-                                            </a>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-8 bg-gray-50 rounded-lg">
-                        <i class="fas fa-receipt text-gray-300 text-4xl mb-2"></i>
-                        <p class="text-gray-500">Chưa có hóa đơn nào</p>
-                    </div>
-                }
             </div>
         </div>
+    </div>
+
+    <!-- Danh sách người ở -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gray-50 px-6 py-3 border-b">
+            <h3 class="font-semibold">👥 Danh sách người ở</h3>
+        </div>
+        <div class="p-4">
+            @if (nguoiOList != null && nguoiOList.Any())
+            {
+                <table class="w-full">
+                    <thead class="bg-gray-100">
+                        <tr class="border-b">
+                            <th class="p-2 text-left">STT</th>
+                            <th class="p-2 text-left">Họ tên</th>
+                            <th class="p-2 text-left">CCCD</th>
+                            <th class="p-2 text-left">Số điện thoại</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in nguoiOList.Select((value, i) => new { i, value }))
+                        {
+                            <tr class="border-b">
+                                <td class="p-2">@(item.i + 1)</td>
+                                <td class="p-2">@item.value.HoTen</td>
+                                <td class="p-2">@item.value.CCCD</td>
+                                <td class="p-2">@item.value.SoDienThoai</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-gray-500 text-center">Không có người ở cùng</p>
+            }
+        </div>
+    </div>
+
+    <!-- Hóa đơn -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gray-50 px-6 py-3 border-b">
+            <h3 class="font-semibold">🧾 Hóa đơn</h3>
+        </div>
+        <div class="p-4">
+            @if (hoaDons != null && hoaDons.Any())
+            {
+                <table class="w-full">
+                    <thead class="bg-gray-100">
+                        <tr class="border-b">
+                            <th class="p-2 text-left">Tháng/Năm</th>
+                            <th class="p-2 text-right">Tổng tiền</th>
+                            <th class="p-2 text-left">Trạng thái</th>
+                            <th class="p-2 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in hoaDons)
+                        {
+                            <tr class="border-b">
+                                <td class="p-2">@item.Thang/@item.Nam</td>
+                                <td class="p-2 text-right">@String.Format("{0:N0}", item.TongTien) đ</td>
+                                <td class="p-2">
+                                    @if (item.TrangThai == "Đã thanh toán")
+                                    {
+                                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Đã thanh toán</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Chưa thanh toán</span>
+                                    }
+                                </td>
+                                <td class="p-2 text-center">
+                                    <a asp-controller="KhachHang" asp-action="HoaDonChiTiet" asp-route-id="@item.MaHoaDon" class="text-blue-500 hover:underline">Chi tiết</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-gray-500 text-center">Chưa có hóa đơn nào</p>
+            }
+        </div>
+    </div>
+
+    <!-- Nút quay lại -->
+    <div class="flex gap-3">
+        <a asp-action="HopDongCuaToi" class="bg-gray-500 text-white px-4 py-2 rounded-lg text-center hover:bg-gray-600">
+            <i class="fas fa-arrow-left mr-2"></i> Quay lại
+        </a>
+        <a asp-action="XuatPdf" asp-controller="HopDong" asp-route-id="@Model.MaHopDong" target="_blank" class="bg-red-500 text-white px-4 py-2 rounded-lg text-center hover:bg-red-600">
+            <i class="fas fa-file-pdf mr-2"></i> Xuất PDF
+        </a>
     </div>
 </div>

@@ -81,7 +81,7 @@
                     <a asp-controller="Phong" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
                         <i class="fas fa-door-open w-5 h-5 mr-3 text-gray-400"></i><span>Phòng trọ</span>
                     </a>
-                    <a asp-controller="KhachHang" asp-action="QuanLy" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                    <a asp-controller="KhachHang" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
                         <i class="fas fa-users w-5 h-5 mr-3 text-gray-400"></i><span>Khách hàng</span>
                     </a>
                     <a asp-controller="HopDong" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
@@ -130,28 +130,24 @@
                             <p class="text-sm text-gray-500 mt-1">Chào mừng bạn trở lại, @username</p>
                         </div>
                         <div class="flex items-center space-x-4">
-                            <!-- ICON CHUÔNG THÔNG BÁO -->
-                            <div class="relative">
-                                <button id="bellButton" class="text-gray-400 hover:text-gray-600 relative">
+                            <!-- Icon chuông thông báo -->
+                            <div class="relative mr-3">
+                                <button id="bellButton" class="text-gray-500 hover:text-gray-700 focus:outline-none relative">
                                     <i class="fas fa-bell text-xl"></i>
                                     <span id="badgeCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
                                 </button>
                                 <div id="bellDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg hidden z-50 border">
-                                    <div class="p-3 border-b font-semibold text-gray-700">Thông báo</div>
+                                    <div class="p-3 border-b font-semibold text-gray-700 flex justify-between items-center">
+                                        <span>Thông báo</span>
+                                        <button id="markAllRead" class="text-xs text-blue-500 hover:text-blue-700">Đánh dấu đã đọc</button>
+                                    </div>
                                     <div id="listThongBao" class="max-h-96 overflow-y-auto">
                                         <div class="p-4 text-center text-gray-500">Đang tải...</div>
                                     </div>
                                     <div class="p-2 text-center border-t">
-                                        <button onclick="xoaThongBao()" class="text-xs text-gray-500 hover:text-blue-500">Đánh dấu đã đọc</button>
+                                        <a href="@Url.Action("Index", "ThongBao")" class="text-xs text-gray-500 hover:text-blue-500">Xem tất cả</a>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="flex items-center space-x-2">
-                                <div class="w-9 h-9 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white shadow-md">
-                                    <i class="fas fa-user text-sm"></i>
-                                </div>
-                                <p class="text-sm font-medium text-gray-700">@username</p>
                             </div>
                         </div>
                     </div>
@@ -163,35 +159,35 @@
             </div>
         </div>
 
+        <!-- Script cho Admin -->
         <script>
             function loadThongBao() {
-                fetch('/ThongBao/GetListFromSession')
-                    .then(response => response.json())
+                fetch('/ThongBao/GetList')
+                    .then(res => res.json())
                     .then(data => {
-                        const list = document.getElementById('listThongBao');
                         const badge = document.getElementById('badgeCount');
+                        const list = document.getElementById('listThongBao');
+
                         if (data && data.length > 0) {
                             badge.classList.remove('hidden');
                             badge.innerText = data.length;
                             list.innerHTML = data.map(tb => `
-                                <div class="p-3 border-b hover:bg-gray-50 ${tb.loai === 'warning' ? 'bg-yellow-50' : ''}">
-                                    <div class="font-medium text-sm">${tb.tieuDe}</div>
-                                    <div class="text-xs text-gray-600 mt-1">${tb.noiDung}</div>
-                                    <div class="text-xs text-gray-400 mt-1">${tb.ngayTao}</div>
+                                <div class="p-3 border-b hover:bg-gray-50 cursor-pointer ${tb.loai === 'success' ? 'bg-green-50' : tb.loai === 'warning' ? 'bg-yellow-50' : ''}"
+                                     onclick="location.href='${tb.duongDan}'">
+                                    <div class="flex items-start">
+                                        <i class="fas ${tb.loai === 'success' ? 'fa-check-circle text-green-500' : tb.loai === 'warning' ? 'fa-exclamation-triangle text-yellow-500' : 'fa-bell text-blue-500'} mr-2 mt-0.5"></i>
+                                        <div class="flex-1">
+                                            <div class="font-medium text-sm">${tb.tieuDe}</div>
+                                            <div class="text-xs text-gray-600 mt-1">${tb.noiDung}</div>
+                                            <div class="text-xs text-gray-400 mt-1">${tb.ngayTao}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             `).join('');
                         } else {
                             badge.classList.add('hidden');
-                            list.innerHTML = '<div class="p-4 text-center text-gray-500">Không có thông báo nào</div>';
+                            list.innerHTML = '<div class="p-4 text-center text-gray-500">Không có thông báo mới</div>';
                         }
-                    }).catch(error => console.error('Lỗi:', error));
-            }
-
-            function xoaThongBao() {
-                fetch('/ThongBao/XoaThongBao', { method: 'POST' })
-                    .then(() => {
-                        document.getElementById('badgeCount').classList.add('hidden');
-                        document.getElementById('listThongBao').innerHTML = '<div class="p-4 text-center text-gray-500">Không có thông báo nào</div>';
                     });
             }
 
@@ -201,56 +197,51 @@
                 dropdown.classList.toggle('hidden');
                 if (!dropdown.classList.contains('hidden')) loadThongBao();
             });
+
             document.addEventListener('click', function() {
                 document.getElementById('bellDropdown').classList.add('hidden');
             });
+
+            document.getElementById('markAllRead')?.addEventListener('click', function() {
+                fetch('/ThongBao/MarkAllAsRead', { method: 'POST' })
+                    .then(() => loadThongBao());
+            });
+
+            setInterval(loadThongBao, 30000);
         </script>
     }
     else if (role == "Khach")
     {
+        <!-- LAYOUT KHÁCH HÀNG - CHỈ MỘT LẦN -->
         <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
             <nav class="bg-white shadow-lg sticky top-0 z-50">
-                <div class="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="container mx-auto px-4 py-3">
+                    <div class="flex justify-between items-center flex-wrap gap-3">
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
+                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-home text-white text-xl"></i>
                             </div>
                             <div>
                                 <h1 class="text-xl font-bold text-gray-800">Phòng Trọ Xinh</h1>
-                                <p class="text-xs text-gray-500">Xin chào, <span class="font-semibold text-blue-600">@username</span></p>
+                                <p class="text-xs text-gray-500">Xin chào, @username</p>
                             </div>
                         </div>
-
-                        <div class="flex flex-wrap justify-center gap-4 sm:gap-6">
-                            <a asp-controller="KhachHang" asp-action="Dashboard" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
-                                <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
-                            </a>
-                            <a asp-controller="KhachHang" asp-action="HopDongCuaToi" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
-                                <i class="fas fa-file-contract mr-1"></i> Hợp đồng
-                            </a>
-                            <a asp-controller="KhachHang" asp-action="HoaDonCuaToi" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
-                                <i class="fas fa-receipt mr-1"></i> Hóa đơn
-                            </a>
-                            <a asp-controller="KhachHang" asp-action="LichSuThanhToan" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
-                                <i class="fas fa-history mr-1"></i> Lịch sử thanh toán
-                            </a>
-                            <a asp-controller="KhachHang" asp-action="DoiMatKhau" class="text-gray-600 hover:text-blue-500 transition-colors duration-200">
-                                <i class="fas fa-key mr-1"></i> Đổi mật khẩu
-                            </a>
-                            <a asp-controller="Login" asp-action="Logout" class="text-red-600 hover:text-red-700 transition-colors duration-200">
-                                <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất
-                            </a>
+                        <div class="flex flex-wrap gap-3">
+                            <a asp-controller="KhachHang" asp-action="Dashboard" class="text-gray-600 hover:text-blue-500">Dashboard</a>
+                            <a asp-controller="KhachHang" asp-action="HopDongCuaToi" class="text-gray-600 hover:text-blue-500">Hợp đồng</a>
+                            <a asp-controller="KhachHang" asp-action="HoaDonCuaToi" class="text-gray-600 hover:text-blue-500">Hóa đơn</a>
+                            <a asp-controller="YeuCauSuaChua" asp-action="TaoYeuCau" class="text-orange-600 hover:text-orange-700">Yêu cầu sửa chữa</a>
+                            <a asp-controller="YeuCauSuaChua" asp-action="YeuCauCuaToi" class="text-gray-600 hover:text-blue-500">Yêu cầu của tôi</a>
+                            <a asp-controller="KhachHang" asp-action="DoiMatKhau" class="text-gray-600 hover:text-blue-500">Đổi mật khẩu</a>
+                            <a asp-controller="Login" asp-action="Logout" class="text-red-600 hover:text-red-700">Đăng xuất</a>
                         </div>
                     </div>
                 </div>
             </nav>
-
-            <div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+            <div class="container mx-auto px-4 py-6">
                 @RenderBody()
             </div>
         </div>
-    
     }
     else
     {
@@ -259,10 +250,9 @@
             @RenderBody()
         </div>
     }
-
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
-
+    @Html.AntiForgeryToken()
 </body>
 </html>

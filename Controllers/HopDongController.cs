@@ -185,10 +185,24 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // GET: Danh sách hợp đồng
+        // GET: Danh sách hợp đồng (CHỈ ADMIN MỚI ĐƯỢC XEM)
         public async Task<IActionResult> Index(string searchString, string trangThai)
         {
-            if (HttpContext.Session.GetInt32("UserId") == null)
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var role = HttpContext.Session.GetString("Role");
+
+            if (userId == null)
             {
+                return RedirectToAction("Index", "Login");
+            }
+
+            // CHỈ ADMIN MỚI ĐƯỢC XEM DANH SÁCH TẤT CẢ HỢP ĐỒNG
+            if (role != "Admin")
+            {
+                if (role == "Khach")
+                {
+                    return RedirectToAction("HopDongCuaToi", "KhachHang");
+                }
                 return RedirectToAction("Index", "Login");
             }
 
@@ -233,6 +247,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             return View();
         }
+
 
         // POST: Tạo hợp đồng mới (CÓ TẠO TÀI KHOẢN VÀ LIÊN KẾT)
         [HttpPost]
@@ -386,11 +401,20 @@ namespace HeThongQuanLyPhongTro.Controllers
             ViewBag.KhachHangList = await _context.KhachHang.ToListAsync();
         }
 
-        // POST: Chấm dứt hợp đồng
+        // POST: Chấm dứt hợp đồng (CHỈ ADMIN)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChamDut(int id)
         {
+            var role = HttpContext.Session.GetString("Role");
+
+            // CHỈ ADMIN MỚI ĐƯỢC CHẤM DỨT HỢP ĐỒNG
+            if (role != "Admin")
+            {
+                TempData["Error"] = "Bạn không có quyền thực hiện chức năng này!";
+                return RedirectToAction("Index", "Login");
+            }
+
             var hopDong = await _context.HopDong
                 .Include(h => h.PhongNavigation)
                 .FirstOrDefaultAsync(h => h.MaHopDong == id);
@@ -467,6 +491,22 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (hopDong == null) return NotFound();
 
+            // Kiểm tra nếu là khách hàng thì chỉ cho xem hợp đồng của mình
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (role == "Khach")
+            {
+                var khachHang = await _context.KhachHang
+                    .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
+
+                if (khachHang == null || hopDong.MaKhachHang != khachHang.MaKhachHang)
+                {
+                    TempData["Error"] = "Bạn không có quyền xem hợp đồng này!";
+                    return RedirectToAction("HopDongCuaToi", "KhachHang");
+                }
+            }
+
             var nguoiOList = await _context.NguoiOHopDong
                 .Where(n => n.MaHopDong == id)
                 .ToListAsync();
@@ -479,6 +519,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             ViewBag.NguoiOList = nguoiOList;
             ViewBag.HoaDons = hoaDons;
+            ViewBag.Role = role;  // Truyền role sang View
 
             return View(hopDong);
         }

@@ -1,0 +1,77 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.YeuCauSuaChua>
+
+@{
+    ViewData["Title"] = "Quản lý yêu cầu sửa chữa";
+}
+
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Quản lý yêu cầu sửa chữa</h1>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="bg-white rounded-xl shadow-md p-4">
+        <form method="get" class="flex gap-3">
+            <select name="trangThai" class="px-3 py-2 border rounded-lg">
+                @foreach (var item in ViewBag.TrangThaiList)
+                {
+                    if (ViewBag.TrangThai == item)
+                    {
+                        <option value="@item" selected>@item</option>
+                    }
+                    else
+                    {
+                        <option value="@item">@item</option>
+                    }
+                }
+            </select>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Lọc</button>
+        </form>
+    </div>
+
+    <!-- Danh sách -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3">Mã</th>
+                    <th class="px-4 py-3">Phòng</th>
+                    <th class="px-4 py-3">Khách hàng</th>
+                    <th class="px-4 py-3">Tiêu đề</th>
+                    <th class="px-4 py-3">Ngày tạo</th>
+                    <th class="px-4 py-3">Trạng thái</th>
+                    <th class="px-4 py-3">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-3">@item.MaYeuCau</td>
+                        <td class="px-4 py-3">@item.PhongNavigation?.TenPhong</td>
+                        <td class="px-4 py-3">@item.KhachHangNavigation?.HoTen</td>
+                        <td class="px-4 py-3">@item.TieuDe</td>
+                        <td class="px-4 py-3">@item.NgayTao.ToString("dd/MM/yyyy")</td>
+                        <td class="px-4 py-3">
+                            @if (item.TrangThai == "Chờ xử lý")
+                            {
+                                <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">⏳ Chờ xử lý</span>
+                            }
+                            else if (item.TrangThai == "Đã tiếp nhận")
+                            {
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">📋 Đã tiếp nhận</span>
+                            }
+                            else
+                            {
+                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">✅ Đã hoàn thành</span>
+                            }
+                        </td>
+                        <td class="px-4 py-3">
+                            <a asp-action="Details" asp-route-id="@item.MaYeuCau" class="text-blue-500">Xử lý</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

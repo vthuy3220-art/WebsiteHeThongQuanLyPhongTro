@@ -25,6 +25,8 @@ namespace HeThongQuanLyPhongTro.Data
         public DbSet<CoSoVatChat> CoSoVatChat { get; set; }
         public DbSet<PhongImage> PhongImages { get; set; }
         public DbSet<LichSuChiSoDienNuoc> LichSuChiSoDienNuoc { get; set; }
+        public DbSet<ThongBao> ThongBao { get; set; }
+        public DbSet<YeuCauSuaChua> YeuCauSuaChua { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,7 +38,8 @@ namespace HeThongQuanLyPhongTro.Data
             modelBuilder.Entity<CoSo>().ToTable("CoSo");
             modelBuilder.Entity<Phong>().ToTable("Phong");
             modelBuilder.Entity<ChiTietHoaDon>().ToTable("ChiTietHoaDon");
-
+            modelBuilder.Entity<ThongBao>().ToTable("ThongBao");
+            modelBuilder.Entity<YeuCauSuaChua>().ToTable("YeuCauSuaChua");
             modelBuilder.Entity<NguoiOHopDong>()
          .ToTable(tb => tb.UseSqlOutputClause(false));
 

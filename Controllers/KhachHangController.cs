@@ -15,26 +15,27 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             _context = context;
         }
-
         // ==================== DASHBOARD CHO KHÁCH HÀNG ====================
         public async Task<IActionResult> Dashboard()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             var role = HttpContext.Session.GetString("Role");
+            var username = HttpContext.Session.GetString("Username");
 
-            if (userId == null)
+            if (userId == null || role != "Khach")
             {
                 return RedirectToAction("Index", "Login");
             }
 
-            if (role != "Khach")
-            {
-                return RedirectToAction("Index", "Login");
-            }
-
-            // Tìm khách hàng theo tài khoản
+            // Tìm khách hàng
             var khachHang = await _context.KhachHang
                 .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
+
+            if (khachHang == null)
+            {
+                khachHang = await _context.KhachHang
+                    .FirstOrDefaultAsync(k => k.Email == username || k.SoDienThoai == username);
+            }
 
             if (khachHang == null)
             {
@@ -42,56 +43,17 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
 
             // Lấy hợp đồng hiện tại
-            var hopDongHienTai = await _context.HopDong
+            var hopDong = await _context.HopDong
+                .Include(h => h.PhongNavigation)
                 .FirstOrDefaultAsync(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai == "Hiệu lực");
 
-            // Lấy lịch sử hợp đồng
-            var lichSuHopDong = await _context.HopDong
-                .Where(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai != "Hiệu lực")
-                .OrderByDescending(h => h.NgayBatDau)
-                .ToListAsync();
+            // Dùng ViewBag
+            ViewBag.KhachHang = khachHang;
+            ViewBag.HopDong = hopDong;
 
-            List<HoaDon> hoaDonChuaThanhToan = new List<HoaDon>();
-            List<HoaDon> hoaDonDaThanhToan = new List<HoaDon>();
-            decimal tongNo = 0;
-            int soNgayConLai = 0;
-
-            if (hopDongHienTai != null)
-            {
-                hoaDonChuaThanhToan = await _context.HoaDon
-                    .Where(h => h.MaHopDong == hopDongHienTai.MaHopDong && h.TrangThai == "Chưa thanh toán")
-                    .ToListAsync();
-
-                hoaDonDaThanhToan = await _context.HoaDon
-                    .Where(h => h.MaHopDong == hopDongHienTai.MaHopDong && h.TrangThai == "Đã thanh toán")
-                    .ToListAsync();
-
-                if (hoaDonChuaThanhToan != null && hoaDonChuaThanhToan.Any())
-                {
-                    tongNo = hoaDonChuaThanhToan.Sum(h => h.TongTien ?? 0);
-                }
-
-                if (hopDongHienTai.NgayKetThuc.HasValue)
-                {
-                    soNgayConLai = (hopDongHienTai.NgayKetThuc.Value - DateTime.Now).Days;
-                    if (soNgayConLai < 0) soNgayConLai = 0;
-                }
-            }
-
-            var viewModel = new KhachHangDashboardViewModel
-            {
-                ThongTinKhachHang = khachHang,
-                HopDongHienTai = hopDongHienTai,
-                LichSuHopDong = lichSuHopDong ?? new List<HopDong>(),
-                HoaDonChuaThanhToan = hoaDonChuaThanhToan ?? new List<HoaDon>(),
-                HoaDonDaThanhToan = hoaDonDaThanhToan ?? new List<HoaDon>(),
-                TongNo = tongNo,
-                SoNgayConLai = soNgayConLai
-            };
-
-            return View(viewModel);
+            return View("Index");
+        
         }
-
         // ==================== HỢP ĐỒNG CỦA TÔI ====================
         public async Task<IActionResult> HopDongCuaToi()
         {
@@ -103,8 +65,10 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (khachHang == null) return RedirectToAction("Index", "Login");
 
+            // CHỈ LẤY HỢP ĐỒNG CỦA KHÁCH NÀY
             var hopDongs = await _context.HopDong
-                .Where(h => h.MaKhachHang == khachHang.MaKhachHang)
+                .Include(h => h.PhongNavigation)
+                .Where(h => h.MaKhachHang == khachHang.MaKhachHang)  // Quan trọng!
                 .OrderByDescending(h => h.NgayBatDau)
                 .ToListAsync();
 
@@ -137,22 +101,74 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // ==================== CHI TIẾT HÓA ĐƠN ====================
+        // ==================== CHI TIẾT HÓA ĐƠN (CHO KHÁCH) ====================
         public async Task<IActionResult> HoaDonChiTiet(int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Index", "Login");
 
+            var khachHang = await _context.KhachHang
+                .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
+
+            if (khachHang == null) return RedirectToAction("Index", "Login");
+
+            // Lấy hóa đơn và kiểm tra quyền sở hữu
             var hoaDon = await _context.HoaDon
+                .Include(h => h.HopDongNavigation)
+                    .ThenInclude(h => h.PhongNavigation)
+                .Include(h => h.HopDongNavigation)
+                    .ThenInclude(h => h.KhachHangNavigation)
                 .FirstOrDefaultAsync(h => h.MaHoaDon == id);
 
             if (hoaDon == null) return NotFound();
+
+            // Kiểm tra hóa đơn có thuộc về khách này không
+            if (hoaDon.HopDongNavigation?.MaKhachHang != khachHang.MaKhachHang)
+            {
+                TempData["Error"] = "Bạn không có quyền xem hóa đơn này!";
+                return RedirectToAction("HoaDonCuaToi");
+            }
 
             var chiTietHoaDons = await _context.ChiTietHoaDon
                 .Where(ct => ct.MaHoaDon == id)
                 .ToListAsync();
 
+            // Lấy số người ở
+            int soNguoiO = await _context.NguoiOHopDong
+                .CountAsync(n => n.MaHopDong == hoaDon.MaHopDong);
+            int soNguoi = soNguoiO + 1;
+
+            // Lấy chỉ số từ chi tiết hóa đơn
+            var chiSoDienCu = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện cũ")?.SoLuong ?? 0;
+            var chiSoDienMoi = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện mới")?.SoLuong ?? 0;
+            var chiSoNuocCu = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số nước cũ")?.SoLuong ?? 0;
+            var chiSoNuocMoi = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số nước mới")?.SoLuong ?? 0;
+            var giaDien = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Đơn giá điện")?.DonGia ?? 3500;
+            var giaNuoc = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Đơn giá nước")?.DonGia ?? 30000;
+            var tienPhatSinh = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Phí phát sinh")?.ThanhTien ?? 0;
+
+            // Tính toán
+            var soDien = Math.Max(0, chiSoDienMoi - chiSoDienCu);
+            var soNuoc = Math.Max(0, chiSoNuocMoi - chiSoNuocCu);
+            var tienDien = soDien * giaDien;
+            var tienNuoc = soNuoc * giaNuoc;
+            var tienDichVu = soNguoi * 200000;
+            var tongTien = (hoaDon.HopDongNavigation?.PhongNavigation?.GiaPhong ?? 0) + tienDien + tienNuoc + tienDichVu + tienPhatSinh;
+
+            ViewBag.HopDong = hoaDon.HopDongNavigation;
             ViewBag.ChiTietHoaDons = chiTietHoaDons;
+            ViewBag.SoNguoi = soNguoi;
+            ViewBag.ChiSoDienCu = chiSoDienCu;
+            ViewBag.ChiSoDienMoi = chiSoDienMoi;
+            ViewBag.ChiSoNuocCu = chiSoNuocCu;
+            ViewBag.ChiSoNuocMoi = chiSoNuocMoi;
+            ViewBag.GiaDien = giaDien;
+            ViewBag.GiaNuoc = giaNuoc;
+            ViewBag.TienPhatSinh = tienPhatSinh;
+            ViewBag.TongTien = tongTien;
+
             return View(hoaDon);
+        
         }
 
         // ==================== LỊCH SỬ THANH TOÁN ====================
@@ -223,6 +239,55 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             TempData["Success"] = "Đổi mật khẩu thành công!";
             return RedirectToAction("Dashboard");
+        }
+        // ==================== CHI TIẾT HỢP ĐỒNG (CHO KHÁCH) ====================
+        public async Task<IActionResult> HopDongChiTiet(int id)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var role = HttpContext.Session.GetString("Role");
+
+            if (userId == null || role != "Khach")
+            {
+                return RedirectToAction("Index", "Login");
+            }
+
+            // Tìm khách hàng
+            var khachHang = await _context.KhachHang
+                .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
+
+            if (khachHang == null)
+            {
+                return RedirectToAction("Index", "Login");
+            }
+
+            // Lấy hợp đồng và kiểm tra quyền sở hữu
+            var hopDong = await _context.HopDong
+                .Include(h => h.PhongNavigation)
+                .ThenInclude(p => p.CoSo)
+                .FirstOrDefaultAsync(h => h.MaHopDong == id && h.MaKhachHang == khachHang.MaKhachHang);
+
+            if (hopDong == null)
+            {
+                TempData["Error"] = "Không tìm thấy hợp đồng hoặc bạn không có quyền xem!";
+                return RedirectToAction("HopDongCuaToi");
+            }
+
+            // Lấy danh sách người ở
+            var nguoiOList = await _context.NguoiOHopDong
+                .Where(n => n.MaHopDong == id)
+                .ToListAsync();
+
+            // Lấy danh sách hóa đơn
+            var hoaDons = await _context.HoaDon
+                .Where(h => h.MaHopDong == id)
+                .OrderByDescending(h => h.Nam)
+                .ThenByDescending(h => h.Thang)
+                .ToListAsync();
+
+            ViewBag.NguoiOList = nguoiOList;
+            ViewBag.HoaDons = hoaDons;
+
+            return View(hopDong);
         }
 
         // ==================== QUẢN LÝ KHÁCH HÀNG (CHO CHỦ TRỌ) ====================

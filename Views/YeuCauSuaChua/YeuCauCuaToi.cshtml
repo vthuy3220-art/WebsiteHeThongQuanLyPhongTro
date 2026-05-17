@@ -1,0 +1,70 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.YeuCauSuaChua>
+
+@{
+    ViewData["Title"] = "Yêu cầu của tôi";
+    Layout = "_Layout";
+}
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
+        <h2 class="text-xl font-bold text-white">📋 Danh sách yêu cầu sửa chữa</h2>
+    </div>
+
+    <div class="p-4">
+        @if (Model != null && Model.Any())
+        {
+            <table class="w-full">
+                <thead class="bg-gray-100">
+                    <tr class="border-b">
+                        <th class="p-2 text-left">Mã</th>
+                        <th class="p-2 text-left">Tiêu đề</th>
+                        <th class="p-2 text-left">Phòng</th>
+                        <th class="p-2 text-left">Ngày gửi</th>
+                        <th class="p-2 text-left">Trạng thái</th>
+                        <th class="p-2 text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr class="border-b">
+                            <td class="p-2">@item.MaYeuCau</td>
+                            <td class="p-2">@item.TieuDe</td>
+                            <td class="p-2">@item.PhongNavigation?.TenPhong</td>
+                            <td class="p-2">@item.NgayTao.ToString("dd/MM/yyyy")</td>
+                            <td class="p-2">
+                                @if (item.TrangThai == "Chờ xử lý")
+                                {
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Chờ xử lý</span>
+                                }
+                                else if (item.TrangThai == "Đã tiếp nhận")
+                                {
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">Đã tiếp nhận</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Đã hoàn thành</span>
+                                }
+                            </td>
+                            <td class="p-2 text-center">
+                                <a asp-action="KhachDetails" asp-route-id="@item.MaYeuCau" class="text-blue-500 hover:text-blue-700">
+                                    <i class="fas fa-eye"></i> Chi tiết
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="text-center py-8">
+                <i class="fas fa-tools text-gray-300 text-5xl mb-3"></i>
+                <p class="text-gray-500">Bạn chưa có yêu cầu sửa chữa nào</p>
+                <a asp-action="TaoYeuCau" class="mt-3 inline-block bg-orange-500 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-plus mr-1"></i> Tạo yêu cầu mới
+                </a>
+            </div>
+        }
+    </div>
+</div>

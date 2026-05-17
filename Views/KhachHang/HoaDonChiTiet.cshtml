@@ -3,83 +3,115 @@
 @{
     ViewData["Title"] = "Chi tiết hóa đơn";
     Layout = "_Layout";
-    var chiTietHoaDons = ViewBag.ChiTietHoaDons as List<HeThongQuanLyPhongTro.Models.ChiTietHoaDon>;
+    var hopDong = ViewBag.HopDong as HeThongQuanLyPhongTro.Models.HopDong;
+    var phong = hopDong?.PhongNavigation;
+    var soNguoi = ViewBag.SoNguoi ?? 1;
+    var chiSoDienCu = ViewBag.ChiSoDienCu ?? 0;
+    var chiSoDienMoi = ViewBag.ChiSoDienMoi ?? 0;
+    var chiSoNuocCu = ViewBag.ChiSoNuocCu ?? 0;
+    var chiSoNuocMoi = ViewBag.ChiSoNuocMoi ?? 0;
+    var giaDien = ViewBag.GiaDien ?? 3500;
+    var giaNuoc = ViewBag.GiaNuoc ?? 30000;
+    var tienPhatSinh = ViewBag.TienPhatSinh ?? 0;
+    var tongTien = ViewBag.TongTien ?? Model.TongTien ?? 0;
+
+    var soDien = Math.Max(0, chiSoDienMoi - chiSoDienCu);
+    var soNuoc = Math.Max(0, chiSoNuocMoi - chiSoNuocCu);
+    var tienDien = soDien * giaDien;
+    var tienNuoc = soNuoc * giaNuoc;
+    var tienDichVu = soNguoi * 200000;
 }
 
-<div class="bg-white rounded-xl shadow-md overflow-hidden">
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
-        <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <i class="fas fa-receipt"></i> Chi tiết hóa đơn
-        </h2>
-    </div>
-
-    <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="p-3 bg-gray-50 rounded-lg">
-                <span class="text-gray-500">Mã hóa đơn:</span>
-                <span class="font-semibold ml-2">@Model.MaHoaDon</span>
-            </div>
-            <div class="p-3 bg-gray-50 rounded-lg">
-                <span class="text-gray-500">Tháng/Năm:</span>
-                <span class="font-semibold ml-2">@Model.Thang/@Model.Nam</span>
-            </div>
-            <div class="p-3 bg-gray-50 rounded-lg">
-                <span class="text-gray-500">Trạng thái:</span>
-                <span class="ml-2 px-2 py-1 rounded-full text-xs @(Model.TrangThai == "Chưa thanh toán" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")">
-                    @Model.TrangThai
-                </span>
-            </div>
-            <div class="p-3 bg-gray-50 rounded-lg">
-                <span class="text-gray-500">Ngày tạo:</span>
-                <span class="font-semibold ml-2">@(Model.NgayTao?.ToString("dd/MM/yyyy") ?? "N/A")</span>
-            </div>
+<div class="max-w-3xl mx-auto space-y-4">
+    @if (Model.TrangThai == "Đã thanh toán")
+    {
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 rounded">
+            <i class="fas fa-check-circle mr-2"></i> ✅ Hóa đơn này đã được thanh toán.
         </div>
+    }
 
-        <h3 class="font-bold text-lg mb-3">Chi tiết khoản thu</h3>
+    <!-- Hóa đơn -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-3">
+            <h2 class="text-xl font-bold text-white">🧾 HÓA ĐƠN TIỀN PHÒNG</h2>
+            <p class="text-white text-sm">Mã: @Model.MaHoaDon.ToString("00000")</p>
+        </div>
+        <div class="p-5">
+            <div class="grid grid-cols-2 gap-3 text-sm mb-4 pb-3 border-b">
+                <div><span class="font-semibold">Phòng:</span> @phong?.TenPhong</div>
+                <div><span class="font-semibold">Khách hàng:</span> @hopDong?.KhachHangNavigation?.HoTen</div>
+                <div><span class="font-semibold">Tháng:</span> @Model.Thang/@Model.Nam</div>
+                <div><span class="font-semibold">Hạn thanh toán:</span> <span class="text-red-600">@(Model.NgayTao?.AddDays(7).ToString("dd/MM/yyyy") ?? "N/A")</span></div>
+            </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 py-2 text-left">Loại khoản thu</th>
-                        <th class="px-4 py-2 text-right">Số lượng</th>
-                        <th class="px-4 py-2 text-right">Đơn giá</th>
-                        <th class="px-4 py-2 text-right">Thành tiền</th>
+            <table class="w-full text-sm">
+                <thead class="bg-gray-100">
+                    <tr class="border-b">
+                        <th class="p-2 text-left">Khoản mục</th>
+                        <th class="p-2 text-left">Chi tiết</th>
+                        <th class="p-2 text-right">Thành tiền</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (chiTietHoaDons != null && chiTietHoaDons.Any())
+                    <tr class="border-b"><td class="p-2">Tiền phòng</td><td class="p-2">@phong?.TenPhong</td><td class="p-2 text-right">@String.Format("{0:N0}", phong?.GiaPhong) đ</td></tr>
+                    <tr class="border-b"><td class="p-2">Tiền điện</td><td class="p-2">@soDien kWh × @String.Format("{0:N0}", giaDien) đ</td><td class="p-2 text-right">@String.Format("{0:N0}", tienDien) đ</td></tr>
+                    <tr class="border-b"><td class="p-2">Tiền nước</td><td class="p-2">@soNuoc m³ × @String.Format("{0:N0}", giaNuoc) đ</td><td class="p-2 text-right">@String.Format("{0:N0}", tienNuoc) đ</td></tr>
+                    <tr class="border-b"><td class="p-2">Phí dịch vụ</td><td class="p-2">@soNguoi người × 200.000đ</td><td class="p-2 text-right">@String.Format("{0:N0}", tienDichVu) đ</td></tr>
+                    @if (tienPhatSinh > 0)
                     {
-                        @foreach (var item in chiTietHoaDons)
-                        {
-                            <tr class="border-b">
-                                <td class="px-4 py-2">@item.LoaiKhoanThu</td>
-                                <td class="px-4 py-2 text-right">@item.SoLuong</td>
-                                <td class="px-4 py-2 text-right">@String.Format("{0:N0}", item.DonGia) VNĐ</td>
-                                <td class="px-4 py-2 text-right">@String.Format("{0:N0}", item.ThanhTien) VNĐ</td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="4" class="px-4 py-4 text-center text-gray-500">Không có chi tiết hóa đơn</td>
-                        </tr>
+                        <tr class="border-b"><td class="p-2">Phí phát sinh</td><td class="p-2">Sửa chữa/phát sinh</td><td class="p-2 text-right">@String.Format("{0:N0}", tienPhatSinh) đ</td></tr>
                     }
                 </tbody>
-                <tfoot class="bg-gray-100">
-                    <tr>
-                        <td colspan="3" class="px-4 py-3 text-right font-bold">Tổng cộng:</td>
-                        <td class="px-4 py-3 text-right font-bold text-red-600">@String.Format("{0:N0}", Model.TongTien) VNĐ</td>
-                    </tr>
+                <tfoot class="bg-yellow-50">
+                    <tr><td colspan="2" class="p-2 font-bold">Tổng cộng</td><td class="p-2 text-right font-bold text-red-600">@String.Format("{0:N0}", tongTien) đ</td></tr>
                 </tfoot>
             </table>
         </div>
+    </div>
 
-        <div class="mt-6">
-            <a asp-action="HoaDonCuaToi" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-all">
-                <i class="fas fa-arrow-left mr-2"></i> Quay lại
-            </a>
+    <!-- QR và nút xác nhận -->
+    @if (Model.TrangThai == "Chưa thanh toán")
+    {
+        <div class="bg-white rounded-xl shadow-md p-5 text-center">
+            <h3 class="font-bold text-lg mb-3">📱 Quét mã QR để thanh toán</h3>
+            <img src="/images/qr_code.jpg" class="mx-auto w-36 h-36" />
+            <div class="mt-3 text-left bg-gray-50 p-3 rounded-lg text-sm">
+                <p><strong>Ngân hàng:</strong> Techcombank</p>
+                <p><strong>Số tài khoản:</strong> 19072789933016</p>
+                <p><strong>Chủ tài khoản:</strong> Vũ Thị Thanh Thúy</p>
+                <p><strong>Nội dung:</strong> <span class="font-mono text-blue-600">TT_HD@Model.MaHoaDon_@Model.Thang@Model.Nam</span></p>
+                <p><strong>Số tiền:</strong> <span class="font-bold text-red-600">@String.Format("{0:N0}", tongTien) đ</span></p>
+            </div>
+
+            @if (Model.KhachXacNhan != true)
+            {
+                <div class="bg-yellow-50 rounded-lg p-3 mt-4">
+                    <p class="text-yellow-800 text-sm mb-2">Sau khi chuyển khoản thành công, bấm nút bên dưới để xác nhận!</p>
+                    <form method="post" asp-action="KhachXacNhan" asp-controller="HoaDon" id="frmXacNhan">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.MaHoaDon" />
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg w-full hover:bg-blue-600">
+                            <i class="fas fa-check-circle mr-2"></i> Tôi đã chuyển khoản
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div class="bg-green-50 rounded-lg p-3 mt-4">
+                    <p class="text-green-800">Đã gửi xác nhận! Chủ trọ sẽ kiểm tra và cập nhật.</p>
+                </div>
+            }
         </div>
+    }
+
+    <!-- Nút quay lại -->
+    <div class="flex gap-3">
+        <a asp-action="HoaDonCuaToi" class="bg-gray-500 text-white px-4 py-2 rounded-lg text-center hover:bg-gray-600">
+            <i class="fas fa-arrow-left mr-2"></i> Quay lại
+        </a>
+        <a asp-action="XuatPdf" asp-controller="HoaDon" asp-route-id="@Model.MaHoaDon" target="_blank" class="bg-red-500 text-white px-4 py-2 rounded-lg text-center hover:bg-red-600">
+            <i class="fas fa-file-pdf mr-2"></i> Xuất PDF
+        </a>
     </div>
 </div>

@@ -18,8 +18,11 @@ namespace HeThongQuanLyPhongTro.Models
         public decimal? TongTien { get; set; }
 
         public string? TrangThai { get; set; } = "Chưa thanh toán";
-
         public DateTime? NgayTao { get; set; } = DateTime.Now;
+        public bool? KhachXacNhan { get; set; } = false;
+        public DateTime? NgayKhachXacNhan { get; set; }
+        public bool? ChuXacNhan { get; set; } = false;
+        public DateTime? NgayChuXacNhan { get; set; }
 
         [ForeignKey("MaHopDong")]
         public virtual HopDong? HopDongNavigation { get; set; }

@@ -172,7 +172,55 @@
                     </div>
                 }
             </div>
-
+            <!-- Hóa đơn - VẪN HIỂN THỊ DÙ HỢP ĐỒNG ĐÃ KẾT THÚC -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden mt-4">
+                <div class="bg-gray-50 px-6 py-3 border-b">
+                    <h3 class="font-semibold">🧾 Danh sách hóa đơn</h3>
+                </div>
+                <div class="p-4">
+                    @if (ViewBag.HoaDons != null && ((List<HoaDon>)ViewBag.HoaDons).Any())
+                    {
+                        <table class="w-full">
+                            <thead class="bg-gray-100">
+                                <tr class="border-b">
+                                    <th class="p-2 text-left">Mã hóa đơn</th>
+                                    <th class="p-2 text-left">Tháng/Năm</th>
+                                    <th class="p-2 text-right">Tổng tiền</th>
+                                    <th class="p-2 text-left">Trạng thái</th>
+                                    <th class="p-2 text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in ViewBag.HoaDons)
+                                {
+                                    <tr class="border-b">
+                                        <td class="p-2">@item.MaHoaDon.ToString("00000")</td>
+                                        <td class="p-2">@item.Thang/@item.Nam</td>
+                                        <td class="p-2 text-right">@String.Format("{0:N0}", item.TongTien) đ</td>
+                                        <td class="p-2">
+                                            @if (item.TrangThai == "Đã thanh toán")
+                                            {
+                                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Đã thanh toán</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Chưa thanh toán</span>
+                                            }
+                                        </td>
+                                        <td class="p-2 text-center">
+                                            <a asp-controller="HoaDon" asp-action="Details" asp-route-id="@item.MaHoaDon" class="text-blue-500 hover:underline">Chi tiết</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-gray-500 text-center">Chưa có hóa đơn nào</p>
+                    }
+                </div>
+            </div>
             <!-- Nút thao tác -->
             <div class="flex justify-end space-x-3 mt-6 pt-4 border-t">
                 @if (Model.TrangThai == "Hiệu lực")
@@ -185,9 +233,29 @@
                         </button>
                     </form>
                 }
-                <a asp-action="Index" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
-                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
-                </a>
+                @{
+                    var role = ViewBag.Role ?? Context.Session.GetString("Role");
+                }
+
+                <div class="mt-4 flex gap-3">
+                    @if (role == "Admin")
+                    {
+                        <a asp-action="Index" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i> Quay lại danh sách
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="KhachHang" asp-action="HopDongCuaToi" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i> Quay lại hợp đồng của tôi
+                        </a>
+                    }
+
+                    <a asp-action="XuatPdf" asp-route-id="@Model.MaHopDong" target="_blank" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-file-pdf mr-2"></i> Xuất PDF
+                    </a>
+                </div>
+                
             </div>
         </div>
     </div>
