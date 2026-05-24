@@ -15,6 +15,24 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             _context = context;
         }
+        // ==================== TRANG CHỦ MẶC ĐỊNH CỦA KHÁCH HÀNG ====================
+        public IActionResult Index()
+        {
+            var role = HttpContext.Session.GetString("Role");
+
+            // Phân luồng tùy theo vai trò
+            if (role == "Admin")
+            {
+                return RedirectToAction("QuanLy");
+            }
+            else if (role == "Khach")
+            {
+                return RedirectToAction("Dashboard");
+            }
+
+            // Nếu chưa đăng nhập hoặc mất Session thì đuổi về trang Login
+            return RedirectToAction("Index", "Login");
+        }
         // ==================== DASHBOARD CHO KHÁCH HÀNG ====================
         public async Task<IActionResult> Dashboard()
         {
@@ -52,7 +70,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             ViewBag.HopDong = hopDong;
 
             return View("Index");
-        
+
         }
         // ==================== HỢP ĐỒNG CỦA TÔI ====================
         public async Task<IActionResult> HopDongCuaToi()
@@ -168,7 +186,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             ViewBag.TongTien = tongTien;
 
             return View(hoaDon);
-        
+
         }
 
         // ==================== LỊCH SỬ THANH TOÁN ====================
@@ -358,6 +376,107 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction(nameof(QuanLy));
             }
             return View(khachHang);
+        }
+
+
+        // ==================== XEM CHI TIẾT KHÁCH HÀNG (CHO ADMIN) ====================
+        public async Task<IActionResult> Details(int? id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            if (id == null) return NotFound();
+
+            var khachHang = await _context.KhachHang
+                .FirstOrDefaultAsync(m => m.MaKhachHang == id);
+
+            if (khachHang == null) return NotFound();
+
+            return View(khachHang);
+        }
+
+        // ==================== SỬA KHÁCH HÀNG (CHO ADMIN) ====================
+        public async Task<IActionResult> Edit(int? id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            if (id == null) return NotFound();
+
+            var khachHang = await _context.KhachHang.FindAsync(id);
+            if (khachHang == null) return NotFound();
+
+            return View(khachHang);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, KhachHang khachHang)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            if (id != khachHang.MaKhachHang) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(khachHang);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "Cập nhật thông tin khách hàng thành công!";
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.KhachHang.Any(e => e.MaKhachHang == khachHang.MaKhachHang))
+                        return NotFound();
+                    else
+                        throw;
+                }
+                return RedirectToAction(nameof(QuanLy));
+            }
+            return View(khachHang);
+        }
+
+        // ==================== XÓA KHÁCH HÀNG (CHO ADMIN) ====================
+        public async Task<IActionResult> Delete(int? id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            if (id == null) return NotFound();
+
+            var khachHang = await _context.KhachHang
+                .FirstOrDefaultAsync(m => m.MaKhachHang == id);
+
+            if (khachHang == null) return NotFound();
+
+            return View(khachHang);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            var khachHang = await _context.KhachHang.FindAsync(id);
+            if (khachHang != null)
+            {
+                // Xóa luôn tài khoản đăng nhập liên kết với khách hàng này (nếu có)
+                if (khachHang.MaTaiKhoan != null)
+                {
+                    var taiKhoan = await _context.TaiKhoan.FindAsync(khachHang.MaTaiKhoan);
+                    if (taiKhoan != null) _context.TaiKhoan.Remove(taiKhoan);
+                }
+
+                _context.KhachHang.Remove(khachHang);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Xóa khách hàng và tài khoản liên kết thành công!";
+            }
+
+            return RedirectToAction(nameof(QuanLy));
         }
     }
 }

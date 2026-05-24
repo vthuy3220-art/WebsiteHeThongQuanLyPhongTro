@@ -1,0 +1,19 @@
+﻿<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 py-12 px-4">
+    <div class="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Xác thực OTP</h2>
+        <p class="text-sm text-gray-500 text-center mb-6">Mã 6 số đã được gửi tới email của bạn.</p>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="text-red-500 mb-4 text-sm font-bold text-center">@ViewBag.Error</div>
+        }
+
+        <form method="post" class="space-y-4">
+            <div>
+                <input type="text" name="otp" required maxlength="6" class="w-full px-4 py-4 text-center text-2xl tracking-[0.5em] border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="------" />
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all">Xác thực mã</button>
+        </form>
+    </div>
+</div>
+ 

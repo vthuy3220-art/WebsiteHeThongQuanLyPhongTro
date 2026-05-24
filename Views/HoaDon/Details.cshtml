@@ -7,7 +7,6 @@
     var soNguoi = ViewBag.SoNguoi ?? 1;
     var chiTietHoaDons = ViewBag.ChiTietHoaDons as List<HeThongQuanLyPhongTro.Models.ChiTietHoaDon>;
 
-    // Lấy giá trị từ ViewBag (đã được tính tự động)
     var chiSoDienCu = ViewBag.ChiSoDienCu ?? 0;
     var chiSoDienMoi = ViewBag.ChiSoDienMoi ?? 0;
     var chiSoNuocCu = ViewBag.ChiSoNuocCu ?? 0;
@@ -16,11 +15,8 @@
     var giaNuoc = ViewBag.GiaNuoc ?? 15000;
     var tienPhatSinh = ViewBag.TienPhatSinh ?? 0;
 
-    // Tính toán hiển thị
-    var soDien = chiSoDienMoi - chiSoDienCu;
-    var soNuoc = chiSoNuocMoi - chiSoNuocCu;
-    if (soDien < 0) soDien = 0;
-    if (soNuoc < 0) soNuoc = 0;
+    var soDien = Math.Max(0, chiSoDienMoi - chiSoDienCu);
+    var soNuoc = Math.Max(0, chiSoNuocMoi - chiSoNuocCu);
     var tienDien = soDien * giaDien;
     var tienNuoc = soNuoc * giaNuoc;
     var tienDichVu = soNguoi * 200000;
@@ -28,105 +24,137 @@
 
 <div style="max-width: 900px; margin: 0 auto;">
 
+    <!-- THÔNG BÁO -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 mb-3 rounded">
+            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 mb-3 rounded">
+            <i class="fas fa-exclamation-triangle mr-2"></i> @TempData["Warning"]
+        </div>
+    }
+    @if (TempData["EmailSent"] != null)
+    {
+        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 mb-3 rounded">
+            <i class="fas fa-envelope mr-2"></i> @TempData["EmailSent"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-3 rounded">
+            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+        </div>
+    }
+
     @if (Model.TrangThai == "Đã thanh toán")
     {
         <div style="background: #d4edda; padding: 10px; margin-bottom: 20px; text-align: center; border-radius: 5px;">
-            ✅ Hóa đơn này đã được thanh toán. Không thể chỉnh sửa.
+            ✅ Hóa đơn này đã được thanh toán.
         </div>
     }
 
-    @if (Model.TrangThai == "Chưa thanh toán")
+    <!-- FORM CẬP NHẬT CHỈ SỐ (CHỦ TRỌ) -->
+    @if (Context.Session.GetString("Role") == "Admin" && Model.TrangThai == "Chưa thanh toán")
     {
         <div style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd;">
             <h4 style="margin: 0 0 10px 0;">⚡ Cập nhật chỉ số điện nước</h4>
-            <form asp-action="CapNhatChiTietHoaDon" method="post" id="frmCapNhat">
+            <form asp-action="CapNhatChiTietHoaDon" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="maHoaDon" value="@Model.MaHoaDon" />
                 <input type="hidden" name="soNguoi" value="@soNguoi" />
-
-                <!-- HIỂN THỊ CHỈ SỐ CŨ (TỰ ĐỘNG, READONLY) -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
                     <div style="background: #e9ecef; padding: 8px; border-radius: 4px;">
-                        <label style="font-size: 12px;">Điện cũ (kWh)</label>
-                        <input type="text" id="hienThiDienCu" style="width:100%; padding:5px; background:#e9ecef; border:1px solid #ccc;" value="@chiSoDienCu" readonly disabled />
+                        <label>Điện cũ (kWh)</label>
+                        <input type="text" class="w-full p-2 bg-gray-100 border rounded" value="@chiSoDienCu" readonly disabled />
                     </div>
                     <div>
-                        <label style="font-size: 12px;">Điện mới (kWh)</label>
-                        <input type="number" name="chiSoDienMoi" id="chiSoDienMoi" style="width:100%; padding:5px;" value="@chiSoDienMoi" />
+                        <label>Điện mới (kWh)</label>
+                        <input type="number" name="chiSoDienMoi" id="chiSoDienMoi" class="w-full p-2 border rounded" value="@chiSoDienMoi" />
                     </div>
                     <div style="background: #e9ecef; padding: 8px; border-radius: 4px;">
-                        <label style="font-size: 12px;">Nước cũ (m³)</label>
-                        <input type="text" id="hienThiNuocCu" style="width:100%; padding:5px; background:#e9ecef; border:1px solid #ccc;" value="@chiSoNuocCu" readonly disabled />
+                        <label>Nước cũ (m³)</label>
+                        <input type="text" class="w-full p-2 bg-gray-100 border rounded" value="@chiSoNuocCu" readonly disabled />
                     </div>
                     <div>
-                        <label style="font-size: 12px;">Nước mới (m³)</label>
-                        <input type="number" name="chiSoNuocMoi" id="chiSoNuocMoi" style="width:100%; padding:5px;" value="@chiSoNuocMoi" />
+                        <label>Nước mới (m³)</label>
+                        <input type="number" name="chiSoNuocMoi" id="chiSoNuocMoi" class="w-full p-2 border rounded" value="@chiSoNuocMoi" />
+                    </div>
+                    <div>
+                        <label>Đơn giá điện (đ/kWh)</label>
+                        <input type="number" name="giaDien" id="giaDien" class="w-full p-2 border rounded" value="@giaDien" />
+                    </div>
+                    <div>
+                        <label>Đơn giá nước (đ/m³)</label>
+                        <input type="number" name="giaNuoc" id="giaNuoc" class="w-full p-2 border rounded" value="@giaNuoc" />
+                    </div>
+                    <div>
+                        <label>Phí phát sinh (VNĐ)</label>
+                        <input type="number" name="tienPhatSinh" id="tienPhatSinh" class="w-full p-2 border rounded" value="@tienPhatSinh" />
                     </div>
                 </div>
-
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;">
-                    <div><label>Đơn giá điện (đ/kWh)</label><input type="number" name="giaDien" id="giaDien" style="width:100%; padding:5px;" value="@giaDien" /></div>
-                    <div><label>Đơn giá nước (đ/m³)</label><input type="number" name="giaNuoc" id="giaNuoc" style="width:100%; padding:5px;" value="@giaNuoc" /></div>
-                    <div><label>Phí phát sinh (VNĐ)</label><input type="number" name="tienPhatSinh" id="tienPhatSinh" style="width:100%; padding:5px;" value="@tienPhatSinh" /></div>
-                </div>
-                <button type="submit" style="background: #007bff; color: white; border: none; padding: 6px 15px; border-radius: 4px;">Cập nhật</button>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Cập nhật</button>
             </form>
         </div>
     }
-    @if (Context.Session.GetString("Role") == "Khach") 
+
+    <!-- QR CODE CHO KHÁCH -->
+    @if (Context.Session.GetString("Role") == "Khach" && Model.TrangThai == "Chưa thanh toán")
     {
-    <!-- QR Code và thông tin chuyển khoản -->
-    <div class="bg-white rounded-lg shadow p-4 text-center mb-4">
-        <h3 class="font-bold text-lg mb-3">📱 Quét mã QR để thanh toán</h3>
-        @if (ViewBag.QRImagePath != null)
-        {
-            <img src="@ViewBag.QRImagePath" class="mx-auto w-48 h-48" />
-        }
-        else
-        {
-            <div class="w-48 h-48 bg-gray-200 rounded-lg mx-auto flex items-center justify-center">
-                <i class="fas fa-qrcode text-gray-400 text-6xl"></i>
+        <div class="bg-white rounded-lg shadow p-4 text-center mb-4">
+            <h3 class="font-bold text-lg mb-3">📱 Quét mã QR để thanh toán</h3>
+            <img src="/images/qr_code.jpg" class="mx-auto w-48 h-48" />
+            <div class="mt-4 text-left bg-gray-50 p-3 rounded-lg">
+                <p><strong>Ngân hàng:</strong> Techcombank</p>
+                <p><strong>Số tài khoản:</strong> 19072789933016</p>
+                <p><strong>Chủ tài khoản:</strong> Vũ Thị Thanh Thúy</p>
+                <p><strong>Nội dung:</strong> TT_HD@Model.MaHoaDon_@Model.Thang@Model.Nam</p>
+                <p><strong>Số tiền:</strong> <span class="font-bold text-red-600">@(Model.TongTien?.ToString("N0") ?? "0") đ</span></p>
             </div>
-        }
-        <div class="mt-4 text-left bg-gray-50 p-3 rounded-lg">
-            <p><strong>Ngân hàng:</strong> Techcombank</p>
-            <p><strong>Số tài khoản:</strong> 19072789933016</p>
-            <p><strong>Chủ tài khoản:</strong> Vũ Thị Thanh Thúy</p>
-            <p><strong>Nội dung chuyển khoản:</strong> <span class="font-mono text-blue-600">TT_HD@Model.MaHoaDon_@Model.Thang@Model.Nam</span></p>
-            <p><strong>Số tiền:</strong> <span class="font-bold text-red-600">@(Model.TongTien?.ToString("N0") ?? "0") đ</span></p>
-        </div>
-    </div>
-    }
-    <!-- Nút Khách xác nhận đã chuyển khoản (CHỈ HIỆN KHI CHƯA THANH TOÁN) -->
-    @if (Model.TrangThai == "Chưa thanh toán" && Model.KhachXacNhan != true)
-    {
-        <div class="bg-yellow-50 rounded-lg p-4 mb-4">
-            <p class="text-yellow-800 mb-2">⚠️ Sau khi chuyển khoản thành công, bấm nút bên dưới để xác nhận!</p>
-            <button id="btnKhachXacNhan" class="bg-blue-500 text-white px-4 py-2 rounded-lg w-full">
-                <i class="fas fa-check-circle mr-2"></i> Tôi đã chuyển khoản
-            </button>
         </div>
     }
 
-    <!-- Chủ trọ xác nhận (CHỈ ADMIN MỚI THẤY) -->
+    <!-- NÚT KHÁCH XÁC NHẬN -->
+    @if (Context.Session.GetString("Role") == "Khach" && Model.TrangThai == "Chưa thanh toán" && Model.KhachXacNhan != true)
+    {
+        <div class="bg-yellow-50 rounded-lg p-4 mb-4">
+            <p class="text-yellow-800 mb-2">⚠️ Sau khi chuyển khoản thành công, bấm nút bên dưới để xác nhận!</p>
+            <form method="post" asp-action="KhachXacNhan" asp-controller="HoaDon">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaHoaDon" />
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg w-full">
+                    <i class="fas fa-check-circle mr-2"></i> Tôi đã chuyển khoản
+                </button>
+            </form>
+        </div>
+    }
+
+    <!-- NÚT CHỦ TRỌ XÁC NHẬN -->
     @if (Context.Session.GetString("Role") == "Admin" && Model.KhachXacNhan == true && Model.TrangThai == "Chưa thanh toán")
     {
         <div class="bg-green-50 rounded-lg p-4 mb-4">
-            <p class="text-green-800 mb-2">Khách đã xác nhận chuyển khoản. Vui lòng kiểm tra tài khoản!</p>
-            <button id="btnChuXacNhan" class="bg-green-500 text-white px-4 py-2 rounded-lg w-full">
-                <i class="fas fa-money-bill-wave mr-2"></i> Xác nhận đã nhận tiền
-            </button>
+            <p class="text-green-800 mb-2">✅ Khách đã xác nhận chuyển khoản. Vui lòng kiểm tra tài khoản!</p>
+            <form method="post" asp-action="ChuXacNhan" asp-controller="HoaDon">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaHoaDon" />
+                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg w-full">
+                    <i class="fas fa-money-bill-wave mr-2"></i> Xác nhận đã nhận tiền
+                </button>
+            </form>
         </div>
     }
 
     @if (Model.TrangThai == "Đã thanh toán")
     {
-        <div class="bg-green-100 rounded-lg p-4 text-center">
+        <div class="bg-green-100 rounded-lg p-4 text-center mb-4">
             <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
-            <p class="text-green-700 font-semibold">Hóa đơn đã được thanh toán</p>
+            <p class="text-green-700 font-semibold">✅ Hóa đơn đã được thanh toán</p>
         </div>
     }
-  
+
     <!-- HÓA ĐƠN -->
     <div id="hoaDon" style="background: white; border: 1px solid #ddd; padding: 20px;">
         <div style="text-align: center; margin-bottom: 20px;">
@@ -136,35 +164,7 @@
             <h2 style="margin: 10px 0;">HÓA ĐƠN TIỀN PHÒNG</h2>
             <p><strong>Mã hóa đơn: @Model.MaHoaDon.ToString("00000")</strong></p>
         </div>
-        <script>
-            // Khách xác nhận đã chuyển khoản
-            document.getElementById('btnKhachXacNhan')?.addEventListener('click', function() {
-                if (confirm('Bạn đã chuyển khoản thành công? Nhấn OK để xác nhận.')) {
-                    fetch('@Url.Action("KhachXacNhan", "HoaDon")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        },
-                        body: JSON.stringify({ id: @Model.MaHoaDon })
-                    }).then(() => location.reload());
-                }
-            });
 
-            // Chủ trọ xác nhận đã nhận tiền
-            document.getElementById('btnChuXacNhan')?.addEventListener('click', function() {
-                if (confirm('Đã kiểm tra tài khoản và xác nhận đã nhận tiền?')) {
-                    fetch('@Url.Action("ChuXacNhan", "HoaDon")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        },
-                        body: JSON.stringify({ id: @Model.MaHoaDon })
-                    }).then(() => location.reload());
-                }
-            });
-        </script>
         <div style="margin-bottom: 20px;">
             <table style="width: 100%;">
                 <tr><td style="width: 120px;"><strong>Phòng:</strong></td><td>@phong?.TenPhong</td></tr>
@@ -178,53 +178,20 @@
 
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
-                <tr style="background: #f8f9fa; border-bottom: 1px solid #ddd;">
-                    <th style="padding: 8px; text-align: left;">Tiêu đề</th>
-                    <th style="padding: 8px; text-align: left;">Mô tả</th>
-                    <th style="padding: 8px; text-align: right;">Giá</th>
-                    <th style="padding: 8px; text-align: right;">Tổng</th>
-                </tr>
+                <tr><th style="padding: 8px; text-align: left;">Tiêu đề</th><th style="padding: 8px; text-align: left;">Mô tả</th><th style="padding: 8px; text-align: right;">Giá</th><th style="padding: 8px; text-align: right;">Tổng</th></tr>
             </thead>
             <tbody>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 8px;">Tiền phòng</td>
-                    <td style="padding: 8px;">@phong?.TenPhong - tháng @Model.Thang/@Model.Nam</td>
-                    <td style="padding: 8px; text-align: right;">@(phong?.GiaPhong.ToString("N0") ?? "0") đ</td>
-                    <td style="padding: 8px; text-align: right;">@(phong?.GiaPhong.ToString("N0") ?? "0") đ</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 8px;">Tiền điện</td>
-                    <td style="padding: 8px;">Số điện: @((chiSoDienMoi - chiSoDienCu).ToString("N0")) kWh × @giaDien.ToString("N0") đ</td>
-                    <td style="padding: 8px; text-align: right;">@tienDien.ToString("N0") đ</td>
-                    <td style="padding: 8px; text-align: right;">@tienDien.ToString("N0") đ</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 8px;">Tiền nước</td>
-                    <td style="padding: 8px;">Số nước: @((chiSoNuocMoi - chiSoNuocCu).ToString("N0")) m³ × @giaNuoc.ToString("N0") đ</td>
-                    <td style="padding: 8px; text-align: right;">@tienNuoc.ToString("N0") đ</td>
-                    <td style="padding: 8px; text-align: right;">@tienNuoc.ToString("N0") đ</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 8px;">Phí dịch vụ</td>
-                    <td style="padding: 8px;">@soNguoi người × 200.000đ</td>
-                    <td style="padding: 8px; text-align: right;">@((soNguoi * 200000).ToString("N0")) đ</td>
-                    <td style="padding: 8px; text-align: right;">@((soNguoi * 200000).ToString("N0")) đ</td>
-                </tr>
+                <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px;">Tiền phòng</td><td>@phong?.TenPhong - tháng @Model.Thang/@Model.Nam</td><td style="text-align: right;">@(phong?.GiaPhong.ToString("N0") ?? "0") đ</td><td style="text-align: right;">@(phong?.GiaPhong.ToString("N0") ?? "0") đ</td></tr>
+                <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px;">Tiền điện</td><td>Số điện: @soDien kWh × @giaDien.ToString("N0") đ</td><td style="text-align: right;">@tienDien.ToString("N0") đ</td><td style="text-align: right;">@tienDien.ToString("N0") đ</td></tr>
+                <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px;">Tiền nước</td><td>Số nước: @soNuoc m³ × @giaNuoc.ToString("N0") đ</td><td style="text-align: right;">@tienNuoc.ToString("N0") đ</td><td style="text-align: right;">@tienNuoc.ToString("N0") đ</td></tr>
+                <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px;">Phí dịch vụ</td><td>@soNguoi người × 200.000đ</td><td style="text-align: right;">@tienDichVu.ToString("N0") đ</td><td style="text-align: right;">@tienDichVu.ToString("N0") đ</td></tr>
                 @if (tienPhatSinh > 0)
                 {
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 8px;">Phí phát sinh</td>
-                        <td style="padding: 8px;">Sửa chữa/phát sinh</td>
-                        <td style="padding: 8px; text-align: right;">@tienPhatSinh.ToString("N0") đ</td>
-                        <td style="padding: 8px; text-align: right;">@tienPhatSinh.ToString("N0") đ</td>
-                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px;">Phí phát sinh</td><td>Sửa chữa/phát sinh</td><td style="text-align: right;">@tienPhatSinh.ToString("N0") đ</td><td style="text-align: right;">@tienPhatSinh.ToString("N0") đ</td></tr>
                 }
             </tbody>
             <tfoot>
-                <tr style="border-top: 2px solid #ddd;">
-                    <td colspan="3" style="padding: 8px; text-align: right; font-weight: bold;">Tổng cộng:</td>
-                    <td style="padding: 8px; text-align: right; font-weight: bold; font-size: 16px;" id="tongCongTd">@(Model.TongTien?.ToString("N0") ?? "0") đ</td>
-                </tr>
+                <tr style="border-top: 2px solid #ddd;"><td colspan="3" style="padding: 8px; text-align: right; font-weight: bold;">Tổng cộng:</td><td style="padding: 8px; text-align: right; font-weight: bold; font-size: 16px;" id="tongCongTd">@(Model.TongTien?.ToString("N0") ?? "0") đ</td></tr>
             </tfoot>
         </table>
 
@@ -235,163 +202,20 @@
     </div>
 
     <div style="text-align: center; margin-top: 20px;">
-        <a href="@Url.Action("XuatPdf", "HoaDon", new { id = Model.MaHoaDon })" target="_blank" style="background: #dc3545; color: white; padding: 8px 20px; border-radius: 4px; text-decoration: none; display: inline-block;">Xuất PDF</a>
-        @if (Model.TrangThai == "Chưa thanh toán")
-        {
-<button id="btnThanhToan" type="button" style="background: #007bff; color: white; border: none; padding: 8px 20px; border-radius: 4px; margin-left: 10px; cursor: pointer;">
-    <i class="fas fa-credit-card mr-1"></i> Thanh toán
-</button>            
-        }
+        <a href="@Url.Action("XuatPdf", "HoaDon", new { id = Model.MaHoaDon })" target="_blank" class="bg-red-500 text-white px-4 py-2 rounded inline-block">Xuất PDF</a>
     </div>
-    <script>
-        // Khách xác nhận đã chuyển khoản
-        document.getElementById('btnKhachXacNhan')?.addEventListener('click', function() {
-            if (confirm('Bạn đã chuyển khoản thành công? Nhấn OK để xác nhận.')) {
-                fetch('@Url.Action("KhachXacNhan", "HoaDon")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                    },
-                    body: JSON.stringify({ id: @Model.MaHoaDon })
-                }).then(() => location.reload());
-            }
-        });
-
-        // Chủ trọ xác nhận đã nhận tiền
-        document.getElementById('btnChuXacNhan')?.addEventListener('click', function() {
-            if (confirm('Đã kiểm tra tài khoản và xác nhận đã nhận tiền?')) {
-                fetch('@Url.Action("ChuXacNhan", "HoaDon")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                    },
-                    body: JSON.stringify({ id: @Model.MaHoaDon })
-                }).then(() => location.reload());
-            }
-        });
-    </script>
-    <button id="btnThanhToan" type="button" class="bg-green-500 text-white px-4 py-2 rounded-lg">
-        <i class="fas fa-credit-card mr-1"></i> Thanh toán
-    </button>
-
-    <!-- Modal thanh toán -->
-    <div id="modalThanhToan" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-        <div style="background:white; width:400px; margin:100px auto; padding:20px; border-radius:8px;">
-            <h3 class="font-bold mb-3">Thanh toán hóa đơn</h3>
-            <form asp-action="ThanhToan" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.MaHoaDon" />
-                <div class="mb-3">
-                    <label>Số tiền:</label>
-                    <input type="number" name="soTien" id="soTienThanhToan" value="@Model.TongTien" class="w-full p-2 border rounded" required />
-                </div>
-                <div class="mb-3">
-                    <label>Nội dung:</label>
-                    <input type="text" name="noiDung" value="Thanh toán hóa đơn tháng @Model.Thang/@Model.Nam" class="w-full p-2 border rounded" />
-                </div>
-                <div class="text-right">
-                    <button type="button" onclick="dongModal()" class="bg-gray-400 text-white px-3 py-1 rounded">Hủy</button>
-                    <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded">Xác nhận</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        function dongModal() {
-            document.getElementById('modalThanhToan').style.display = 'none';
-        }
-
-        document.getElementById('btnThanhToan')?.addEventListener('click', function() {
-            document.getElementById('modalThanhToan').style.display = 'block';
-        });
-    </script>
 </div>
 
 <script>
-    // Hàm đóng modal
-    function dongModal() {
-        document.getElementById('modalThanhToan').style.display = 'none';
-    }
-
-    // Mở modal thanh toán
-    var btnThanhToan = document.getElementById('btnThanhToan');
-    if (btnThanhToan) {
-        btnThanhToan.addEventListener('click', function(e) {
-            e.preventDefault();
-            var modal = document.getElementById('modalThanhToan');
-            if (modal) {
-                modal.style.display = 'block';
-            } else {
-                console.error('Không tìm thấy modal');
-                alert('Có lỗi, vui lòng thử lại!');
-            }
-        });
-    }
-
-    // Nút đóng modal (nếu có nút đóng)
-    var closeModalBtn = document.querySelector('#modalThanhToan .close-btn');
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', dongModal);
-    }
-
-    // Khách xác nhận đã chuyển khoản
-    var btnKhachXacNhan = document.getElementById('btnKhachXacNhan');
-    if (btnKhachXacNhan) {
-        btnKhachXacNhan.addEventListener('click', function() {
-            if (confirm('Bạn đã chuyển khoản thành công? Nhấn OK để xác nhận.')) {
-                fetch('@Url.Action("KhachXacNhan", "HoaDon")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                    },
-                    body: JSON.stringify({ id: @Model.MaHoaDon })
-                }).then(function(res) {
-                    if (res.ok) location.reload();
-                    else alert('Có lỗi xảy ra!');
-                }).catch(function(err) {
-                    console.error(err);
-                    alert('Có lỗi xảy ra, vui lòng thử lại!');
-                });
-            }
-        });
-    }
-
-    // Chủ trọ xác nhận đã nhận tiền
-    var btnChuXacNhan = document.getElementById('btnChuXacNhan');
-    if (btnChuXacNhan) {
-        btnChuXacNhan.addEventListener('click', function() {
-            if (confirm('Đã kiểm tra tài khoản và xác nhận đã nhận tiền?')) {
-                fetch('@Url.Action("ChuXacNhan", "HoaDon")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                    },
-                    body: JSON.stringify({ id: @Model.MaHoaDon })
-                }).then(function(res) {
-                    if (res.ok) location.reload();
-                    else alert('Có lỗi xảy ra!');
-                }).catch(function(err) {
-                    console.error(err);
-                    alert('Có lỗi xảy ra, vui lòng thử lại!');
-                });
-            }
-        });
-    }
-
-    // Hàm tính tiền
     function tinhTien() {
-        let dienCu = parseFloat(document.getElementById('chiSoDienCu')?.value) || 0;
         let dienMoi = parseFloat(document.getElementById('chiSoDienMoi')?.value) || 0;
-        let nuocCu = parseFloat(document.getElementById('chiSoNuocCu')?.value) || 0;
         let nuocMoi = parseFloat(document.getElementById('chiSoNuocMoi')?.value) || 0;
         let gDien = parseFloat(document.getElementById('giaDien')?.value) || 0;
         let gNuoc = parseFloat(document.getElementById('giaNuoc')?.value) || 0;
         let phatSinh = parseFloat(document.getElementById('tienPhatSinh')?.value) || 0;
+
+        let dienCu = @chiSoDienCu;
+        let nuocCu = @chiSoNuocCu;
 
         let soDien = Math.max(0, dienMoi - dienCu);
         let soNuoc = Math.max(0, nuocMoi - nuocCu);
@@ -402,24 +226,11 @@
 
         let tongTd = document.getElementById('tongCongTd');
         if (tongTd) tongTd.innerText = tong.toLocaleString('vi-VN') + ' đ';
-        let soTien = document.getElementById('soTienThanhToan');
-        if (soTien) soTien.value = tong;
     }
 
-    // Gắn sự kiện cho các input
     var inputs = ['chiSoDienMoi', 'chiSoNuocMoi', 'giaDien', 'giaNuoc', 'tienPhatSinh'];
     inputs.forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.addEventListener('input', tinhTien);
     });
-
-    tinhTien();
-
-    // Đóng modal khi click ra ngoài
-    window.onclick = function(event) {
-        var modal = document.getElementById('modalThanhToan');
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-    }
 </script>

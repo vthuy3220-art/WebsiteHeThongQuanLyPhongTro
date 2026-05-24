@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PuppeteerSharp;
 using PuppeteerSharp.Media;
+using System.IO;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -326,14 +327,20 @@ namespace HeThongQuanLyPhongTro.Controllers
             var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
             var phong = hoaDon.HopDongNavigation?.PhongNavigation;
 
-            // Gửi thông báo (nếu có service)
-            // await _thongBaoService.GuiAdmin(...);
+            if (_thongBaoService != null && khachHang != null)
+            {
+                await _thongBaoService.GuiAdmin(
+                    "💰 Khách hàng xác nhận thanh toán",
+                    $"Khách {khachHang.HoTen} - Phòng {phong?.TenPhong} đã xác nhận chuyển khoản cho hóa đơn tháng {hoaDon.Thang}/{hoaDon.Nam}. Vui lòng kiểm tra và xác nhận!",
+                    "warning",
+                    $"/HoaDon/Details/{hoaDon.MaHoaDon}"
+                );
+            }
 
             TempData["Success"] = "Đã gửi xác nhận! Chủ trọ sẽ kiểm tra và xác nhận thanh toán.";
             return RedirectToAction("HoaDonChiTiet", "KhachHang", new { id });
         }
 
-        // Chủ trọ xác nhận đã nhận tiền
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChuXacNhan(int id)
@@ -346,10 +353,16 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             var hoaDon = await _context.HoaDon
                 .Include(h => h.HopDongNavigation)
-                .ThenInclude(h => h.KhachHangNavigation)
+                    .ThenInclude(h => h.KhachHangNavigation)
+                .Include(h => h.HopDongNavigation)
+                    .ThenInclude(h => h.PhongNavigation)
                 .FirstOrDefaultAsync(h => h.MaHoaDon == id);
 
-            if (hoaDon == null) return NotFound();
+            if (hoaDon == null)
+            {
+                TempData["Error"] = "Không tìm thấy hóa đơn!";
+                return RedirectToAction("Index");
+            }
 
             if (hoaDon.TrangThai == "Đã thanh toán")
             {
@@ -372,24 +385,55 @@ namespace HeThongQuanLyPhongTro.Controllers
                 TrangThai = "Thành công"
             };
             _context.ThanhToan.Add(thanhToan);
-
             _context.Update(hoaDon);
             await _context.SaveChangesAsync();
 
-            // Gửi thông báo cho khách
-            var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
-            if (khachHang != null)
+            // ========== HIỂN THỊ THÔNG BÁO ==========
+            TempData["Success"] = "✅ Đã xác nhận thanh toán thành công!";
+
+            // ========== THỬ GỬI EMAIL (CÓ LOG) ==========
+            try
             {
-                await _thongBaoService.GuiKhach(
-                    khachHang.MaKhachHang,
-                    "Thanh toán thành công",
-                    $"Hóa đơn tháng {hoaDon.Thang}/{hoaDon.Nam} đã được xác nhận thanh toán. Cảm ơn bạn!",
-                    "success",
-                    $"/KhachHang/HoaDonChiTiet/{hoaDon.MaHoaDon}"
-                );
+                var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
+                if (khachHang != null && !string.IsNullOrEmpty(khachHang.Email))
+                {
+                    var pdfBytes = await TaoPdfHoaDon(id);
+                    if (pdfBytes != null && pdfBytes.Length > 0)
+                    {
+                        var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+                        var result = await emailService.GuiEmailHoaDon(
+                            khachHang.Email,
+                            khachHang.HoTen,
+                            hoaDon.MaHoaDon.ToString("00000"),
+                            pdfBytes
+                        );
+
+                        if (result)
+                        {
+                            TempData["EmailSent"] = $"📧 Đã gửi hóa đơn qua email {khachHang.Email}";
+                        }
+                        else
+                        {
+                            TempData["Warning"] = "⚠️ Xác nhận thành công nhưng gửi email thất bại!";
+                        }
+                    }
+                    else
+                    {
+                        TempData["Warning"] = "⚠️ Không thể tạo file PDF!";
+                    }
+                }
+                else
+                {
+                    TempData["Warning"] = $"⚠️ Khách hàng chưa có email! Email hiện tại: '{(khachHang != null ? khachHang.Email : "NULL")}'";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Warning"] = $"⚠️ Lỗi gửi email: {ex.Message}";
+                Console.WriteLine($"Lỗi gửi email: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
 
-            TempData["Success"] = "Đã xác nhận thanh toán! Hóa đơn đã được cập nhật.";
             return RedirectToAction("Details", new { id });
         }
         // ==================== THANH TOÁN HÓA ĐƠN ====================
@@ -845,5 +889,122 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
-    }
+        // ==================== TẠO PDF HÓA ĐƠN (HÀM PHỤ) ====================
+        private async Task<byte[]> TaoPdfHoaDon(int id)
+        {
+            var hoaDon = await _context.HoaDon
+                .Include(h => h.HopDongNavigation)
+                    .ThenInclude(h => h.PhongNavigation)
+                .Include(h => h.HopDongNavigation)
+                    .ThenInclude(h => h.KhachHangNavigation)
+                .FirstOrDefaultAsync(h => h.MaHoaDon == id);
+
+            if (hoaDon == null) return null;
+
+            var chiTietHoaDons = await _context.ChiTietHoaDon
+                .Where(c => c.MaHoaDon == id)
+                .ToListAsync();
+
+            var phong = hoaDon.HopDongNavigation?.PhongNavigation;
+            var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
+
+            // Lấy số người ở cùng
+            int soNguoiO = await _context.NguoiOHopDong
+                .CountAsync(n => n.MaHopDong == hoaDon.MaHopDong);
+            int soNguoi = soNguoiO + 1;
+
+            // Lấy chỉ số từ chi tiết hóa đơn
+            var chiSoDienCu = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện cũ")?.SoLuong ?? 0;
+            var chiSoDienMoi = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện mới")?.SoLuong ?? 0;
+            var chiSoNuocCu = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số nước cũ")?.SoLuong ?? 0;
+            var chiSoNuocMoi = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số nước mới")?.SoLuong ?? 0;
+            var giaDien = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Đơn giá điện")?.DonGia ?? 3500;
+            var giaNuoc = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Đơn giá nước")?.DonGia ?? 30000;
+            var tienPhatSinh = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Phí phát sinh")?.ThanhTien ?? 0;
+
+            // Tính toán
+            var soDien = Math.Max(0, (chiSoDienMoi - chiSoDienCu));
+            var soNuoc = Math.Max(0, (chiSoNuocMoi - chiSoNuocCu));
+            var tienDien = soDien * giaDien;
+            var tienNuoc = soNuoc * giaNuoc;
+            var tienDichVu = soNguoi * 200000;
+            var tongTien = (phong?.GiaPhong ?? 0) + tienDien + tienNuoc + tienDichVu + tienPhatSinh;
+            var ngayThanhToan = DateTime.Now.AddDays(7);
+
+            // Tạo HTML cho PDF
+            string htmlContent = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>HÓA ĐƠN THANH TOÁN</title>
+    <style>
+        body {{ font-family: 'Times New Roman', Times, serif; font-size: 14px; margin: 0; padding: 20px; background: white; }}
+        .invoice-box {{ max-width: 800px; margin: 0 auto; padding: 20px; background: white; }}
+        .header {{ text-align: center; margin-bottom: 25px; border-bottom: 2px solid #2563eb; padding-bottom: 15px; }}
+        .title {{ font-size: 22px; font-weight: bold; color: #1e3a8a; text-transform: uppercase; }}
+        .info-box {{ background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }}
+        .info-row {{ display: flex; justify-content: space-between; margin-bottom: 8px; padding: 5px 0; }}
+        .info-label {{ font-weight: bold; min-width: 100px; display: inline-block; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
+        th {{ background: #1e3a8a; color: white; padding: 10px; text-align: left; }}
+        td {{ padding: 10px; border-bottom: 1px solid #e2e8f0; }}
+        .text-right {{ text-align: right; }}
+        .total-row {{ background: #fef3c7; font-weight: bold; border-top: 2px solid #f59e0b; }}
+        .bank-box {{ background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 15px; margin-top: 20px; }}
+        .amount {{ font-size: 18px; font-weight: bold; color: #dc2626; }}
+        .footer {{ text-align: center; font-size: 11px; color: #888; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 15px; }}
+    </style>
+</head>
+<body>
+    <div class='invoice-box'>
+        <div class='header'>
+            <div class='title'>HÓA ĐƠN THANH TOÁN</div>
+            <div class='subtitle'>Phòng Trọ Xinh - Hệ thống quản lý phòng trọ</div>
+        </div>
+        <div class='info-box'>
+            <div class='info-row'><span><span class='info-label'>Mã hóa đơn:</span> {hoaDon.MaHoaDon:D5}</span><span><span class='info-label'>Ngày lập:</span> {DateTime.Now:dd/MM/yyyy}</span></div>
+            <div class='info-row'><span><span class='info-label'>Phòng:</span> {phong?.TenPhong ?? "N/A"}</span><span><span class='info-label'>Hạn thanh toán:</span> {ngayThanhToan:dd/MM/yyyy}</span></div>
+            <div class='info-row'><span><span class='info-label'>Khách hàng:</span> {khachHang?.HoTen ?? "N/A"}</span><span><span class='info-label'>Số điện thoại:</span> {khachHang?.SoDienThoai ?? "N/A"}</span></div>
+            <div class='info-row'><span><span class='info-label'>Email:</span> {khachHang?.Email ?? "N/A"}</span></div>
+        </div>
+        <table>
+            <thead><tr><th>Tiêu đề</th><th>Mô tả</th><th class='text-right'>Giá</th><th class='text-right'>Tổng</th></tr></thead>
+            <tbody>
+                <tr><td class='p-2'>Tiền phòng</td><td class='p-2'>{phong?.TenPhong ?? "N/A"} - tháng {hoaDon.Thang}/{hoaDon.Nam}</td><td class='p-2 text-right'>{(phong?.GiaPhong ?? 0):N0} đ</td><td class='p-2 text-right'>{(phong?.GiaPhong ?? 0):N0} đ</td></tr>
+                <tr><td class='p-2'>Tiền điện</td><td class='p-2'>Số điện: {soDien:N0} kWh × {giaDien:N0} đ</td><td class='p-2 text-right'>{tienDien:N0} đ</td><td class='p-2 text-right'>{tienDien:N0} đ</td></tr>
+                <tr><td class='p-2'>Tiền nước</td><td class='p-2'>Số nước: {soNuoc:N0} m³ × {giaNuoc:N0} đ</td><td class='p-2 text-right'>{tienNuoc:N0} đ</td><td class='p-2 text-right'>{tienNuoc:N0} đ</td></tr>
+                <tr><td class='p-2'>Phí dịch vụ</td><td class='p-2'>{soNguoi} người × 200.000đ</td><td class='p-2 text-right'>{tienDichVu:N0} đ</td><td class='p-2 text-right'>{tienDichVu:N0} đ</td></tr>
+                {(tienPhatSinh > 0 ? $@"<tr><td class='p-2'>Phí phát sinh</td><td class='p-2'>Sửa chữa/phát sinh</td><td class='p-2 text-right'>{tienPhatSinh:N0} đ</td><td class='p-2 text-right'>{tienPhatSinh:N0} đ</td></tr>" : "")}
+            </tbody>
+            <tfoot><tr class='total-row'><td colspan='3' class='text-right'><strong>Tổng cộng:</strong></td><td class='text-right amount'>{tongTien:N0} đ</td></tr></tfoot>
+        </table>
+        <div class='bank-box'>
+            <div><strong>Ngân hàng:</strong> Techcombank</div>
+            <div><strong>Số tài khoản:</strong> 19072789933016</div>
+            <div><strong>Chủ tài khoản:</strong> Vũ Thị Thanh Thúy</div>
+            <div><strong>Nội dung:</strong> TT_HD{hoaDon.MaHoaDon:D5}_{hoaDon.Thang}{hoaDon.Nam}</div>
+            <div><strong>Số tiền:</strong> <span class='amount'>{tongTien:N0} đ</span></div>
+        </div>
+        <div class='footer'>
+            <p>Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+            <p>Mọi thắc mắc vui lòng liên hệ: 0869189018</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+            await new BrowserFetcher().DownloadAsync();
+            using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+            using var page = await browser.NewPageAsync();
+            await page.SetContentAsync(htmlContent);
+
+            return await page.PdfDataAsync(new PdfOptions
+            {
+                Format = PaperFormat.A4,
+                MarginOptions = new MarginOptions { Top = "15mm", Bottom = "15mm", Left = "12mm", Right = "12mm" }
+            });
+        }
+    }  // ← Dấu đóng ngoặc của class HoaDonController
 }
+

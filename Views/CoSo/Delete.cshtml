@@ -1,45 +1,34 @@
 ﻿@model HeThongQuanLyPhongTro.Models.CoSo
 
-@{
-    ViewData["Title"] = "Xóa cơ sở";
-    Layout = "~/Views/Shared/_Layout.cshtml";
-}
-
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">Xác nhận xóa</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> Bạn có chắc chắn muốn xóa cơ sở này?
-                    </div>
-
-                    <dl class="row">
-                        <dt class="col-sm-3">Mã cơ sở</dt>
-                        <dd class="col-sm-9">@Model.MaCoSo</dd>
-
-                        <dt class="col-sm-3">Tên cơ sở</dt>
-                        <dd class="col-sm-9">@Model.TenCoSo</dd>
-
-                        <dt class="col-sm-3">Địa chỉ</dt>
-                        <dd class="col-sm-9">@Model.DiaChi</dd>
-
-                        <dt class="col-sm-3">Mô tả</dt>
-                        <dd class="col-sm-9">@Model.MoTa</dd>
-                    </dl>
-
-                    <form asp-action="Delete">
-                        <input type="hidden" asp-for="MaCoSo" />
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
-                            <button type="submit" class="btn btn-danger">Xóa</button>
-                        </div>
-                    </form>
-                </div>
+<div class="max-w-2xl mx-auto mt-10">
+    <div class="bg-white rounded-2xl shadow-xl border border-red-100 overflow-hidden">
+        <div class="p-8 text-center bg-red-50">
+            <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-3xl"></i>
             </div>
+            <h2 class="text-2xl font-bold text-red-800">Xác nhận xóa cơ sở?</h2>
+            <p class="text-red-600 mt-2">Hành động này không thể hoàn tác. Các phòng thuộc cơ sở này cũng sẽ bị ảnh hưởng.</p>
+        </div>
+
+        <div class="p-8 space-y-4">
+            <div class="flex justify-between border-b pb-2 text-sm">
+                <span class="text-gray-500 uppercase font-semibold">Tên cơ sở:</span>
+                <span class="text-gray-800 font-bold">@Model.TenCoSo</span>
+            </div>
+            <div class="flex justify-between border-b pb-2 text-sm">
+                <span class="text-gray-500 uppercase font-semibold">Địa chỉ:</span>
+                <span class="text-gray-800">@Model.DiaChi</span>
+            </div>
+
+            <form asp-action="Delete" class="flex space-x-4 mt-8">
+                <input type="hidden" asp-for="MaCoSo" />
+                <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-red-200">
+                    Xác nhận xóa ngay
+                </button>
+                <a asp-action="Index" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3 rounded-xl text-center transition-all">
+                    Hủy bỏ
+                </a>
+            </form>
         </div>
     </div>
 </div>

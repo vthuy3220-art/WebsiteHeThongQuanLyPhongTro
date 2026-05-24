@@ -1,5 +1,6 @@
 ﻿using HeThongQuanLyPhongTro.Data;
 using HeThongQuanLyPhongTro.Models;
+using HeThongQuanLyPhongTro.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -82,6 +83,110 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             HttpContext.Session.Clear();
             return RedirectToAction("Index");
+        }
+        // =========================================
+        // LUỒNG QUÊN MẬT KHẨU
+        // =========================================
+
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            // Tìm trong bảng TaiKhoan xem có ai dùng email này không
+            // (Đảm bảo bảng TaiKhoan của cậu đã được thêm cột Email nhé)
+            var user = _context.TaiKhoan.FirstOrDefault(x => x.Email == email);
+            if (user == null)
+            {
+                ViewBag.Error = "Email không tồn tại trong hệ thống!";
+                return View();
+            }
+
+            // Sinh mã OTP 6 số
+            Random rd = new Random();
+            string otp = rd.Next(100000, 999999).ToString();
+
+            // Lưu mã vào bộ nhớ tạm Session để sang trang sau kiểm tra
+            HttpContext.Session.SetString("ResetOTP", otp);
+            HttpContext.Session.SetString("ResetEmail", email);
+
+            // Gọi hàm gửi mail vừa tạo ở Bước 1
+            var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+            bool isSent = await emailService.GuiEmailOTP(email, otp);
+
+            if (isSent)
+            {
+                return RedirectToAction("VerifyOTP");
+            }
+            else
+            {
+                ViewBag.Error = "Lỗi hệ thống khi gửi email, vui lòng thử lại!";
+                return View();
+            }
+        }
+
+        public IActionResult VerifyOTP()
+        {
+            // Nếu vô tình vào trang này mà chưa nhập email thì đuổi về
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("ResetEmail")))
+                return RedirectToAction("ForgotPassword");
+
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult VerifyOTP(string otp)
+        {
+            string? sessionOtp = HttpContext.Session.GetString("ResetOTP");
+
+            // So sánh mã người dùng nhập với mã đã sinh ra
+            if (string.IsNullOrEmpty(sessionOtp) || sessionOtp != otp)
+            {
+                ViewBag.Error = "Mã xác thực không đúng hoặc đã hết hạn!";
+                return View();
+            }
+
+            return RedirectToAction("ResetPassword");
+        }
+
+        public IActionResult ResetPassword()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("ResetOTP")))
+                return RedirectToAction("ForgotPassword");
+
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult ResetPassword(string matKhauMoi, string xacNhanMatKhau)
+        {
+            if (matKhauMoi != xacNhanMatKhau)
+            {
+                ViewBag.Error = "Mật khẩu xác nhận không trùng khớp!";
+                return View();
+            }
+
+            string? email = HttpContext.Session.GetString("ResetEmail");
+            var user = _context.TaiKhoan.FirstOrDefault(x => x.Email == email);
+
+            if (user != null)
+            {
+                user.MatKhau = matKhauMoi; // Lưu mật khẩu mới
+                _context.SaveChanges();
+
+                // Xóa thông tin tạm
+                HttpContext.Session.Remove("ResetOTP");
+                HttpContext.Session.Remove("ResetEmail");
+
+                TempData["Success"] = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại!";
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.Error = "Có lỗi xảy ra, vui lòng thử lại!";
+            return View();
         }
     }
 }

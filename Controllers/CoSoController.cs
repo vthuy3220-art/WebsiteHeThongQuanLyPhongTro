@@ -167,8 +167,11 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return NotFound();
             }
 
-            var coSo = await _context.CoSo
-                .FirstOrDefaultAsync(m => m.MaCoSo == id);
+            //var coSo = await _context.CoSo
+            //   .FirstOrDefaultAsync(m => m.MaCoSo == id);
+            var coSo = _context.CoSo
+       .Include(c => c.Phongs)
+       .FirstOrDefault(m => m.MaCoSo == id);
             if (coSo == null)
             {
                 return NotFound();

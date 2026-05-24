@@ -15,6 +15,8 @@ namespace HeThongQuanLyPhongTro.Models
         [Required(ErrorMessage = "Mật khẩu không được để trống")]
         [StringLength(255)]
         public string MatKhau { get; set; } = string.Empty;
+        [StringLength(100)]
+        public string? Email { get; set; }
 
         [Required]
         public string VaiTro { get; set; } = "Khach"; // Admin hoặc Khach

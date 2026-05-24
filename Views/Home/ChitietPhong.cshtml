@@ -161,7 +161,35 @@
                                         }
                                     </div>
                                 </div>
+                                <!-- Cơ sở vật chất -->
+                                <div class="mt-6 bg-white rounded-xl shadow-md p-6">
+                                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                        <i class="fas fa-microchip text-purple-500 mr-2"></i>
+                                        Cơ sở vật chất trong phòng
+                                    </h3>
 
+                                    @if (ViewBag.CSVCNhanh != null && ((List<HeThongQuanLyPhongTro.Models.CoSoVatChat>)ViewBag.CSVCNhanh).Any())
+                                    {
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            @foreach (var item in ViewBag.CSVCNhanh)
+                                            {
+                                                <div class="border rounded-lg p-3 flex justify-between items-center">
+                                                    <div>
+                                                        <p class="font-semibold text-gray-800">@item.TenThietBi</p>
+                                                        <p class="text-xs text-gray-500">Số lượng: @item.SoLuong</p>
+                                                    </div>
+                                                    <span class="text-xs px-2 py-1 rounded-full @(item.TinhTrang == "Tốt" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700")">
+                                                        @item.TinhTrang
+                                                    </span>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-gray-400 text-center py-4">Chưa có cơ sở vật chất nào</p>
+                                    }
+                                </div>
                                 <!-- MÔ TẢ CHI TIẾT TỪ BÀI ĐĂNG -->
                                 @if (baiDang != null)
                                 {
@@ -181,6 +209,7 @@
                                     <p class="text-yellow-800 flex items-center">
                                         <i class="fas fa-phone-alt mr-2"></i>
                                         Liên hệ ngay: <strong class="ml-1">0869 189 018</strong>
+                                        Email: <strong class="ml-1">phongtroxinhh@gmail.com</strong>
                                     </p>
                                 </div>
                             </div>

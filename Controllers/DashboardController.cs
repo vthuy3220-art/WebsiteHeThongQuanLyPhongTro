@@ -90,7 +90,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                     TongSoPhong = tongSoPhong,
                     SoPhongDaThue = soPhongDaThue,
                     SoPhongTrong = soPhongTrong,
-                    TongSoKhachThue = tongSoKhachThue,
+                    TongSoKhachHang = tongSoKhachThue,
                     DoanhThuThangNay = doanhThuThangNay,
                     SoHopDongSapHetHan = soHopDongSapHetHan,
                     HopDongSapHetHanList = hopDongSapHetHanList,

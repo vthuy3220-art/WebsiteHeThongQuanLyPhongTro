@@ -2,74 +2,104 @@
 
 @{
     ViewData["Title"] = "Chi tiết cơ sở";
-    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container">
-    <div class="card shadow">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0">Chi tiết cơ sở</h5>
+<div class="space-y-6 mt-4">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Chi tiết cơ sở</h1>
+            <p class="text-gray-500 mt-1">Thông tin chi tiết và danh sách phòng thuộc cơ sở</p>
         </div>
-        <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">Mã cơ sở</dt>
-                <dd class="col-sm-9">@Model.MaCoSo</dd>
+        <div class="flex space-x-3">
+            <a asp-action="Edit" asp-route-id="@Model.MaCoSo" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center transition-all shadow-sm">
+                <i class="fas fa-edit mr-2"></i> Chỉnh sửa
+            </a>
+            <a asp-action="Index" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center transition-all">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại
+            </a>
+        </div>
+    </div>
 
-                <dt class="col-sm-3">Tên cơ sở</dt>
-                <dd class="col-sm-9">@Model.TenCoSo</dd>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Mã cơ sở</label>
+                <p class="mt-1 text-gray-800 font-bold text-lg">#@Model.MaCoSo</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Tên cơ sở</label>
+                <p class="mt-1 text-blue-600 font-bold text-lg">@Model.TenCoSo</p>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Địa chỉ</label>
+                <p class="mt-1 text-gray-700 font-medium"><i class="fas fa-map-marker-alt text-red-500 mr-2"></i>@Model.DiaChi</p>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Mô tả</label>
+                <p class="mt-2 text-gray-600 bg-gray-50 p-4 rounded-lg border-l-4 border-blue-400">
+                    @(string.IsNullOrEmpty(Model.MoTa) ? "Chưa có mô tả" : Model.MoTa)
+                </p>
+            </div>
+        </div>
+    </div>
 
-                <dt class="col-sm-3">Địa chỉ</dt>
-                <dd class="col-sm-9">@Model.DiaChi</dd>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+            <h3 class="font-bold text-gray-700 flex items-center">
+                <i class="fas fa-door-open mr-2 text-blue-500"></i> Danh sách phòng thuộc cơ sở này
+            </h3>
+            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">Tổng: @Model.Phongs.Count phòng</span>
+        </div>
 
-                <dt class="col-sm-3">Mô tả</dt>
-                <dd class="col-sm-9">@Model.MoTa</dd>
-            </dl>
-
-            <hr />
-            <h6>Danh sách phòng thuộc cơ sở này:</h6>
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Mã phòng</th>
-                            <th>Tên phòng</th>
-                            <th>Giá phòng</th>
-                            <th>Diện tích</th>
-                            <th>Trạng thái</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var phong in ViewBag.DanhSachPhong as List<HeThongQuanLyPhongTro.Models.Phong> ?? new List<HeThongQuanLyPhongTro.Models.Phong>())
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-white border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Mã phòng</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Tên phòng</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Giá phòng</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Diện tích</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 text-sm">
+                    @if (Model.Phongs != null && Model.Phongs.Any())
+                    {
+                        @foreach (var p in Model.Phongs)
                         {
-                            <tr>
-                                <td>@phong.MaPhong</td>
-                                <td>@phong.TenPhong</td>
-                                <td>@phong.GiaPhong.ToString("N0") đ</td>
-                                <td>@phong.DienTich m²</td>
-                                <td>
-                                    @if (phong.TrangThai == "Trống")
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 text-gray-500 font-medium">@p.MaPhong</td>
+                                <td class="px-6 py-4 font-bold text-gray-800">@p.TenPhong</td>
+                                <td class="px-6 py-4 text-blue-600 font-bold">@p.GiaPhong.ToString("N0") đ</td>
+                                <td class="px-6 py-4 text-gray-600">@p.DienTich m²</td>
+                                <td class="px-6 py-4">
+                                    @if (p.TrangThai == "Trống")
                                     {
-                                        <span class="badge bg-success">Trống</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="w-1.5 h-1.5 mr-1.5 bg-green-500 rounded-full"></span> Trống
+                                        </span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-danger">Đã thuê</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span class="w-1.5 h-1.5 mr-1.5 bg-red-500 rounded-full"></span> Đã thuê
+                                        </span>
                                     }
                                 </td>
                             </tr>
                         }
-                    </tbody>
-                </table>
-                @if ((ViewBag.DanhSachPhong as List<HeThongQuanLyPhongTro.Models.Phong>)?.Count == 0)
-                {
-                    <p class="text-muted">Chưa có phòng nào trong cơ sở này.</p>
-                }
-            </div>
-
-            <div class="d-flex justify-content-end mt-3">
-                <a asp-action="Edit" asp-route-id="@Model.MaCoSo" class="btn btn-warning me-2">Sửa</a>
-                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
-            </div>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500 bg-gray-50/50">
+                                <i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i>
+                                <p>Cơ sở này hiện chưa có phòng nào.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

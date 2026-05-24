@@ -60,7 +60,12 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .FirstOrDefaultAsync(m => m.MaPhong == id);
 
             if (phong == null) return NotFound();
+            // Lấy danh sách CSVC của phòng này
+            var csvcList = await _context.CoSoVatChat
+                .Where(c => c.MaPhong == id)
+                .ToListAsync();
 
+            ViewBag.CSVCNhanh = csvcList;
             // Load TẤT CẢ ẢNH của phòng này (không phân biệt người dùng)
             var images = await _context.PhongImages
                 .Where(i => i.MaPhong == id)

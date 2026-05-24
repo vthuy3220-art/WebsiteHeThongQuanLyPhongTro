@@ -1,39 +1,187 @@
-﻿<div class="min-h-screen flex items-center justify-center bg-gray-100">
+﻿<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-gray-100 transition-all">
 
-    <div class="bg-white p-8 rounded shadow w-full max-w-md">
-        <h2 class="text-2xl font-bold mb-6 text-center">
-            Đăng Nhập Hệ Thống
-        </h2>
+        <!-- Phần Header Logo -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4 shadow-sm">
+                <i class="fas fa-home text-3xl"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-gray-900">
+                Phòng Trọ Xinh
+            </h2>
+            <p class="mt-2 text-sm text-gray-500">
+                Chào mừng bạn quay lại hệ thống
+            </p>
+        </div>
 
+        <!-- Cảnh báo lỗi -->
         @if (ViewBag.Error != null)
         {
-            <div class="bg-red-100 text-red-600 p-3 rounded mb-4">
-                @ViewBag.Error
+            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 flex items-center shadow-sm">
+                <i class="fas fa-exclamation-circle text-xl mr-3"></i>
+                <span class="text-sm font-medium">@ViewBag.Error</span>
             </div>
         }
 
-        <form method="post" class="space-y-4">
+        <!-- Form Đăng Nhập -->
+        <form method="post" class="space-y-6">
 
+            <!-- Ô Tên Đăng Nhập -->
             <div>
-                <label>Tên đăng nhập</label>
-                <input type="text"
-                       name="tenDangNhap"
-                       class="w-full border rounded px-3 py-2" />
+                <label class="block text-sm font-bold text-gray-700 mb-2">Tên đăng nhập</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-gray-400"></i>
+                    </div>
+                    <!-- THÊM id="usernameInput" -->
+                    <input type="text"
+                           id="usernameInput"
+                           name="tenDangNhap"
+                           required
+                           class="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-800"
+                           placeholder="Nhập tài khoản..." />
+                </div>
             </div>
 
+            <!-- Ô Mật Khẩu -->
             <div>
-                <label>Mật khẩu</label>
-                <input type="password"
-                       name="matKhau"
-                       class="w-full border rounded px-3 py-2" />
+                <label class="block text-sm font-bold text-gray-700 mb-2">Mật khẩu</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input type="password"
+                           id="passwordInput"
+                           name="matKhau"
+                           required
+                           class="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-800"
+                           placeholder="••••••••" />
+                    <!-- Nút Mắt Ẩn/Hiện -->
+                    <button type="button"
+                            id="togglePassword"
+                            class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-blue-600 focus:outline-none transition-colors">
+                        <i class="fas fa-eye text-lg" id="eyeIcon"></i>
+                    </button>
+                </div>
             </div>
 
-            <button type="submit"
-                    class="w-full bg-blue-500 text-white py-2 rounded">
-                Đăng Nhập
-            </button>
+            <!-- Ghi nhớ đăng nhập & Quên mật khẩu -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer">
+                    <label for="remember-me" class="ml-2 block text-sm text-gray-600 cursor-pointer">
+                        Ghi nhớ tôi
+                    </label>
+                </div>
+
+                <div class="text-sm">
+                    <!-- ĐÃ SỬA: Sửa lại tên Controller cho khớp với project của bạn -->
+                    <a asp-controller="Login" asp-action="ForgotPassword" class="font-bold text-blue-600 hover:text-blue-500 transition-colors">
+                        Quên mật khẩu?
+                    </a>
+                </div>
+            </div>
+
+            <!-- Nút Submit -->
+            <div>
+                <button type="submit"
+                        class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-md text-base font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                    Đăng Nhập
+                    <i class="fas fa-sign-in-alt ml-2"></i>
+                </button>
+            </div>
 
         </form>
     </div>
-
 </div>
+
+<!-- Script xử lý Logic con mắt và Ghi nhớ mật khẩu -->
+<script>
+    // ==========================================
+    // 1. LOGIC ẨN/HIỆN MẬT KHẨU (CON MẮT)
+    // ==========================================
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const passwordInput = document.getElementById('passwordInput');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        const isPassword = passwordInput.getAttribute('type') === 'password';
+        passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+
+        if (isPassword) {
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+            eyeIcon.classList.add('text-blue-500');
+        } else {
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+            eyeIcon.classList.remove('text-blue-500');
+        }
+    });
+
+    // ==========================================
+    // 2. LOGIC GHI NHỚ NHIỀU TÀI KHOẢN (NÂNG CẤP)
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', function () {
+        const userInput = document.getElementById('usernameInput');
+        const passInput = document.getElementById('passwordInput');
+        const rememberChk = document.getElementById('remember-me');
+        const form = document.querySelector('form');
+
+        // Tạo một Datalist ẩn để làm dropdown gợi ý tên tài khoản cực đẹp
+        let dataList = document.createElement('datalist');
+        dataList.id = 'savedUsersList';
+        document.body.appendChild(dataList);
+        // Gắn datalist vào ô nhập Tên đăng nhập
+        userInput.setAttribute('list', 'savedUsersList');
+
+        // Lấy danh sách tài khoản từ bộ nhớ (Dạng Object)
+        // Ví dụ dữ liệu sẽ lưu thế này: { "admin": "123456", "ThuanCD233318": "abc" }
+        let savedAccounts = JSON.parse(localStorage.getItem('ptx_accounts_list')) || {};
+
+        // Hàm cập nhật danh sách xổ xuống
+        function updateDropdown() {
+            dataList.innerHTML = '';
+            for (let user in savedAccounts) {
+                let option = document.createElement('option');
+                option.value = user;
+                dataList.appendChild(option);
+            }
+        }
+
+        // Gọi hàm đổ dữ liệu ra dropdown ngay khi load trang
+        updateDropdown();
+
+        // Lắng nghe khi người dùng gõ hoặc bấm chọn tên tài khoản từ dropdown
+        userInput.addEventListener('input', function () {
+            const typedUser = this.value;
+
+            if (savedAccounts[typedUser]) {
+                // Nếu tài khoản có trong danh sách -> Tự động điền pass và tự động tích Ghi nhớ
+                passInput.value = savedAccounts[typedUser];
+                rememberChk.checked = true;
+            } else {
+                // Nếu gõ một tài khoản hoàn toàn mới -> Xóa ô pass đi để tự nhập
+                passInput.value = '';
+                rememberChk.checked = false;
+            }
+        });
+
+        // Khi bấm Đăng Nhập
+        form.addEventListener('submit', function () {
+            const currentUser = userInput.value.trim();
+            if (!currentUser) return; // Bỏ qua nếu để trống
+
+            if (rememberChk.checked) {
+                // Tích chọn: Thêm mới hoặc cập nhật pass của tài khoản này vào danh sách
+                savedAccounts[currentUser] = passInput.value;
+            } else {
+                // Không tích: Nếu tài khoản này đang có trong bộ nhớ thì xóa nó đi
+                delete savedAccounts[currentUser];
+            }
+
+            // Lưu ngược lại danh sách mới vào trình duyệt
+            localStorage.setItem('ptx_accounts_list', JSON.stringify(savedAccounts));
+        });
+    });
+</script>
+
