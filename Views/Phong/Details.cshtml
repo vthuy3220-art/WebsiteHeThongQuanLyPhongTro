@@ -5,19 +5,29 @@
     var images = ViewBag.Images as List<HeThongQuanLyPhongTro.Models.PhongImage> ?? new List<HeThongQuanLyPhongTro.Models.PhongImage>();
     var isAdmin = Context.Session.GetString("Role") == "Admin";
     var anhChinh = images.FirstOrDefault(i => i.IsMain) ?? images.FirstOrDefault();
+
+    // Lấy dữ liệu CSVC
+    var csvcList = ViewBag.CSVCNhanh as List<HeThongQuanLyPhongTro.Models.CoSoVatChat>;
+    var coCSVC = csvcList != null && csvcList.Any();
 }
+
+<!-- DEBUG - Chỉ để kiểm tra, sau khi xong có thể xóa -->
+<div style="background: #ffcc00; padding: 10px; margin-bottom: 10px; border: 1px solid orange;">
+    <strong>🔍 DEBUG:</strong><br />
+    Mã phòng: <strong>@Model.MaPhong</strong><br />
+    Số lượng CSVC: <strong>@(csvcList?.Count ?? 0)</strong>
+</div>
 
 <div class="max-w-6xl mx-auto px-4 py-8">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        <!-- Cột trái: Gallery ảnh (chiếm 2/3) -->
+        <!-- Cột trái: Gallery ảnh -->
         <div class="md:col-span-2">
             <!-- Ảnh chính lớn -->
             <div class="bg-gray-100 rounded-lg overflow-hidden mb-4" style="height: 400px;">
                 @if (anhChinh != null)
                 {
-                    <img id="mainImage" src="@anhChinh.ImagePath" alt="Ảnh phòng"
-                         class="w-full h-full object-cover" />
+                    <img id="mainImage" src="@anhChinh.ImagePath" alt="Ảnh phòng" class="w-full h-full object-cover" />
                 }
                 else
                 {
@@ -27,20 +37,49 @@
                 }
             </div>
 
-            <!-- Danh sách ảnh nhỏ (thumbnail) -->
+            <!-- Danh sách ảnh nhỏ -->
             @if (images.Any())
             {
                 <div class="grid grid-cols-4 gap-2">
                     @foreach (var img in images)
                     {
-                        <div class="cursor-pointer border-2 rounded-lg overflow-hidden hover:border-blue-500 transition-all
-                                            @(img.IsMain ? "border-blue-500" : "border-gray-200")"
+                        <div class="cursor-pointer border-2 rounded-lg overflow-hidden hover:border-blue-500 transition-all @(img.IsMain ? "border-blue-500" : "border-gray-200")"
                              onclick="document.getElementById('mainImage').src='@img.ImagePath'">
                             <img src="@img.ImagePath" alt="Ảnh phòng" class="w-full h-20 object-cover" />
                         </div>
                     }
                 </div>
             }
+
+            <!-- CƠ SỞ VẬT CHẤT -->
+            <div class="mt-6 bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-microchip text-purple-500 mr-2"></i>
+                    Cơ sở vật chất trong phòng
+                </h3>
+
+                @if (coCSVC)
+                {
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        @foreach (var item in csvcList)
+                        {
+                            <div class="border rounded-lg p-3 flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-gray-800">@item.TenThietBi</p>
+                                    <p class="text-xs text-gray-500">Số lượng: @item.SoLuong</p>
+                                </div>
+                                <span class="text-xs px-2 py-1 rounded-full @(item.TinhTrang == "Tốt" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700")">
+                                    @item.TinhTrang
+                                </span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-gray-400 text-center py-4">Chưa có cơ sở vật chất nào</p>
+                }
+            </div>
 
             <!-- Form upload ảnh (chỉ Admin) -->
             @if (isAdmin)
@@ -132,35 +171,7 @@
         </div>
     </div>
 </div>
-<!-- Cơ sở vật chất -->
-<div class="mt-6 bg-white rounded-xl shadow-md p-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-        <i class="fas fa-microchip text-purple-500 mr-2"></i>
-        Cơ sở vật chất trong phòng
-    </h3>
 
-    @if (ViewBag.CSVCNhanh != null && ((List<HeThongQuanLyPhongTro.Models.CoSoVatChat>)ViewBag.CSVCNhanh).Any())
-    {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            @foreach (var item in ViewBag.CSVCNhanh)
-            {
-                <div class="border rounded-lg p-3 flex justify-between items-center">
-                    <div>
-                        <p class="font-semibold text-gray-800">@item.TenThietBi</p>
-                        <p class="text-xs text-gray-500">Số lượng: @item.SoLuong</p>
-                    </div>
-                    <span class="text-xs px-2 py-1 rounded-full @(item.TinhTrang == "Tốt" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700")">
-                        @item.TinhTrang
-                    </span>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p class="text-gray-400 text-center py-4">Chưa có cơ sở vật chất nào</p>
-    }
-</div>
 <script>
     function setMainImage(src) {
         document.getElementById('mainImage').src = src;

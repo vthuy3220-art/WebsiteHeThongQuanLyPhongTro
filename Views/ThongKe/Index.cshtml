@@ -3,16 +3,57 @@
 @{
     ViewData["Title"] = "Thống kê";
     Layout = "_Layout";
+
 }
+<style>
+    /* NHỚ DÙNG @@media THAY VÌ @@media NHÉ */
+    @@media print {
+        /* 1. Tàng hình toàn bộ thanh Menu trái, Header trên cùng và các nút bấm */
+        aside, nav, header, footer, .sidebar, .main-header, button
+
+    {
+        display: none !important;
+    }
+
+    /* 2. Ép phần nội dung chính tràn viền 100% khổ giấy A4, xóa margin */
+    body, main, .content-wrapper, .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        background-color: white !important;
+    }
+
+    /* 3. Lớp class đặc biệt để ẩn cục chứa tiêu đề và nút "In báo cáo" */
+    .hide-on-print {
+        display: none !important;
+    }
+
+    /* 4. Xóa đổ bóng (shadow) của các thẻ div để bản in không bị lem nhem */
+    * {
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+    }
+
+    /* 5. Ép biểu đồ in ra màu nét nhất */
+    canvas {
+        max-width: 100% !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    }
+</style>
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-center bg-white p-5 rounded-xl shadow-sm border border-gray-50 hide-on-print">
         <div>
-            <h1 class="text-2xl font-semibold text-gray-800">📊 Thống kê & Báo cáo</h1>
-            <p class="text-gray-500 text-sm mt-1">Báo cáo chi tiết hoạt động</p>
+            <h1 class="text-2xl font-extrabold text-gray-800 flex items-center">
+                <i class="fas fa-chart-pie text-blue-600 mr-3"></i> Thống kê & Báo cáo
+            </h1>
+            <p class="text-gray-500 mt-1 text-sm">Báo cáo chi tiết hoạt động hệ thống</p>
         </div>
-        <button onclick="window.print()" class="border border-gray-300 text-gray-600 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg transition-all flex items-center shadow-md focus:ring-2 focus:ring-blue-300">
             <i class="fas fa-print mr-2"></i> In báo cáo
         </button>
     </div>

@@ -1,0 +1,150 @@
+﻿@model HeThongQuanLyPhongTro.Models.YeuCauSuaChua
+
+@{
+    ViewData["Title"] = "Chi Tiết Yêu Cầu Sửa Chữa";
+}
+
+<div class="max-w-5xl mx-auto p-4 md:p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-tools text-blue-500 mr-2"></i>Chi tiết yêu cầu #@Model.MaYeuCau
+        </h2>
+        <a asp-action="Index" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Quay lại danh sách
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="mb-4 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded shadow-sm">
+            <i class="fas fa-check-circle mr-2"></i>@TempData["Success"]
+        </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                    <h3 class="font-semibold text-gray-800 text-lg">Thông tin yêu cầu</h3>
+
+                    @* Hiển thị Badge trạng thái *@
+                    @if (Model.TrangThai == "Chờ xử lý")
+                    {
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">Chờ xử lý</span>
+                    }
+                    else if (Model.TrangThai == "Đã tiếp nhận")
+                    {
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Đã tiếp nhận</span>
+                    }
+                    else
+                    {
+                        <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Đã hoàn thành</span>
+                    }
+                </div>
+
+                <div class="p-5 space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Tiêu đề</p>
+                        <p class="font-medium text-gray-800 text-lg">@Model.TieuDe</p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Mô tả chi tiết</p>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 text-gray-700 whitespace-pre-line leading-relaxed">
+                            @Model.NoiDung
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Phòng báo sự cố</p>
+                            <p class="font-medium text-gray-800">
+                                <i class="fas fa-door-open text-blue-400 mr-1"></i>
+                                @(Model.PhongNavigation?.TenPhong ?? "N/A")
+                                <span class="text-gray-500 text-sm">(@(Model.PhongNavigation?.CoSo?.TenCoSo ?? ""))</span>
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Khách hàng yêu cầu</p>
+                            <p class="font-medium text-gray-800">
+                                <i class="fas fa-user text-blue-400 mr-1"></i>
+                                @(Model.KhachHangNavigation?.HoTen ?? "N/A")
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Ngày gửi</p>
+                            <p class="font-medium text-gray-800">@Model.NgayTao.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.HinhAnh))
+            {
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-5 border-b border-gray-100 bg-gray-50/50">
+                        <h3 class="font-semibold text-gray-800">Hình ảnh đính kèm</h3>
+                    </div>
+                    <div class="p-5">
+                        <img src="@Model.HinhAnh" alt="Hình ảnh yêu cầu" class="max-w-full h-auto rounded-lg shadow-sm border border-gray-200" style="max-height: 400px; object-fit: contain;">
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-5 border-b border-gray-100 bg-blue-50/30">
+                    <h3 class="font-semibold text-gray-800">Cập nhật tiến độ</h3>
+                </div>
+
+                <div class="p-5">
+                    <form asp-action="XuLy" method="post">
+                        <input type="hidden" name="id" value="@Model.MaYeuCau" />
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái xử lý</label>
+                                <select name="trangThai" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border">
+                                    <option value="Chờ xử lý" selected="@(Model.TrangThai == "Chờ xử lý")">Chờ xử lý</option>
+                                    <option value="Đã tiếp nhận" selected="@(Model.TrangThai == "Đã tiếp nhận")">Đã tiếp nhận (Đang sửa)</option>
+                                    <option value="Đã hoàn thành" selected="@(Model.TrangThai == "Đã hoàn thành")">Đã hoàn thành</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Chi phí sửa chữa (VNĐ)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">đ</span>
+                                    </div>
+                                    <input type="number" name="chiPhiPhatSinh" value="@(Model.ChiPhiPhatSinh?.ToString("0") ?? "")" placeholder="Để trống nếu miễn phí"
+                                           class="w-full pl-8 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border" />
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">* Nếu nhập, phí này sẽ tự động cộng vào hóa đơn tháng của phòng khi hoàn thành.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú phản hồi cho khách</label>
+                                <textarea name="ghiChu" rows="3" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border"
+                                          placeholder="Vd: Đã thay bóng đèn mới...">@Model.GhiChuXuLy</textarea>
+                            </div>
+
+                            @if (Model.NgayXuLy.HasValue)
+                            {
+                                <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                                    Cập nhật lần cuối: @Model.NgayXuLy.Value.ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            }
+
+                            <button type="submit" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center">
+                                <i class="fas fa-save mr-2"></i> Cập nhật & Gửi thông báo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

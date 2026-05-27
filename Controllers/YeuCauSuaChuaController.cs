@@ -109,7 +109,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                 tieuDeThongBao,
                 noiDungThongBao,
                 trangThai == "Đã hoàn thành" ? "success" : "info",
-                $"/KhachHang/YeuCauSuaChuaChiTiet/{yeuCau.MaYeuCau}"
+                $"/YeuCauSuaChua/KhachDetails/{yeuCau.MaYeuCau}"
             );
 
             TempData["Success"] = "Đã cập nhật trạng thái yêu cầu!";

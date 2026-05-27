@@ -49,7 +49,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             return View(await phongs.ToListAsync());
         }
-              
+
         // ==================== CHI TIẾT PHÒNG ====================
         public async Task<IActionResult> Details(int? id)
         {
@@ -60,20 +60,24 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .FirstOrDefaultAsync(m => m.MaPhong == id);
 
             if (phong == null) return NotFound();
-            // Lấy danh sách CSVC của phòng này
+
             var csvcList = await _context.CoSoVatChat
                 .Where(c => c.MaPhong == id)
                 .ToListAsync();
 
-            ViewBag.CSVCNhanh = csvcList;
-            // Load TẤT CẢ ẢNH của phòng này (không phân biệt người dùng)
-            var images = await _context.PhongImages
-                .Where(i => i.MaPhong == id)
-                .OrderByDescending(i => i.IsMain)      // Ảnh chính lên đầu
-                .ThenByDescending(i => i.NgayUpload)   // Ảnh mới nhất sau
-                .ToListAsync();
+            // LOG ra Output của Visual Studio
+            System.Diagnostics.Debug.WriteLine($"=== DEBUG: MaPhong={id}, So luong CSVC={csvcList.Count} ===");
+            foreach (var item in csvcList)
+            {
+                System.Diagnostics.Debug.WriteLine($" - {item.TenThietBi}");
+            }
 
-            ViewBag.Images = images;
+            ViewBag.CSVCNhanh = csvcList;
+            ViewBag.Images = await _context.PhongImages
+                .Where(i => i.MaPhong == id)
+                .OrderByDescending(i => i.IsMain)
+                .ThenByDescending(i => i.NgayUpload)
+                .ToListAsync();
 
             return View(phong);
         }

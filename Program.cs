@@ -1,4 +1,3 @@
-using HeThongQuanLyPhongTro;
 using HeThongQuanLyPhongTro.Data;
 using HeThongQuanLyPhongTro.Services;
 using Microsoft.EntityFrameworkCore;
@@ -7,9 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<ThongBaoService>();
-// Thêm dòng này vào Program.cs
-// Thêm background service chạy mỗi ngày
+
+// Đăng ký Database Context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -21,6 +19,10 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+// Đăng ký các Service
+builder.Services.AddScoped<ThongBaoService>();
+builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
@@ -34,11 +36,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
-
-// ... sau app.UseRouting()
-
-app.UseSession();  // QUAN TRỌNG: phải có dòng này
+app.UseSession();      // 👈 Session phải đặt trước UseAuthorization
 app.UseAuthorization();
 
 app.MapControllerRoute(
