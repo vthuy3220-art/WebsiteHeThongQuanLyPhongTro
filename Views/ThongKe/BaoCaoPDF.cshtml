@@ -1,0 +1,173 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.ChiTietDoanhThuViewModel>
+@{
+    Layout = null;
+
+    // 1. SỬA LỖI 0 VNĐ: Tính tổng trực tiếp từ Model (Bất tử)
+    decimal tongDoanhThu = Model != null ? Model.Sum(x => x.TongTien) : 0;
+
+    // Kiểm tra đa tầng: Lấy từ ViewBag -> Lấy từ User hệ thống -> Lấy từ Session tài khoản
+    string tenNguoiXuat = "Admin";
+
+    if (ViewBag.Username != null && !string.IsNullOrWhiteSpace(ViewBag.Username.ToString()))
+    {
+        tenNguoiXuat = ViewBag.Username.ToString();
+    }
+    else if (User.Identity != null && !string.IsNullOrWhiteSpace(User.Identity.Name))
+    {
+        tenNguoiXuat = User.Identity.Name;
+    }
+    else if (Context.Session.GetString("UserName") != null)
+    {
+        tenNguoiXuat = Context.Session.GetString("UserName");
+    }
+    int m = ViewBag.Thang != null ? Convert.ToInt32(ViewBag.Thang) : DateTime.Now.Month;
+    int y = ViewBag.Nam != null ? Convert.ToInt32(ViewBag.Nam) : DateTime.Now.Year;
+
+    // Tính toán số liệu tuần bằng C#
+    decimal t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+    if (Model != null)
+    {
+        foreach (var item in Model)
+        {
+            if (item.NgayThanhToan.HasValue)
+            {
+                int day = item.NgayThanhToan.Value.Day;
+                if (day <= 7) t1 += item.TongTien;
+                else if (day <= 14) t2 += item.TongTien;
+                else if (day <= 21) t3 += item.TongTien;
+                else t4 += item.TongTien;
+            }
+        }
+    }
+
+    // 2. SỬA LỖI SAI LỆCH DỮ LIỆU: Ép về số nguyên (long) để triệt tiêu dấu phẩy thập phân của tiếng Việt
+    long dt1 = (long)t1;
+    long dt2 = (long)t2;
+    long dt3 = (long)t3;
+    long dt4 = (long)t4;
+
+    // 3. SỬA LỖI ĐƯỜNG THẲNG: Thêm tension:0.3 vào để uốn cong đồ thị
+    string chartJson = $"{{type:'line',data:{{labels:['Tuần 1','Tuần 2','Tuần 3','Tuần 4'],datasets:[{{label:'Doanh thu VNĐ',data:[{dt1},{dt2},{dt3},{dt4}],borderColor:'#0d9488',backgroundColor:'rgba(13,148,136,0.2)',fill:true,tension:0.3}}]}}}}";
+
+    string chartUrl = "https://quickchart.io/chart?w=600&h=250&c=" + Uri.EscapeDataString(chartJson);
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Báo Cáo Doanh Thu PDF</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            color: black;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .summary-box {
+            border: 2px solid #333;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #e6f4ea;
+        }
+
+        .chart-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <table style="border: none; margin-bottom: 20px;">
+        <tr style="border: none;">
+            <td style="border: none; text-align: left; width: 40%; vertical-align: top;">
+                <b>HỆ THỐNG QUẢN LÝ TRỌ</b><br />Người lập: @tenNguoiXuat
+            </td>
+            <td style="border: none; text-align: center; width: 60%;">
+                <b style="font-size: 16px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br />
+                <u style="font-weight: bold;">Độc lập - Tự do - Hạnh phúc</u>
+            </td>
+        </tr>
+    </table>
+
+    <h2 style="text-align: center; text-transform: uppercase;">BÁO CÁO CHI TIẾT DOANH THU</h2>
+    <p style="text-align: center; font-style: italic; margin-bottom: 20px;">(Kỳ báo cáo: Tháng @m / @y)</p>
+
+    <div class="summary-box">
+        TỔNG DOANH THU GHI NHẬN: @tongDoanhThu.ToString("N0") VNĐ
+    </div>
+
+    <div class="chart-container">
+        <h3 style="text-align: center; margin-bottom: 10px; font-size: 15px;">Biểu đồ tăng trưởng theo tuần</h3>
+        <img src="@chartUrl" style="max-width: 100%; height: auto;" />
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 8%;">STT</th>
+                <th style="width: 22%;">Ngày thanh toán</th>
+                <th style="width: 20%;">Mã HĐ</th>
+                <th style="width: 25%;">Phòng / Dịch vụ</th>
+                <th style="width: 25%;">Doanh thu (VNĐ)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                int stt = 1;
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td style="text-align: center;">@(stt++)</td>
+                        <td style="text-align: center;">@(item.NgayThanhToan?.ToString("dd/MM/yyyy") ?? "")</td>
+                        <td style="text-align: center;">@item.MaHoaDon</td>
+                        <td>@item.TenPhong</td>
+                        <td style="text-align: right; font-weight: bold;">@item.TongTien.ToString("N0") đ</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5" style="text-align: center;">Không phát sinh doanh thu trong kỳ báo cáo này.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <table style="border: none; margin-top: 40px; page-break-inside: avoid;">
+        <tr style="border: none;">
+            <td style="border: none; width: 55%;"></td>
+            <td style="border: none; width: 45%; text-align: center;">
+                <i>Ngày @DateTime.Now.Day tháng @DateTime.Now.Month năm @DateTime.Now.Year</i><br />
+                <b style="font-size: 15px;">Người lập biểu</b><br /><br /><br /><br />
+                <b>@tenNguoiXuat</b>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

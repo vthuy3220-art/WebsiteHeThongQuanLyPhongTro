@@ -1,0 +1,171 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.ThongKeHoaDonViewModel>
+@{
+    ViewData["Title"] = "Thống Kê Hóa Đơn";
+    Layout = "_Layout";
+    int thang = ViewBag.Thang ?? DateTime.Now.Month;
+    int nam = ViewBag.Nam ?? DateTime.Now.Year;
+    int tongSoHD = ViewBag.TongSoHD ?? 0;
+    decimal daThu = ViewBag.DaThu ?? 0;
+    decimal chuaThu = ViewBag.ChuaThu ?? 0;
+}
+<div class="bg-slate-50 min-h-screen p-6">
+    <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+        <h1 class="text-2xl font-bold text-gray-800">Thống Kê Hóa Đơn - Tháng @thang/@nam</h1>
+
+        <div class="flex gap-2 flex-wrap items-center">
+            <form method="get" asp-action="ThongKeHoaDon" asp-controller="ThongKe" class="flex gap-2">
+                <select name="thang" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm">
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        <option value="@i" selected="@(i == thang ? "selected" : null)">Tháng @i</option>
+                    }
+                </select>
+                <select name="nam" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm">
+                    @for (int i = DateTime.Now.Year - 3; i <= DateTime.Now.Year + 1; i++)
+                    {
+                        <option value="@i" selected="@(i == nam ? "selected" : null)">Năm @i</option>
+                    }
+                </select>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">Lọc Dữ Liệu</button>
+            </form>
+            <a href="@Url.Action("XuatPDFThongKeHoaDon", "ThongKe", new { thang = thang, nam = nam })" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition" style="text-decoration:none;">Xuất PDF</a>
+            <a asp-action="Index" asp-controller="ThongKe" class="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 transition" style="text-decoration:none;">Trở về</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white p-6 rounded-lg shadow col-span-1 border border-gray-100 flex flex-col justify-center">
+            <h3 class="font-bold text-gray-500 mb-4 text-center">Tổng hóa đơn phát sinh: <span class="text-2xl text-indigo-600">@tongSoHD</span></h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-teal-500"></div> Đã thu</span>
+                    <span class="font-bold text-teal-600">@daThu.ToString("N0") đ</span>
+                </div>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <span class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-rose-500"></div> Chưa thu (Nợ)</span>
+                    <span class="font-bold text-rose-600">@chuaThu.ToString("N0") đ</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow col-span-2 border border-gray-100">
+            <h3 class="font-bold text-gray-700 mb-4">Biểu đồ tỷ lệ thu tiền tháng @thang</h3>
+            <div style="height: 250px; position: relative;" class="flex justify-center">
+                <canvas id="hoaDonChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-100">
+        <div class="p-4 bg-slate-100 border-b">
+            <h3 class="font-bold text-gray-700">CHI TIẾT HÓA ĐƠN THÁNG @thang</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 text-gray-600">
+                    <tr>
+                        <th class="p-4 border-b text-center">STT</th>
+                        <th class="p-4 border-b">Mã HĐ</th>
+                        <th class="p-4 border-b">Phòng / Khách thuê</th>
+                        <th class="p-4 border-b text-center">Ngày lập</th>
+                        <th class="p-4 border-b text-right">Tổng tiền</th>
+                        <th class="p-4 border-b text-center">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        int stt = 1;
+                        foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-gray-50 border-b">
+                                <td class="p-4 text-center font-medium">@(stt++)</td>
+                                <td class="p-4 font-bold text-gray-600">@item.MaHoaDon</td>
+                                <td class="p-4">
+                                    <div class="font-bold text-indigo-600">@item.TenPhong</div>
+                                    <div class="text-sm text-gray-500">@item.KhachHang</div>
+                                </td>
+                                <td class="p-4 text-center text-sm text-gray-500">@(item.NgayTao?.ToString("dd/MM/yyyy") ?? "")</td>
+                                <td class="p-4 text-right font-bold text-gray-800">@item.TongTien.ToString("N0") đ</td>
+                                <td class="p-4 text-center">
+                                    <!-- ĐÃ SỬA: Ép chữ về so sánh chữ thường đầu để không bị lỗi cách viết hoa/thường từ DB -->
+                                    @if (item.TrangThai.Trim().Equals("Đã thanh toán", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-bold">Đã thanh toán</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-xs font-bold">Chưa thanh toán</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="6" class="p-6 text-center text-gray-500">Tháng này chưa phát sinh hóa đơn nào.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var rawData = @Html.Raw(Json.Serialize(Model ?? new List<HeThongQuanLyPhongTro.Models.ThongKeHoaDonViewModel>()));
+
+        var t1_da = 0, t2_da = 0, t3_da = 0, t4_da = 0;
+        var t1_no = 0, t2_no = 0, t3_no = 0, t4_no = 0;
+
+        if (rawData && rawData.length > 0) {
+        for (var i = 0; i < rawData.length; i++) {
+        var item = rawData[i];
+
+        // ĐÃ SỬA: Gọi đúng thuộc tính chữ Hoa đầu của Object C# khi Serialize sang JSON
+        var amt = parseFloat(item.TongTien || item.tongTien || 0);
+        var statusStr = item.TrangThai || item.trangThai || "";
+        var isPaid = statusStr.trim().toLowerCase() === "đã thanh toán";
+
+        var dateSrc = item.NgayTao || item.ngayTao;
+        if (dateSrc) {
+        var d = new Date(dateSrc).getDate();
+        if (d <= 7) { if(isPaid) t1_da+=amt; else t1_no+=amt; }
+        else if (d <= 14) { if(isPaid) t2_da+=amt; else t2_no+=amt; }
+        else if (d <= 21) { if(isPaid) t3_da+=amt; else t3_no+=amt; }
+        else { if(isPaid) t4_da+=amt; else t4_no+=amt; }
+        }
+        }
+        }
+
+        var ctx = document.getElementById('hoaDonChart').getContext('2d');
+        new Chart(ctx, {
+        type: 'bar',
+        data: {
+        labels: ['Tuần 1 (1-7)', 'Tuần 2 (8-14)', 'Tuần 3 (15-21)', 'Tuần 4 (22-Cuối)'],
+        datasets: [
+        {
+        label: 'Đã thu tiền',
+        data: [t1_da, t2_da, t3_da, t4_da],
+        backgroundColor: '#0d9488',
+        borderRadius: 4
+        },
+        {
+        label: 'Chưa thu (Nợ)',
+        data: [t1_no, t2_no, t3_no, t4_no],
+        backgroundColor: '#f43f5e',
+        borderRadius: 4
+        }
+        ]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+        y: { beginAtZero: true, ticks: { callback: function(v) { return v.toLocaleString('vi-VN') + ' đ'; } } }
+        }
+        }
+        });
+    </script>
+}

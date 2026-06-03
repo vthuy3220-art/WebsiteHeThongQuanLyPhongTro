@@ -5,29 +5,27 @@
     var images = ViewBag.Images as List<HeThongQuanLyPhongTro.Models.PhongImage> ?? new List<HeThongQuanLyPhongTro.Models.PhongImage>();
     var isAdmin = Context.Session.GetString("Role") == "Admin";
     var anhChinh = images.FirstOrDefault(i => i.IsMain) ?? images.FirstOrDefault();
-
-    // Lấy dữ liệu CSVC
-    var csvcList = ViewBag.CSVCNhanh as List<HeThongQuanLyPhongTro.Models.CoSoVatChat>;
-    var coCSVC = csvcList != null && csvcList.Any();
 }
-
-<!-- DEBUG - Chỉ để kiểm tra, sau khi xong có thể xóa -->
-<div style="background: #ffcc00; padding: 10px; margin-bottom: 10px; border: 1px solid orange;">
-    <strong>🔍 DEBUG:</strong><br />
-    Mã phòng: <strong>@Model.MaPhong</strong><br />
-    Số lượng CSVC: <strong>@(csvcList?.Count ?? 0)</strong>
-</div>
 
 <div class="max-w-6xl mx-auto px-4 py-8">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        <!-- Cột trái: Gallery ảnh -->
+        <!-- Cột trái: Gallery ảnh (chiếm 2/3) -->
         <div class="md:col-span-2">
             <!-- Ảnh chính lớn -->
-            <div class="bg-gray-100 rounded-lg overflow-hidden mb-4" style="height: 400px;">
+            <div class="relative group bg-gray-100 rounded-lg overflow-hidden mb-4" style="height: 400px;">
                 @if (anhChinh != null)
                 {
                     <img id="mainImage" src="@anhChinh.ImagePath" alt="Ảnh phòng" class="w-full h-full object-cover" />
+
+                    @if (isAdmin)
+                    {
+                        <a asp-action="DeleteImage" asp-route-id="@anhChinh.MaImage"
+                           class="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white rounded-full p-2.5 shadow-lg flex items-center justify-center transition-all opacity-90 hover:scale-110"
+                           title="Xóa ảnh lớn hiện tại">
+                            <i class="fas fa-trash-alt text-sm"></i>
+                        </a>
+                    }
                 }
                 else
                 {
@@ -37,49 +35,31 @@
                 }
             </div>
 
-            <!-- Danh sách ảnh nhỏ -->
+            <!-- Danh sách ảnh nhỏ (thumbnail) -->
             @if (images.Any())
             {
                 <div class="grid grid-cols-4 gap-2">
                     @foreach (var img in images)
                     {
-                        <div class="cursor-pointer border-2 rounded-lg overflow-hidden hover:border-blue-500 transition-all @(img.IsMain ? "border-blue-500" : "border-gray-200")"
+                        <div class="relative group cursor-pointer border-2 rounded-lg overflow-hidden hover:border-blue-500 transition-all
+                                    @(img.IsMain ? "border-blue-500" : "border-gray-200")"
                              onclick="document.getElementById('mainImage').src='@img.ImagePath'">
+
                             <img src="@img.ImagePath" alt="Ảnh phòng" class="w-full h-20 object-cover" />
+
+                            @if (isAdmin)
+                            {
+                                <a asp-action="DeleteImage" asp-route-id="@img.MaImage"
+                                   class="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-md flex items-center justify-center transition-all opacity-90 hover:scale-110"
+                                   title="Xóa ảnh này"
+                                   onclick="event.stopPropagation();">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </a>
+                            }
                         </div>
                     }
                 </div>
             }
-
-            <!-- CƠ SỞ VẬT CHẤT -->
-            <div class="mt-6 bg-white rounded-xl shadow-md p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-microchip text-purple-500 mr-2"></i>
-                    Cơ sở vật chất trong phòng
-                </h3>
-
-                @if (coCSVC)
-                {
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        @foreach (var item in csvcList)
-                        {
-                            <div class="border rounded-lg p-3 flex justify-between items-center">
-                                <div>
-                                    <p class="font-semibold text-gray-800">@item.TenThietBi</p>
-                                    <p class="text-xs text-gray-500">Số lượng: @item.SoLuong</p>
-                                </div>
-                                <span class="text-xs px-2 py-1 rounded-full @(item.TinhTrang == "Tốt" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700")">
-                                    @item.TinhTrang
-                                </span>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p class="text-gray-400 text-center py-4">Chưa có cơ sở vật chất nào</p>
-                }
-            </div>
 
             <!-- Form upload ảnh (chỉ Admin) -->
             @if (isAdmin)

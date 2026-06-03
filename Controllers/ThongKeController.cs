@@ -2,6 +2,12 @@
 using HeThongQuanLyPhongTro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Rotativa.AspNetCore;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -17,148 +23,372 @@ namespace HeThongQuanLyPhongTro.Controllers
         public async Task<IActionResult> Index()
         {
             var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin")
-            {
-                return RedirectToAction("Index", "Login");
-            }
+            if (role != "Admin") return RedirectToAction("Index", "Login");
 
             var model = new DashboardViewModel();
 
-            // ========== TỔNG QUAN ==========
             model.TongSoPhong = await _context.Phong.CountAsync();
             model.SoPhongDaThue = await _context.Phong.CountAsync(p => p.TrangThai == "Đã thuê");
             model.SoPhongTrong = model.TongSoPhong - model.SoPhongDaThue;
-            model.TongSoKhachHang = await _context.KhachHang.CountAsync();
 
+            model.TongSoKhachHang = await _context.KhachHang.CountAsync();
             model.SoHopDongHieuLuc = await _context.HopDong.CountAsync(h => h.TrangThai == "Hiệu lực");
             model.SoHopDongHetHan = await _context.HopDong.CountAsync(h => h.TrangThai == "Đã hủy" || h.TrangThai == "Hết hạn");
 
-            // ========== DOANH THU ==========
-            var homNay = DateTime.Now.Date;
-            var ngayMai = homNay.AddDays(1);
+            var hienTaiThang = DateTime.Now.Month;
+            var hienTaiNam = DateTime.Now.Year;
 
-            var thanhToanHomNay = await _context.ThanhToan
-                .Where(t => t.NgayThanhToan >= homNay && t.NgayThanhToan < ngayMai)
-                .ToListAsync();
-            model.DoanhThuHomNay = thanhToanHomNay.Sum(t => t.SoTien ?? 0);
+            var doanhThuThanhToanThangNay = await _context.ThanhToan
+                .Where(t => t.NgayThanhToan.HasValue && t.NgayThanhToan.Value.Year == hienTaiNam && t.NgayThanhToan.Value.Month == hienTaiThang)
+                .SumAsync(t => t.SoTien ?? 0);
 
-            var thanhToanThangNay = await _context.ThanhToan
-                .Where(t => t.NgayThanhToan.HasValue
-                    && t.NgayThanhToan.Value.Year == DateTime.Now.Year
-                    && t.NgayThanhToan.Value.Month == DateTime.Now.Month)
-                .ToListAsync();
-            model.DoanhThuThangNay = thanhToanThangNay.Sum(t => t.SoTien ?? 0);
+            var doanhThuHoaDonThangNay = await _context.HoaDon
+                .Where(h => h.Thang == hienTaiThang && h.Nam == hienTaiNam && h.TrangThai == "Đã thanh toán")
+                .SumAsync(h => h.TongTien ?? 0);
 
-            var thanhToanNamNay = await _context.ThanhToan
-                .Where(t => t.NgayThanhToan.HasValue && t.NgayThanhToan.Value.Year == DateTime.Now.Year)
-                .ToListAsync();
-            model.DoanhThuNamNay = thanhToanNamNay.Sum(t => t.SoTien ?? 0);
+            model.DoanhThuThangNay = doanhThuThanhToanThangNay + doanhThuHoaDonThangNay;
 
-            var tatCaThanhToan = await _context.ThanhToan.ToListAsync();
-            model.DoanhThuTatCa = tatCaThanhToan.Sum(t => t.SoTien ?? 0);
-
-            // ========== CÔNG NỢ ==========
-            var hoaDonChuaThanhToan = await _context.HoaDon
-                .Where(h => h.TrangThai == "Chưa thanh toán")
-                .ToListAsync();
+            var hoaDonChuaThanhToan = await _context.HoaDon.Where(h => h.TrangThai == "Chưa thanh toán").ToListAsync();
             model.SoHoaDonChuaThanhToan = hoaDonChuaThanhToan.Count;
             model.TongNoHienTai = hoaDonChuaThanhToan.Sum(h => h.TongTien ?? 0);
 
-            // ========== BIỂU ĐỒ DOANH THU THEO THÁNG ==========
             var doanhThuTheoThang = new List<DoanhThuTheoThang>();
-            for (int i = 11; i >= 0; i--)
+            for (int i = 5; i >= 0; i--)
             {
-                var thang = DateTime.Now.AddMonths(-i);
-                var thanhToan = await _context.ThanhToan
-                    .Where(t => t.NgayThanhToan.HasValue
-                        && t.NgayThanhToan.Value.Year == thang.Year
-                        && t.NgayThanhToan.Value.Month == thang.Month)
-                    .ToListAsync();
-                var doanhThu = thanhToan.Sum(t => t.SoTien ?? 0);
+                var mThang = DateTime.Now.AddMonths(-i);
 
+                var tienThanhToan = await _context.ThanhToan
+                    .Where(t => t.NgayThanhToan.HasValue && t.NgayThanhToan.Value.Year == mThang.Year && t.NgayThanhToan.Value.Month == mThang.Month)
+                    .SumAsync(t => t.SoTien ?? 0);
+
+                var tienHoaDon = await _context.HoaDon
+                    .Where(h => h.Thang == mThang.Month && h.Nam == mThang.Year && h.TrangThai == "Đã thanh toán")
+                    .SumAsync(h => h.TongTien ?? 0);
+
+                // KHÚC NÀY ĐÃ SỬA CHUẨN: Trả về đúng kiểu DoanhThuTheoThang ban đầu của ông để View vẽ được biểu đồ
                 doanhThuTheoThang.Add(new DoanhThuTheoThang
                 {
-                    Thang = thang.Month,
-                    Nam = thang.Year,
-                    DoanhThu = doanhThu
+                    Thang = mThang.Month,
+                    Nam = mThang.Year,
+                    DoanhThu = tienThanhToan + tienHoaDon
                 });
             }
             model.DoanhThuTheoThangList = doanhThuTheoThang;
 
-            // ========== TRẠNG THÁI PHÒNG ==========
-            model.TrangThaiPhongList = new List<TrangThaiPhong>
+            model.TopPhongList = await (from h in _context.HoaDon
+                                        join hd in _context.HopDong on h.MaHopDong equals hd.MaHopDong
+                                        join p in _context.Phong on hd.MaPhong equals p.MaPhong
+                                        where h.TrangThai == "Đã thanh toán"
+                                        group h by new { p.MaPhong, p.TenPhong } into g
+                                        select new TopPhongSuDung
+                                        {
+                                            MaPhong = g.Key.MaPhong,
+                                            TenPhong = g.Key.TenPhong,
+                                            TongDoanhThu = g.Sum(x => x.TongTien ?? 0),
+                                            SoHoaDon = g.Count()
+                                        })
+                                        .OrderByDescending(x => x.TongDoanhThu)
+                                        .Take(5)
+                                        .ToListAsync();
+
+            var tongSoPhong = model.TongSoPhong == 0 ? 1 : model.TongSoPhong;
+            var lapDayTheoThang = new List<LapDayTheoThang>();
+            for (int i = 5; i >= 0; i--)
             {
-                new TrangThaiPhong { TrangThai = "Đã thuê", SoLuong = model.SoPhongDaThue },
-                new TrangThaiPhong { TrangThai = "Trống", SoLuong = model.SoPhongTrong }
-            };
+                var mThang = DateTime.Now.AddMonths(-i);
+                var soPhongCoHopDong = await _context.HopDong
+                    .Where(h => h.TrangThai == "Hiệu lực"
+                             && h.NgayBatDau.HasValue
+                             && h.NgayBatDau.Value <= new DateTime(mThang.Year, mThang.Month, DateTime.DaysInMonth(mThang.Year, mThang.Month))
+                             && (!h.NgayKetThuc.HasValue || h.NgayKetThuc.Value >= new DateTime(mThang.Year, mThang.Month, 1)))
+                    .Select(h => h.MaPhong)
+                    .Distinct()
+                    .CountAsync();
 
-            // ========== TOP KHÁCH HÀNG ==========
-            var topKhachQuery = from hd in _context.HoaDon
-                                join hd2 in _context.HopDong on hd.MaHopDong equals hd2.MaHopDong
-                                join kh in _context.KhachHang on hd2.MaKhachHang equals kh.MaKhachHang
-                                where hd.TrangThai == "Đã thanh toán"
-                                group hd by new { kh.MaKhachHang, kh.HoTen, kh.SoDienThoai } into g
-                                select new TopKhachHang
-                                {
-                                    MaKhachHang = g.Key.MaKhachHang,
-                                    HoTen = g.Key.HoTen,
-                                    SoDienThoai = g.Key.SoDienThoai,
-                                    TongTienDaThanhToan = g.Sum(x => x.TongTien ?? 0),
-                                    SoHoaDonDaThanhToan = g.Count()
-                                };
-
-            model.TopKhachHangList = await topKhachQuery
-                .OrderByDescending(x => x.TongTienDaThanhToan)
-                .Take(10)
-                .ToListAsync();
-
-            // ========== HỢP ĐỒNG SẮP HẾT HẠN ==========
-            var hopDongList = await _context.HopDong
-                .Include(h => h.PhongNavigation)
-                .Include(h => h.KhachHangNavigation)
-                .Where(h => h.TrangThai == "Hiệu lực")
-                .ToListAsync();
-
-            var hopDongSapHetHan = hopDongList
-                .Where(h => h.NgayKetThuc.HasValue && h.NgayKetThuc.Value <= DateTime.Now.AddDays(30))
-                .Select(h => new HopDongSapHetHan
+                lapDayTheoThang.Add(new LapDayTheoThang
                 {
-                    MaHopDong = h.MaHopDong,
-                    TenPhong = h.PhongNavigation?.TenPhong ?? "N/A",
-                    TenKhachHang = h.KhachHangNavigation?.HoTen ?? "N/A",
-                    NgayKetThuc = h.NgayKetThuc ?? DateTime.Now,
-                    SoNgayConLai = (h.NgayKetThuc.Value - DateTime.Now).Days
-                })
-                .OrderBy(h => h.SoNgayConLai)
-                .Take(10)
-                .ToList();
-
-            model.HopDongSapHetHanList = hopDongSapHetHan;
-
-            // ========== BÀI ĐĂNG GẦN ĐÂY ==========
-            var baiDangList = await _context.BaiDang
-                .Include(b => b.PhongNavigation)
-                .OrderByDescending(b => b.NgayDang)
-                .Take(5)
-                .ToListAsync();
-
-            model.BaiDangGanDayList = baiDangList.Select(b => new BaiDangGanDay
-            {
-                MaBaiDang = b.MaBaiDang,
-                TieuDe = b.TieuDe ?? "Không có tiêu đề",
-                TenPhong = b.PhongNavigation?.TenPhong ?? "N/A",
-                NgayDang = b.NgayDang ?? DateTime.Now,
-                TrangThai = b.TrangThai ?? "Ẩn",
-                LuotXem = 0
-            }).ToList();
-
-            model.TongSoBaiDang = await _context.BaiDang.CountAsync();
-            model.SoBaiDangHienThi = await _context.BaiDang.CountAsync(b => b.TrangThai == "Hiển thị");
-            model.SoBaiDangAn = model.TongSoBaiDang - model.SoBaiDangHienThi;
-            model.SoBaiDangThangNay = await _context.BaiDang
-                .CountAsync(b => b.NgayDang != null && b.NgayDang.Value.Month == DateTime.Now.Month);
-
+                    Thang = mThang.Month,
+                    Nam = mThang.Year,
+                    TyLeLapDay = Math.Round((double)soPhongCoHopDong / tongSoPhong * 100, 1)
+                });
+            }
+            model.LapDayTheoThangList = lapDayTheoThang;
             return View(model);
+        }
+
+        // ======================= MODULE HÓA ĐƠN =======================
+        public async Task<IActionResult> ThongKeHoaDon(int? thang, int? nam)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            int m = thang ?? DateTime.Now.Month;
+            int y = nam ?? DateTime.Now.Year;
+
+            var query = from h in _context.HoaDon
+                        join hd in _context.HopDong on h.MaHopDong equals hd.MaHopDong
+                        join p in _context.Phong on hd.MaPhong equals p.MaPhong
+                        join k in _context.KhachHang on hd.MaKhachHang equals k.MaKhachHang
+                        where h.Thang == m && h.Nam == y
+                        select new ThongKeHoaDonViewModel
+                        {
+                            MaHoaDon = h.MaHoaDon.ToString(),
+                            TenPhong = p.TenPhong,
+                            KhachHang = k.HoTen,
+                            TongTien = h.TongTien ?? 0,
+                            TrangThai = (h.TrangThai != null) ? h.TrangThai.Trim() : "Chưa thanh toán",
+                            NgayTao = h.NgayTao
+                        };
+
+            var data = await query.ToListAsync();
+            data = data.OrderBy(x => x.TrangThai.Equals("Chưa thanh toán", StringComparison.OrdinalIgnoreCase) ? 1 : 2).ToList();
+
+            ViewBag.Thang = m;
+            ViewBag.Nam = y;
+            ViewBag.TongSoHD = data.Count;
+            ViewBag.DaThu = data.Where(x => x.TrangThai.Equals("Đã thanh toán", StringComparison.OrdinalIgnoreCase)).Sum(x => x.TongTien);
+            ViewBag.ChuaThu = data.Where(x => x.TrangThai.Equals("Chưa thanh toán", StringComparison.OrdinalIgnoreCase)).Sum(x => x.TongTien);
+
+            return View(data);
+        }
+
+        public async Task<IActionResult> XuatPDFThongKeHoaDon(int thang, int nam)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            var query = from h in _context.HoaDon
+                        join hd in _context.HopDong on h.MaHopDong equals hd.MaHopDong
+                        join p in _context.Phong on hd.MaPhong equals p.MaPhong
+                        join k in _context.KhachHang on hd.MaKhachHang equals k.MaKhachHang
+                        where h.Thang == thang && h.Nam == nam
+                        select new ThongKeHoaDonViewModel
+                        {
+                            MaHoaDon = h.MaHoaDon.ToString(),
+                            TenPhong = p.TenPhong,
+                            KhachHang = k.HoTen,
+                            TongTien = h.TongTien ?? 0,
+                            TrangThai = (h.TrangThai != null) ? h.TrangThai.Trim() : "Chưa thanh toán",
+                            NgayTao = h.NgayTao
+                        };
+
+            var data = await query.ToListAsync();
+            data = data.OrderBy(x => x.TrangThai.Equals("Chưa thanh toán", StringComparison.OrdinalIgnoreCase) ? 1 : 2).ToList();
+
+            ViewBag.Thang = thang;
+            ViewBag.Nam = nam;
+            ViewBag.TongSoHD = data.Count;
+            ViewBag.DaThu = data.Where(x => x.TrangThai.Equals("Đã thanh toán", StringComparison.OrdinalIgnoreCase)).Sum(x => x.TongTien);
+            ViewBag.ChuaThu = data.Where(x => x.TrangThai.Equals("Chưa thanh toán", StringComparison.OrdinalIgnoreCase)).Sum(x => x.TongTien);
+
+            var sessionUser = HttpContext.Session.GetString("UserName");
+            var sessionName = HttpContext.Session.GetString("Fullname");
+
+            if (!string.IsNullOrWhiteSpace(sessionUser)) { ViewBag.Username = sessionUser.Trim(); }
+            else if (!string.IsNullOrWhiteSpace(sessionName)) { ViewBag.Username = sessionName.Trim(); }
+            else { ViewBag.Username = "Người quản lý"; }
+
+            return new ViewAsPdf("ThongKeHoaDonPDF", (object)data)
+            {
+                FileName = $"BaoCao_HoaDon_Thang_{thang}_{nam}.pdf",
+                PageSize = Rotativa.AspNetCore.Options.Size.A4,
+                PageOrientation = Rotativa.AspNetCore.Options.Orientation.Portrait,
+                PageMargins = { Left = 15, Right = 15, Top = 15, Bottom = 15 }
+            };
+        }
+
+        // ======================= MODULE HỢP ĐỒNG =======================
+        public async Task<IActionResult> ChiTietHopDong()
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            var query = from h in _context.HopDong
+                        join p in _context.Phong on h.MaPhong equals p.MaPhong
+                        join k in _context.KhachHang on h.MaKhachHang equals k.MaKhachHang
+                        select new ChiTietHopDongViewModel
+                        {
+                            MaHopDong = h.MaHopDong.ToString(),
+                            TenPhong = p.TenPhong,
+                            TenKhachThue = k.HoTen,
+                            NgayBatDau = h.NgayBatDau,
+                            NgayKetThuc = h.NgayKetThuc,
+                            TrangThai = (h.TrangThai == "Hiệu lực") ? "Đang hiệu lực" : h.TrangThai
+                        };
+
+            var data = await query.ToListAsync();
+            data = data.OrderBy(x => x.TrangThai == "Đang hiệu lực" ? 1 : (x.TrangThai == "Hết hạn" ? 2 : 3)).ToList();
+
+            ViewBag.TongSo = data.Count;
+            ViewBag.DangHieuLuc = data.Count(x => x.TrangThai == "Đang hiệu lực");
+            ViewBag.HetHan = data.Count(x => x.TrangThai == "Hết hạn");
+            ViewBag.DaHuy = data.Count(x => x.TrangThai == "Đã hủy");
+
+            return View(data);
+        }
+
+        public async Task<IActionResult> XuatPDFChiTietHopDong()
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            var query = from h in _context.HopDong
+                        join p in _context.Phong on h.MaPhong equals p.MaPhong
+                        join k in _context.KhachHang on h.MaKhachHang equals k.MaKhachHang
+                        select new ChiTietHopDongViewModel
+                        {
+                            MaHopDong = h.MaHopDong.ToString(),
+                            TenPhong = p.TenPhong,
+                            TenKhachThue = k.HoTen,
+                            NgayBatDau = h.NgayBatDau,
+                            NgayKetThuc = h.NgayKetThuc,
+                            TrangThai = (h.TrangThai == "Hiệu lực") ? "Đang hiệu lực" : h.TrangThai
+                        };
+
+            var data = await query.ToListAsync();
+            data = data.OrderBy(x => x.TrangThai == "Đang hiệu lực" ? 1 : (x.TrangThai == "Hết hạn" ? 2 : 3)).ToList();
+
+            ViewBag.TongSo = data.Count;
+            ViewBag.DangHieuLuc = data.Count(x => x.TrangThai == "Đang hiệu lực");
+            ViewBag.HetHan = data.Count(x => x.TrangThai == "Hết hạn");
+            ViewBag.DaHuy = data.Count(x => x.TrangThai == "Đã hủy");
+            ViewBag.Username = HttpContext.Session.GetString("FullName") ?? HttpContext.Session.GetString("Username") ?? "Quản trị viên";
+
+            return new ViewAsPdf("ChiTietHopDongPDF", (object)data)
+            {
+                FileName = $"BaoCao_TrangThaiHopDong_{DateTime.Now:ddMMyyyy}.pdf",
+                PageSize = Rotativa.AspNetCore.Options.Size.A4,
+                PageOrientation = Rotativa.AspNetCore.Options.Orientation.Portrait,
+                PageMargins = { Left = 15, Right = 15, Top = 15, Bottom = 15 }
+            };
+        }
+
+        // ======================= MODULE PHÒNG =======================
+        public async Task<IActionResult> ChiTietPhong()
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            var data = await _context.Phong
+                .Include(p => p.CoSo)
+                .GroupBy(p => p.CoSo.TenCoSo)
+                .Select(g => new ThongKeCoSoViewModel
+                {
+                    TenCoSo = g.Key ?? "Cơ sở chính",
+                    TongSoPhong = g.Count(),
+                    SoPhongDaThue = g.Count(x => x.TrangThai == "Đã thuê"),
+                    SoPhongTrong = g.Count(x => x.TrangThai != "Đã thuê"),
+                    TyLeSuDung = g.Count() == 0 ? 0 : Math.Max(0, Math.Round(((double)g.Count(x => x.TrangThai == "Đã thuê") / g.Count() * 100) - 5.5, 2))
+                }).ToListAsync();
+
+            ViewBag.TongPhong = data.Sum(x => x.TongSoPhong);
+            ViewBag.TongDaThue = data.Sum(x => x.SoPhongDaThue);
+            ViewBag.TongTrong = data.Sum(x => x.SoPhongTrong);
+
+            return View(data);
+        }
+
+        public async Task<IActionResult> XuatPDFChiTietPhong()
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            var data = await _context.Phong
+                .Include(p => p.CoSo)
+                .GroupBy(p => p.CoSo.TenCoSo)
+                .Select(g => new ThongKeCoSoViewModel
+                {
+                    TenCoSo = g.Key ?? "Cơ sở chính",
+                    TongSoPhong = g.Count(),
+                    SoPhongDaThue = g.Count(x => x.TrangThai == "Đã thuê"),
+                    SoPhongTrong = g.Count(x => x.TrangThai != "Đã thuê"),
+                    TyLeSuDung = g.Count() == 0 ? 0 : Math.Max(0, Math.Round(((double)g.Count(x => x.TrangThai == "Đã thuê") / g.Count() * 100) - 5.5, 2))
+                }).ToListAsync();
+
+            ViewBag.TongPhong = data.Sum(x => x.TongSoPhong);
+            ViewBag.TongDaThue = data.Sum(x => x.SoPhongDaThue);
+            ViewBag.TongTrong = data.Sum(x => x.SoPhongTrong);
+            ViewBag.Username = HttpContext.Session.GetString("FullName") ?? HttpContext.Session.GetString("Username") ?? "Quản trị viên";
+
+            return new ViewAsPdf("ChiTietPhongPDF", (object)data)
+            {
+                FileName = $"BaoCao_LapDayPhong_{DateTime.Now:ddMMyyyy}.pdf",
+                PageSize = Rotativa.AspNetCore.Options.Size.A4,
+                PageOrientation = Rotativa.AspNetCore.Options.Orientation.Portrait,
+                PageMargins = { Left = 15, Right = 15, Top = 15, Bottom = 15 }
+            };
+        }
+
+        // ======================= MODULE DOANH THU =======================
+        public async Task<IActionResult> ChiTietDoanhThu(int? thang, int? nam)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            int m = thang ?? DateTime.Now.Month;
+            int y = nam ?? DateTime.Now.Year;
+
+            var query = from hd in _context.HoaDon
+                        join hopDong in _context.HopDong on hd.MaHopDong equals hopDong.MaHopDong
+                        join p in _context.Phong on hopDong.MaPhong equals p.MaPhong
+                        where hd.TrangThai == "Đã thanh toán"
+                              && hd.NgayTao.HasValue
+                              && hd.NgayTao.Value.Month == m
+                              && hd.NgayTao.Value.Year == y
+                        select new ChiTietDoanhThuViewModel
+                        {
+                            MaHoaDon = hd.MaHoaDon.ToString(),
+                            TenPhong = p.TenPhong,
+                            NgayThanhToan = hd.NgayTao,
+                            TongTien = hd.TongTien ?? 0
+                        };
+
+            var data = await query.ToListAsync();
+
+            ViewBag.Thang = m;
+            ViewBag.Nam = y;
+            ViewBag.TongDoanhThu = data.Sum(x => x.TongTien);
+            ViewBag.SoGiaoDich = data.Count;
+            ViewBag.TrungBinh = data.Count > 0 ? data.Average(x => x.TongTien) : 0;
+            ViewBag.Username = HttpContext.Session.GetString("FullName") ?? HttpContext.Session.GetString("Username") ?? "Quản trị viên";
+
+            return View(data);
+        }
+
+        public async Task<IActionResult> XuatPDFBaoCao(int thang, int nam)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            var query = from hd in _context.HoaDon
+                        join hopDong in _context.HopDong on hd.MaHopDong equals hopDong.MaHopDong
+                        join p in _context.Phong on hopDong.MaPhong equals p.MaPhong
+                        where hd.TrangThai == "Đã thanh toán"
+                              && hd.NgayTao.HasValue
+                              && hd.NgayTao.Value.Month == thang
+                              && hd.NgayTao.Value.Year == nam
+                        select new ChiTietDoanhThuViewModel
+                        {
+                            MaHoaDon = hd.MaHoaDon.ToString(),
+                            TenPhong = p.TenPhong,
+                            NgayThanhToan = hd.NgayTao,
+                            TongTien = hd.TongTien ?? 0
+                        };
+
+            var data = await query.ToListAsync();
+
+            ViewBag.Thang = thang;
+            ViewBag.Nam = nam;
+            ViewBag.TongDoanhThu = data.Sum(x => x.TongTien);
+            ViewBag.Username = HttpContext.Session.GetString("FullName") ?? HttpContext.Session.GetString("Username") ?? "Quản trị viên";
+
+            return new ViewAsPdf("BaoCaoPDF", (object)data)
+            {
+                FileName = $"BaoCao_DoanhThu_{thang}_{nam}.pdf",
+                PageSize = Rotativa.AspNetCore.Options.Size.A4,
+                PageOrientation = Rotativa.AspNetCore.Options.Orientation.Portrait,
+                PageMargins = { Left = 15, Right = 15, Top = 15, Bottom = 15 }
+            };
         }
     }
 }

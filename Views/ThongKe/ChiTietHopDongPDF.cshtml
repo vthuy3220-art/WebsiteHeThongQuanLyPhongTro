@@ -1,0 +1,151 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.ChiTietHopDongViewModel>
+@{
+    Layout = null;
+    int tongSo = ViewBag.TongSo ?? 0;
+    int dangHieuLuc = ViewBag.DangHieuLuc ?? 0;
+    int hetHan = ViewBag.HetHan ?? 0;
+    int daHuy = ViewBag.DaHuy ?? 0;
+    // Kiểm tra đa tầng: Lấy từ ViewBag -> Lấy từ User hệ thống -> Lấy từ Session tài khoản
+    string tenNguoiXuat = "Admin";
+
+    if (ViewBag.Username != null && !string.IsNullOrWhiteSpace(ViewBag.Username.ToString()))
+    {
+        tenNguoiXuat = ViewBag.Username.ToString();
+    }
+    else if (User.Identity != null && !string.IsNullOrWhiteSpace(User.Identity.Name))
+    {
+        tenNguoiXuat = User.Identity.Name;
+    }
+    else if (Context.Session.GetString("UserName") != null)
+    {
+        tenNguoiXuat = Context.Session.GetString("UserName");
+    }
+
+    // ĐÃ SỬA: Đổi mã màu # thành chữ (teal, gray, crimson) để trị dứt điểm lỗi đứt Link hình ảnh
+    string chartJson = $"{{type:'doughnut',data:{{labels:['Đang hiệu lực','Hết hạn','Đã hủy'],datasets:[{{data:[{dangHieuLuc},{hetHan},{daHuy}],backgroundColor:['teal','gray','crimson']}}]}}}}";
+    string chartUrl = "https://quickchart.io/chart?w=500&h=250&c=" + Uri.EscapeDataString(chartJson);
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Báo Cáo Hợp Đồng PDF</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            color: black;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .summary-box {
+            border: 2px solid #333;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #e6f4ea;
+        }
+
+        .chart-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <table style="border: none; margin-bottom: 20px;">
+        <tr style="border: none;">
+            <td style="border: none; text-align: left; width: 40%; vertical-align: top;">
+                <b>HỆ THỐNG QUẢN LÝ TRỌ</b><br />Người lập: @tenNguoiXuat
+            </td>
+            <td style="border: none; text-align: center; width: 60%;">
+                <b style="font-size: 16px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br />
+                <u style="font-weight: bold;">Độc lập - Tự do - Hạnh phúc</u>
+            </td>
+        </tr>
+    </table>
+
+    <h2 style="text-align: center; text-transform: uppercase;">BÁO CÁO TÌNH TRẠNG HỢP ĐỒNG</h2>
+    <p style="text-align: center; font-style: italic; margin-bottom: 20px;">(Ngày trích xuất: @DateTime.Now.ToString("dd/MM/yyyy HH:mm"))</p>
+
+    <div class="summary-box">
+        TỔNG SỐ HỢP ĐỒNG: @tongSo | ĐANG HIỆU LỰC: @dangHieuLuc | HẾT HẠN: @hetHan | ĐÃ HỦY: @daHuy
+    </div>
+
+    <div class="chart-container">
+        <h3 style="text-align: center; margin-bottom: 10px; font-size: 15px;">Biểu đồ phân bổ trạng thái hợp đồng</h3>
+        <img src="@chartUrl" style="max-width: 100%; height: auto;" />
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">STT</th>
+                <th style="width: 15%;">Mã HĐ</th>
+                <th style="width: 25%;">Khách thuê</th>
+                <th style="width: 15%;">Phòng</th>
+                <th style="width: 25%;">Thời hạn</th>
+                <th style="width: 15%;">Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                int stt = 1;
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td style="text-align: center;">@(stt++)</td>
+                        <td style="text-align: center; font-weight: bold;">@item.MaHopDong</td>
+                        <td>@item.TenKhachThue</td>
+                        <td style="text-align: center;">@item.TenPhong</td>
+                        <td style="text-align: center;">
+                            @(item.NgayBatDau?.ToString("dd/MM/yyyy")) - @(item.NgayKetThuc?.ToString("dd/MM/yyyy"))
+                        </td>
+                        <td style="text-align: center;">@item.TrangThai</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center;">Chưa có dữ liệu hợp đồng.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <table style="border: none; margin-top: 40px; page-break-inside: avoid;">
+        <tr style="border: none;">
+            <td style="border: none; width: 55%;"></td>
+            <td style="border: none; width: 45%; text-align: center;">
+                <i>Ngày @DateTime.Now.Day tháng @DateTime.Now.Month năm @DateTime.Now.Year</i><br />
+                <b style="font-size: 15px;">Người lập biểu</b><br /><br /><br /><br />
+                <b>@tenNguoiXuat</b>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

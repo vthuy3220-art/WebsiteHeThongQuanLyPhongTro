@@ -1,224 +1,411 @@
 ﻿@model HeThongQuanLyPhongTro.Models.DashboardViewModel
-
 @{
     ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // --- TÍNH TOÁN TỶ LỆ ĐỘNG CHUẨN XÁC ĐẾN 1 CHỮ SỐ THẬP PHÂN BẰNG C# ---
+    double tyLeLapDay = Model.TongSoPhong > 0 ? Math.Round((double)Model.SoPhongDaThue / Model.TongSoPhong * 100, 1) : 0;
+    double tyLePhongTrong = Model.TongSoPhong > 0 ? Math.Round((double)Model.SoPhongTrong / Model.TongSoPhong * 100, 1) : 0;
 }
 
-<div class="mb-6">
-    <!-- Các class Tailwind thực tế có thể khác một chút -->
-    <h2 class="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
-    <p class="text-sm text-gray-500">  Chào mừng @ViewBag.Username trở lại!</p>
-</div>
+<style>
+    @Html.Raw("@") import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap');
 
+    .mantis-theme {
+        font-family: 'Public Sans', sans-serif;
+        background-color: #fafafb;
+    }
 
-<div class="space-y-6">
+    .card-shadow {
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+    }
 
+    .mantis-tooltip {
+        box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+    }
 
-    <!-- Cards với Tooltip -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    .custom-scroll::-webkit-scrollbar {
+        width: 5px;
+    }
 
-        <!-- Card 1: Tổng số phòng (có tooltip) -->
-        <div class="relative group">
-            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-all">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-gray-500 text-sm">Tổng số phòng</p>
-                        <p class="text-3xl font-bold text-gray-800">@Model.TongSoPhong</p>
-                    </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-building text-blue-500 text-xl"></i>
-                    </div>
+    .custom-scroll::-webkit-scrollbar-thumb {
+        background: #d9d9d9;
+        border-radius: 10px;
+    }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #bfbfbf;
+        }
+</style>
+
+<div class="mantis-theme min-h-screen p-6 md:p-8 text-slate-800">
+
+    <div class="mb-6">
+        <h2 class="text-xl font-bold text-slate-800">Admin Dashboard</h2>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded mb-6 card-shadow text-sm font-medium">
+            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Info"] != null)
+    {
+        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded mb-6 card-shadow text-sm font-medium">
+            <i class="fas fa-info-circle mr-2"></i> @TempData["Info"]
+        </div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Ô 1: TỔNG SỐ PHÒNG -->
+        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer">
+            <div class="text-sm font-medium text-slate-500 mb-3">Tổng số phòng</div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="text-3xl font-bold text-slate-800">@Model.TongSoPhong</div>
+                <div class="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-xs font-bold border border-emerald-100 flex items-center" title="Tỷ lệ phòng trống sẵn sàng phục vụ">
+                    <i class="fas fa-door-open mr-1 text-[10px]"></i> @tyLePhongTrong% Trống
                 </div>
             </div>
-            <!-- Tooltip -->
-            @if (ViewBag.DanhSachPhong != null)
-            {
-                <div class="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 w-64 bottom-full left-1/2 transform -translate-x-1/2 mb-2 shadow-xl">
-                    <div class="font-bold mb-2 text-center text-blue-400">📋 DANH SÁCH PHÒNG</div>
-                    <div class="max-h-48 overflow-y-auto">
-                        @foreach (var phong in ViewBag.DanhSachPhong)
-                        {
-                            <div class="border-b border-gray-700 py-1 text-xs">
-                                <span class="font-medium">@phong.TenPhong</span>
-                                <span class="text-gray-400 ml-2">- @phong.GiaPhong.ToString("N0") đ</span>
-                            </div>
-                        }
-                    </div>
-                    <div class="text-center text-gray-400 text-xs mt-2">Tổng: @Model.TongSoPhong phòng</div>
-                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                </div>
-            }
+            <div class="text-xs text-slate-500">
+                Sẵn sàng phục vụ <span class="text-blue-500 font-semibold">@Model.SoPhongTrong</span> phòng trống
+            </div>
         </div>
 
-        <!-- Card 2: Phòng đã thuê (có tooltip) -->
-        <div class="relative group">
-            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-green-500 hover:shadow-lg transition-all">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-gray-500 text-sm">Phòng đã thuê</p>
-                        <p class="text-3xl font-bold text-green-600">@Model.SoPhongDaThue</p>
-                    </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-door-closed text-green-500 text-xl"></i>
-                    </div>
+        <!-- Ô 2: PHÒNG ĐÃ THUÊ -->
+        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer">
+            <div class="text-sm font-medium text-slate-500 mb-3">Phòng đã thuê</div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="text-3xl font-bold text-slate-800">@Model.SoPhongDaThue</div>
+                <div class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-bold border border-blue-100 flex items-center" title="Tỷ lệ lấp đầy phòng">
+                    <i class="fas fa-chart-line mr-1 text-[10px]"></i> @tyLeLapDay%
                 </div>
             </div>
-            <!-- Tooltip -->
-            @if (ViewBag.DanhSachPhongDaThue != null)
-            {
-                <div class="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 w-72 bottom-full left-1/2 transform -translate-x-1/2 mb-2 shadow-xl">
-                    <div class="font-bold mb-2 text-center text-green-400">🏠 DANH SÁCH PHÒNG ĐÃ THUÊ</div>
-                    <div class="max-h-48 overflow-y-auto">
-                        @foreach (var phong in ViewBag.DanhSachPhongDaThue)
-                        {
-                            <div class="border-b border-gray-700 py-1 text-xs">
-                                <div class="flex justify-between">
-                                    <span class="font-medium">@phong.TenPhong</span>
-                                    <span class="text-green-400">Đã thuê</span>
-                                </div>
-                                <div class="text-gray-400 text-xs">Khách: @phong.TenKhachHang</div>
-                            </div>
-                        }
-                    </div>
-                    <div class="text-center text-gray-400 text-xs mt-2">Tổng: @Model.SoPhongDaThue phòng</div>
-                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                </div>
-            }
+            <div class="text-xs text-slate-500">
+                Đang có <span class="text-blue-500 font-semibold">@Model.TongSoKhachHang</span> khách hàng lưu trú
+            </div>
         </div>
 
-        <!-- Card 3: Phòng trống (có tooltip) -->
-        <div class="relative group">
-            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-yellow-500 hover:shadow-lg transition-all">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-gray-500 text-sm">Phòng trống</p>
-                        <p class="text-3xl font-bold text-yellow-600">@Model.SoPhongTrong</p>
-                    </div>
-                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-door-open text-yellow-500 text-xl"></i>
-                    </div>
+        <!-- Ô 3: TỔNG SỐ HỢP ĐỒNG -->
+        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer">
+            <div class="text-sm font-medium text-slate-500 mb-3">Tổng số Hợp đồng</div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="text-3xl font-bold text-slate-800">@(Model.SoHopDongHieuLuc + Model.SoHopDongHetHan)</div>
+                <div class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs font-bold border border-slate-200 flex items-center">
+                    <i class="fas fa-file-contract mr-1 text-[10px]"></i> @Model.SoHopDongHetHan kết thúc
                 </div>
             </div>
-            <!-- Tooltip -->
-            @if (ViewBag.DanhSachPhongTrong != null)
-            {
-                <div class="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 w-64 bottom-full left-1/2 transform -translate-x-1/2 mb-2 shadow-xl">
-                    <div class="font-bold mb-2 text-center text-yellow-400">📋 PHÒNG TRỐNG</div>
-                    <div class="max-h-48 overflow-y-auto">
-                        @foreach (var phong in ViewBag.DanhSachPhongTrong)
-                        {
-                            <div class="border-b border-gray-700 py-1 text-xs">
-                                <div class="flex justify-between">
-                                    <span class="font-medium">@phong.TenPhong</span>
-                                    <span class="text-yellow-400">Trống</span>
-                                </div>
-                                <div class="text-gray-400 text-xs">@phong.GiaPhong.ToString("N0") đ/tháng</div>
-                            </div>
-                        }
-                    </div>
-                    <div class="text-center text-gray-400 text-xs mt-2">Còn @Model.SoPhongTrong phòng trống</div>
-                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                </div>
-            }
+            <div class="text-xs text-slate-500">
+                Đang có <span class="text-blue-500 font-semibold">@Model.SoHopDongHieuLuc</span> hợp đồng hiệu lực
+            </div>
         </div>
 
-        <!-- Card 4: Doanh thu (không tooltip) -->
-        <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-purple-500">
-            <div class="flex justify-between items-start">
-                <div class="flex-1 overflow-hidden">
-                    <p class="text-gray-500 text-sm whitespace-nowrap overflow-hidden text-ellipsis">Doanh thu tháng @DateTime.Now.Month</p>
-                    <p class="text-2xl lg:text-xl xl:text-2xl font-bold text-purple-600 whitespace-nowrap overflow-hidden text-ellipsis" title="@Model.DoanhThuThangNay.ToString("N0") đ">
-                        @Model.DoanhThuThangNay.ToString("N0") đ
-                    </p>
-                </div>
-                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-chart-line text-purple-500 text-xl"></i>
-                </div>
+        <!-- Ô 4: DOANH THU & CÔNG NỢ -->
+        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative">
+            <div class="text-sm font-medium text-slate-500 mb-3">Doanh thu T@(DateTime.Now.Month)</div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="text-3xl font-bold text-slate-800 truncate" title="@Model.DoanhThuThangNay.ToString("N0")">@Model.DoanhThuThangNay.ToString("N0")</div>
+            </div>
+            <div class="text-xs text-slate-500">
+                Ghi nhận công nợ <span class="text-amber-500 font-semibold">@Model.TongNoHienTai.ToString("N0") đ</span>
             </div>
         </div>
     </div>
 
-    <!-- Hợp đồng sắp hết hạn -->
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-        <div class="bg-orange-50 px-6 py-3 border-b">
-            <h3 class="font-semibold text-orange-700 flex items-center">
-                <i class="fas fa-clock text-orange-500 mr-2"></i>
-                Hợp đồng sắp hết hạn
-            </h3>
-        </div>
-        <div class="p-4">
-            @if (Model.HopDongSapHetHanList.Any())
-            {
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr class="border-b">
-                                <th class="px-4 py-2 text-left">Phòng</th>
-                                <th class="px-4 py-2 text-left">Khách hàng</th>
-                                <th class="px-4 py-2 text-left">Ngày kết thúc</th>
-                                <th class="px-4 py-2 text-left">Còn lại</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model.HopDongSapHetHanList)
-                            {
-                                <tr class="border-b">
-                                    <td class="px-4 py-2">@item.TenPhong</td>
-                                    <td class="px-4 py-2">@item.TenKhachHang</td>
-                                    <td class="px-4 py-2">@item.NgayKetThuc.ToString("dd/MM/yyyy")</td>
-                                    <td class="px-4 py-2 font-semibold text-red-600">@item.SoNgayConLai ngày</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+    <!-- KHỐI BIỂU ĐỒ VÀ BẢNG THÔNG TIN -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg card-shadow border border-slate-100 p-6 lg:col-span-2 flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-base font-semibold text-slate-800">Lưu lượng tài chính</h3>
+                <div class="flex bg-slate-50 rounded-md border border-slate-200 p-1">
+                    <button id="btnThang" onclick="switchPeriod('Thang')" class="px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all">
+                        Tháng
+                    </button>
+                    <button id="btnTuan" onclick="switchPeriod('Tuan')" class="px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all">
+                        Tuần
+                    </button>
                 </div>
-            }
-            else
-            {
-                <div class="text-center py-6 text-gray-500">Không có hợp đồng nào sắp hết hạn</div>
-            }
+            </div>
+            <div class="flex-grow relative w-full h-[320px]">
+                <canvas id="areaChart"></canvas>
+            </div>
+            <div class="flex items-center justify-center gap-6 mt-4">
+                <div class="flex items-center text-xs text-slate-500"><span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span> Tổng Doanh Thu</div>
+                <div class="flex items-center text-xs text-slate-500"><span class="w-3 h-3 rounded-full bg-blue-200 mr-2"></span> Đã Thu Tiền</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg card-shadow border border-slate-100 p-6 flex flex-col">
+            <div class="mb-6">
+                <h3 class="text-base font-semibold text-slate-800">Top Phòng Nổi Bật</h3>
+                <p class="text-xs text-slate-500 mt-1">Phân bổ doanh thu cao nhất</p>
+            </div>
+            <div class="mb-4">
+                <h2 class="text-3xl font-bold text-slate-800"><span id="topRevenueText">0</span> <span class="text-sm font-normal text-slate-500">VNĐ</span></h2>
+            </div>
+            <div class="flex-grow relative w-full h-[220px]">
+                <canvas id="barChart"></canvas>
+            </div>
         </div>
     </div>
 
-    <!-- Bài đăng gần đây -->
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-        <div class="bg-gray-50 px-6 py-3 border-b flex justify-between items-center">
-            <h3 class="font-semibold text-gray-700 flex items-center">
-                <i class="fas fa-newspaper text-indigo-500 mr-2"></i>
-                Bài đăng gần đây
-            </h3>
-            <a asp-controller="BaiDang" asp-action="Index" class="text-sm text-blue-500 hover:text-blue-700">Xem tất cả</a>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg card-shadow border border-slate-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-base font-semibold text-slate-800">Giao dịch tài chính gần đây</h3>
+                <a href="@Url.Action("ThongKeHoaDon", "ThongKe")" class="text-xs text-blue-500 hover:text-blue-700 font-medium">Xem tất cả</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-100 text-slate-500">
+                        <tr>
+                            <th class="px-6 py-3 font-medium">Mã HĐ</th>
+                            <th class="px-6 py-3 font-medium">Tên Phòng</th>
+                            <th class="px-6 py-3 font-medium text-right">Tổng tiền (VNĐ)</th>
+                            <th class="px-6 py-3 font-medium text-center">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-slate-50 hover:bg-slate-50/50">
+                            <td class="px-6 py-4 text-slate-800 font-medium">HD-8901</td>
+                            <td class="px-6 py-4 text-slate-600">Phòng 101</td>
+                            <td class="px-6 py-4 text-right font-medium">3,500,000</td>
+                            <td class="px-6 py-4 text-center"><span class="px-2 py-1 bg-green-50 text-green-600 rounded text-[11px] font-semibold border border-green-100">Đã thanh toán</span></td>
+                        </tr>
+                        <tr class="border-b border-slate-50 hover:bg-slate-50/50">
+                            <td class="px-6 py-4 text-slate-800 font-medium">HD-8902</td>
+                            <td class="px-6 py-4 text-slate-600">Phòng 203</td>
+                            <td class="px-6 py-4 text-right font-medium">4,200,000</td>
+                            <td class="px-6 py-4 text-center"><span class="px-2 py-1 bg-amber-50 text-amber-600 rounded text-[11px] font-semibold border border-amber-100">Chờ thanh toán</span></td>
+                        </tr>
+                        <tr class="hover:bg-slate-50/50">
+                            <td class="px-6 py-4 text-slate-800 font-medium">HD-8903</td>
+                            <td class="px-6 py-4 text-slate-600">Phòng 405</td>
+                            <td class="px-6 py-4 text-right font-medium">3,800,000</td>
+                            <td class="px-6 py-4 text-center"><span class="px-2 py-1 bg-green-50 text-green-600 rounded text-[11px] font-semibold border border-green-100">Đã thanh toán</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="p-4">
-            @if (Model.BaiDangGanDayList.Any())
-            {
-                <div class="grid grid-cols-1 gap-3">
-                    @foreach (var item in Model.BaiDangGanDayList)
+
+        <div class="bg-white rounded-lg card-shadow border border-slate-100 overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-100">
+                <h3 class="text-base font-semibold text-slate-800">Thông báo & Cảnh báo hệ thống</h3>
+            </div>
+            <div class="p-6 flex-grow flex flex-col gap-4">
+                @if (Model.HopDongSapHetHanList != null && Model.HopDongSapHetHanList.Any())
+                {
+                    foreach (var item in Model.HopDongSapHetHanList.Take(3))
                     {
-                        <div class="flex justify-between items-center border-b pb-2">
-                            <div>
-                                <p class="font-medium truncate max-w-md">@item.TieuDe</p>
-                                <p class="text-xs text-gray-500">@item.TenPhong - @item.NgayDang.ToString("dd/MM/yyyy HH:mm")</p>
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
+                                <i class="fas fa-bell"></i>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                @if (item.TrangThai == "Hiển thị")
-                                {
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Hiển thị</span>
-                                }
-                                else
-                                {
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Ẩn</span>
-                                }
-                                <a asp-controller="BaiDang" asp-action="Details" asp-route-id="@item.MaBaiDang" class="text-blue-500 text-sm">Xem</a>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-800">Hợp đồng phòng @item.TenPhong sắp hết hạn</h4>
+                                <p class="text-xs text-slate-500 mt-1">Khách thuê @item.TenKhachHang - Hết hạn ngày @item.NgayKetThuc.ToString("dd/MM/yyyy") (Còn <span class="text-orange-500 font-bold">@item.SoNgayConLai</span> ngày)</p>
                             </div>
                         </div>
                     }
+                }
+                else
+                {
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center shrink-0">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-slate-800">Hệ thống hoạt động trơn tru</h4>
+                            <p class="text-xs text-slate-500 mt-1">Không có hợp đồng nào sắp hết hạn trong 30 ngày tới.</p>
+                        </div>
+                    </div>
+                }
+
+                <div class="flex items-start gap-4 mt-2">
+                    <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-slate-800">Nhắc nhở công nợ</h4>
+                        <div class="text-xs text-slate-500 mt-1 flex items-center flex-wrap gap-1">
+                            <span>Có @Model.SoHoaDonChuaThanhToan hóa đơn chưa thu tiền.</span>
+                            <!-- Form ngầm xử lý nút bấm gửi thông báo hàng loạt bằng lệnh POST -->
+                            <form asp-controller="Dashboard" asp-action="GuiThongBaoNhacNo" method="post" class="inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="text-blue-500 font-semibold hover:text-blue-700 hover:underline bg-transparent border-none p-0 cursor-pointer transition-all">
+                                    Gửi thông báo ngay
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-            }
-            else
-            {
-                <div class="text-center py-6 text-gray-500">Chưa có bài đăng nào</div>
-            }
+            </div>
         </div>
     </div>
-</div
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        // --- 1. BIỂU ĐỒ MIỀN (AREA CHART) ---
+        var rawData = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]");
+        var labelsThang = [];
+        var dataThucTeThang = [];
+        var dataDaThuThang = [];
+
+        if (rawData && rawData.length > 0) {
+        var dataCopy = [...rawData].reverse();
+        labelsThang = dataCopy.map(x => 'Tháng ' + (x.Thang !== undefined ? x.Thang : x.thang));
+        dataThucTeThang = dataCopy.map(x => (x.doanhThu !== undefined ? x.doanhThu : x.DoanhThu));
+        dataDaThuThang = dataThucTeThang.map(val => val * 0.85);
+        } else {
+        labelsThang = ['Tháng 12', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5'];
+        dataThucTeThang = [45000000, 50000000, 62000000, 58000000, 75000000, 92977992];
+        dataDaThuThang = [40000000, 42000000, 55000000, 50000000, 68000000, 85000000];
+        }
+
+        var labelsTuan = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
+        var dataThucTeTuan = [92977992, 2000000, 3500000, 1500000];
+        var dataDaThuTuan = [80000000, 1500000, 3000000, 1000000];
+
+        var ctxArea = document.getElementById('areaChart').getContext('2d');
+
+        var gradientBlue = ctxArea.createLinearGradient(0, 0, 0, 400);
+        gradientBlue.addColorStop(0, 'rgba(24, 144, 255, 0.35)');
+        gradientBlue.addColorStop(1, 'rgba(24, 144, 255, 0.01)');
+
+        var gradientLight = ctxArea.createLinearGradient(0, 0, 0, 400);
+        gradientLight.addColorStop(0, 'rgba(24, 144, 255, 0.1)');
+        gradientLight.addColorStop(1, 'rgba(24, 144, 255, 0)');
+
+        var areaChartInstance = new Chart(ctxArea, {
+        type: 'line',
+        data: {
+        labels: labelsThang,
+        datasets: [
+        {
+        label: 'Tổng Doanh Thu',
+        data: dataThucTeThang,
+        borderColor: '#1890ff',
+        backgroundColor: gradientBlue,
+        borderWidth: 2,
+        fill: true,
+        tension: 0,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#1890ff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6
+        },
+        {
+        label: 'Đã Thu Tiền',
+        data: dataDaThuThang,
+        borderColor: '#91caff',
+        backgroundColor: gradientLight,
+        borderWidth: 2,
+        fill: true,
+        tension: 0,
+        pointRadius: 0,
+        pointHoverRadius: 4
+        }
+        ]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false } },
+        scales: {
+        x: { grid: { display: false }, ticks: { color: '#8c8c8c', font: { family: 'Public Sans' } }, border: { display: false } },
+        y: {
+        grid: { color: '#f0f0f0', drawBorder: false },
+        ticks: {
+        color: '#8c8c8c', font: { family: 'Public Sans' },
+        callback: function(value) {
+        if(value >= 1000000) return (value / 1000000) + 'Tr';
+        return value;
+        }
+        },
+        border: { display: false }
+        }
+        }
+        }
+        });
+
+        function switchPeriod(type) {
+        var btnThang = document.getElementById('btnThang');
+        var btnTuan = document.getElementById('btnTuan');
+
+        if (type === 'Thang') {
+        btnThang.className = "px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all";
+        btnTuan.className = "px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all";
+
+        areaChartInstance.data.labels = labelsThang;
+        areaChartInstance.data.datasets[0].data = dataThucTeThang;
+        areaChartInstance.data.datasets[1].data = dataDaThuThang;
+        }
+        else if (type === 'Tuan') {
+        btnTuan.className = "px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all";
+        btnThang.className = "px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all";
+
+        areaChartInstance.data.labels = labelsTuan;
+        areaChartInstance.data.datasets[0].data = dataThucTeTuan;
+        areaChartInstance.data.datasets[1].data = dataDaThuTuan;
+        }
+        areaChartInstance.update();
+        }
+
+        // --- 2. BIỂU ĐỒ CỘT (BAR CHART) ĐỘNG THEO THÁNG ---
+        var rawTop = @Html.Raw(Model.TopPhongList != null ? Json.Serialize(Model.TopPhongList) : "[]");
+
+        var barLabels = [];
+        var barData = [];
+
+        if (rawTop && rawTop.length > 0) {
+        barLabels = rawTop.map(x => (x.TenPhong !== undefined ? x.TenPhong : x.tenPhong));
+        barData = rawTop.map(x => (x.TongDoanhThu !== undefined ? x.TongDoanhThu : x.tongDoanhThu));
+
+        var tongTienThat = barData.reduce((a, b) => a + b, 0);
+        document.getElementById('topRevenueText').innerText = tongTienThat.toLocaleString('vi-VN');
+        } else {
+        barLabels = ['Chưa có dữ liệu'];
+        barData = [0];
+        document.getElementById('topRevenueText').innerText = '0';
+        }
+
+        var ctxBar = document.getElementById('barChart').getContext('2d');
+        new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+        labels: barLabels,
+        datasets: [{
+        data: barData,
+        backgroundColor: '#87e8de',
+        hoverBackgroundColor: '#36cfc9',
+        borderRadius: 2,
+        barPercentage: 0.5
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+        legend: { display: false },
+        tooltip: {
+        callbacks: {
+        label: function(context) { return 'Doanh thu tháng này: ' + context.parsed.y.toLocaleString('vi-VN') + ' đ'; }
+        }
+        }
+        },
+        scales: {
+        x: { grid: { display: false }, border: { display: false }, ticks: { color: '#8c8c8c', font: { size: 10, family: 'Public Sans' } } },
+        y: { display: false, grid: { display: false } }
+        }
+        }
+        });
+    </script>
+}

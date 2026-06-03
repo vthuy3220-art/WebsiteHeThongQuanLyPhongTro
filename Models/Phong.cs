@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HeThongQuanLyPhongTro.Models
@@ -29,5 +30,8 @@ namespace HeThongQuanLyPhongTro.Models
 
         [ForeignKey("MaCoSo")]
         public virtual CoSo? CoSo { get; set; }
+
+        // THÊM: Mối quan hệ đến bảng CoSoVatChat để sửa lỗi CS1061
+        public virtual ICollection<CoSoVatChat> CoSoVatChats { get; set; } = new List<CoSoVatChat>();
     }
 }

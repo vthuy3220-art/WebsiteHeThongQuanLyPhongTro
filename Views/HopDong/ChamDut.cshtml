@@ -1,0 +1,75 @@
+﻿@model HeThongQuanLyPhongTro.Models.HopDong
+
+@{
+    ViewData["Title"] = "Chấm dứt hợp đồng";
+}
+
+<div class="max-w-3xl mx-auto mt-8 px-4">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+
+        <div class="bg-red-600 px-8 py-5">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-white mb-1">Chấm dứt hợp đồng</h1>
+                    <p class="text-red-100 text-sm font-medium">Mã HĐ: @Model.MaHopDong</p>
+                </div>
+                <a asp-action="Index" class="text-white hover:text-red-200 flex items-center font-medium transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-5 mb-8 flex items-start rounded-r-lg">
+                <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5 mr-4 text-xl"></i>
+                <div>
+                    <p class="text-yellow-700 font-bold text-lg mb-1">Bạn có chắc chắn muốn chấm dứt hợp đồng này?</p>
+                    <p class="text-yellow-600 text-sm">Hành động này sẽ thực hiện thao tác theo logic mà bạn quyết định sau.</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-6 mb-8">
+                <h3 class="text-lg font-bold text-gray-700 mb-5 border-b pb-3">Thông tin hợp đồng</h3>
+
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                    <div>
+                        <dt class="text-gray-500 text-sm font-medium mb-1">Khách hàng</dt>
+                        <dd class="text-gray-900 font-bold text-base">@Model.KhachHangNavigation?.HoTen</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 text-sm font-medium mb-1">Số điện thoại</dt>
+                        <dd class="text-gray-900 font-bold text-base">@Model.KhachHangNavigation?.SoDienThoai</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 text-sm font-medium mb-1">Phòng thuê</dt>
+                        <dd class="text-blue-600 font-bold text-base">@Model.PhongNavigation?.TenPhong</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 text-sm font-medium mb-1">Tiền cọc</dt>
+                        <dd class="text-red-600 font-bold text-base">
+                            @(Model.TienCoc?.ToString("N0") ?? "0") đ
+                        </dd>
+                    </div>
+                    <div class="md:col-span-2">
+                        <dt class="text-gray-500 text-sm font-medium mb-1">Thời hạn thuê</dt>
+                        <dd class="text-gray-900 font-bold text-base">
+                            @Model.NgayBatDau?.ToString("dd/MM/yyyy") <i class="fas fa-arrow-right mx-2 text-gray-400 text-xs"></i> @Model.NgayKetThuc?.ToString("dd/MM/yyyy")
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+
+            <form asp-action="ChamDut" method="post" class="flex justify-end gap-3 pt-2">
+                <input type="hidden" name="maHopDong" value="@Model.MaHopDong" />
+
+                <a asp-action="Index" class="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                    Hủy bỏ
+                </a>
+
+                <button type="submit" class="px-6 py-2.5 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors flex items-center shadow-sm">
+                    <i class="fas fa-trash-alt mr-2"></i> Xác nhận
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

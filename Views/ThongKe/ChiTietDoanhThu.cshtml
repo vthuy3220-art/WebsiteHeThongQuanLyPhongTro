@@ -1,0 +1,143 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.ChiTietDoanhThuViewModel>
+@{
+    ViewData["Title"] = "Chi tiết Doanh Thu";
+    Layout = "_Layout";
+    decimal tongDoanhThu = ViewBag.TongDoanhThu ?? 0;
+    decimal trungBinh = ViewBag.TrungBinh ?? 0;
+    int soGiaoDich = ViewBag.SoGiaoDich ?? 0;
+    int thang = ViewBag.Thang ?? DateTime.Now.Month;
+    int nam = ViewBag.Nam ?? DateTime.Now.Year;
+}
+<div class="bg-slate-50 min-h-screen p-6">
+    <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+        <h1 class="text-2xl font-bold text-gray-800">Chi tiết Doanh Thu - Tháng @thang/@nam</h1>
+
+        <div class="flex gap-2 flex-wrap items-center">
+            <form method="get" asp-action="ChiTietDoanhThu" asp-controller="ThongKe" class="flex gap-2">
+                <select name="thang" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm">
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        <option value="@i" selected="@(i == thang ? "selected" : null)">Tháng @i</option>
+                    }
+                </select>
+                <select name="nam" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm">
+                    @for (int i = DateTime.Now.Year - 3; i <= DateTime.Now.Year + 1; i++)
+                    {
+                        <option value="@i" selected="@(i == nam ? "selected" : null)">Năm @i</option>
+                    }
+                </select>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">Lọc</button>
+            </form>
+            <a href="@Url.Action("XuatPDFBaoCao", "ThongKe", new { thang = thang, nam = nam })" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition" style="text-decoration:none;">Xuất PDF</a>
+            <a asp-action="Index" asp-controller="ThongKe" class="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 transition" style="text-decoration:none;">Trở về</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white p-6 rounded-lg shadow col-span-1 border border-gray-100">
+            <h3 class="font-bold text-gray-500 mb-2">Tổng doanh thu</h3>
+            <div class="text-3xl font-bold text-teal-600">@tongDoanhThu.ToString("N0") đ</div>
+            <div class="text-sm text-gray-500 mt-2">Tổng số: @soGiaoDich giao dịch</div>
+            <div class="text-sm text-gray-500">Trung bình: @trungBinh.ToString("N0") đ / GD</div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow col-span-2 border border-gray-100">
+            <h3 class="font-bold text-gray-700 mb-4">Biểu đồ doanh thu theo tuần</h3>
+            <div style="height: 250px;">
+                <canvas id="doanhThuChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-100">
+        <div class="p-4 bg-slate-100 border-b">
+            <h3 class="font-bold text-gray-700">LỊCH SỬ THU TIỀN TRONG THÁNG</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 text-gray-600">
+                    <tr>
+                        <th class="p-4 border-b text-center" style="width: 5%;">STT</th>
+                        <th class="p-4 border-b" style="width: 15%;">Ngày thu tiền</th>
+                        <th class="p-4 border-b" style="width: 15%;">Mã HĐ</th>
+                        <th class="p-4 border-b" style="width: 40%;">Phòng / Giao dịch</th>
+                        <th class="p-4 border-b text-right text-teal-600" style="width: 25%;">Doanh thu (VNĐ)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        int stt = 1;
+                        foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-gray-50 border-b">
+                                <td class="p-4 text-center font-medium">@(stt++)</td>
+                                <td class="p-4">@(item.NgayThanhToan?.ToString("dd/MM/yyyy") ?? "")</td>
+                                <td class="p-4 font-bold text-gray-600">@item.MaHoaDon</td>
+                                <td class="p-4 text-gray-800">@item.TenPhong</td>
+                                <td class="p-4 text-right font-bold text-teal-600">@item.TongTien.ToString("N0") đ</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="p-6 text-center text-gray-500">Không có dữ liệu thu tiền trong tháng này.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var rawData = @Html.Raw(Json.Serialize(Model ?? new List<HeThongQuanLyPhongTro.Models.ChiTietDoanhThuViewModel>()));
+        var weeklyTotals = [0, 0, 0, 0];
+
+        if (rawData && rawData.length > 0) {
+        for (var i = 0; i < rawData.length; i++) {
+        var amount = parseFloat(rawData[i].TongTien || rawData[i].tongTien || 0);
+        var ngay = rawData[i].NgayThanhToan || rawData[i].ngayThanhToan;
+        if (ngay) {
+        var date = new Date(ngay);
+        var day = date.getDate();
+        if (day <= 7) weeklyTotals[0] += amount;
+        else if (day <= 14) weeklyTotals[1] += amount;
+        else if (day <= 21) weeklyTotals[2] += amount;
+        else weeklyTotals[3] += amount;
+        }
+        }
+        }
+
+        new Chart(document.getElementById('doanhThuChart'), {
+        type: 'line',
+        data: {
+        labels: ['Tuần 1 (1-7)', 'Tuần 2 (8-14)', 'Tuần 3 (15-21)', 'Tuần 4 (22-cuối)'],
+        datasets: [{
+        label: 'Doanh thu (VNĐ)',
+        data: weeklyTotals,
+        borderColor: '#0d9488',
+        backgroundColor: 'rgba(13,148,136,0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0 // ĐÃ SỬA CHUẨN: Bằng 0 để đường đi miền bị gấp khúc thẳng tắp, không uốn cong phi thực tế
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+        y: {
+        beginAtZero: true,
+        ticks: {
+        callback: function(v) { return v.toLocaleString('vi-VN') + ' đ'; }
+        }
+        }
+        }
+        }
+        });
+    </script>
+}

@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="EPPlus" Version="8.5.3" />
+    <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -26,6 +27,8 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
     <PackageReference Include="PuppeteerSharp" Version="24.42.0" />
+    <PackageReference Include="Rotativa.AspNetCore" Version="1.4.0" />
+    <PackageReference Include="Select.HtmlToPdf" Version="23.1.0" />
   </ItemGroup>
 
 </Project>

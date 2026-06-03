@@ -1,0 +1,167 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.ThongKeCoSoViewModel>
+@{
+    Layout = null;
+
+    // 1. TÍNH TỔNG TRỰC TIẾP (Khắc phục hoàn toàn lỗi ra số 0)
+    int tongPhong = Model != null ? Model.Sum(x => x.TongSoPhong) : 0;
+    int tongDaThue = Model != null ? Model.Sum(x => x.SoPhongDaThue) : 0;
+    int tongTrong = Model != null ? Model.Sum(x => x.SoPhongTrong) : 0;
+    // Kiểm tra đa tầng: Lấy từ ViewBag -> Lấy từ User hệ thống -> Lấy từ Session tài khoản
+    string tenNguoiXuat = "Admin";
+
+    if (ViewBag.Username != null && !string.IsNullOrWhiteSpace(ViewBag.Username.ToString()))
+    {
+        tenNguoiXuat = ViewBag.Username.ToString();
+    }
+    else if (User.Identity != null && !string.IsNullOrWhiteSpace(User.Identity.Name))
+    {
+        tenNguoiXuat = User.Identity.Name;
+    }
+    else if (Context.Session.GetString("UserName") != null)
+    {
+        tenNguoiXuat = Context.Session.GetString("UserName");
+    }
+
+    // 2. MÃ HÓA URL (Khắc phục lỗi biểu đồ khi có tiếng Việt)
+    var labels = string.Join(",", Model.Select(m => "'" + m.TenCoSo + "'"));
+    var daThueData = string.Join(",", Model.Select(m => m.SoPhongDaThue));
+    var trongData = string.Join(",", Model.Select(m => m.SoPhongTrong));
+
+    string chartJson = $"{{type:'bar',data:{{labels:[{labels}],datasets:[{{label:'Đã thuê',data:[{daThueData}],backgroundColor:'#0d9488'}},{{label:'Trống',data:[{trongData}],backgroundColor:'#f43f5e'}}]}},options:{{scales:{{xAxes:[{{stacked:true}}],yAxes:[{{stacked:true}}]}}}}}}";
+
+    // Ép API mã hóa tiếng Việt chuẩn xác
+    string chartUrl = "https://quickchart.io/chart?w=600&h=280&c=" + Uri.EscapeDataString(chartJson);
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Báo Cáo Tỷ Lệ Phòng PDF</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            color: black;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .summary-box {
+            border: 2px solid #333;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #e6f4ea;
+        }
+
+        .chart-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .note-box {
+            font-style: italic;
+            font-size: 13px;
+            margin-top: 15px;
+            padding: 10px;
+            border-left: 3px solid #333;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <table style="border: none; margin-bottom: 20px;">
+        <tr style="border: none;">
+            <td style="border: none; text-align: left; width: 40%; vertical-align: top;">
+                <b>HỆ THỐNG QUẢN LÝ TRỌ</b><br />Người lập:
+            </td>
+            <td style="border: none; text-align: center; width: 60%;">
+                <b style="font-size: 16px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br />
+                <u style="font-weight: bold;">Độc lập - Tự do - Hạnh phúc</u>
+            </td>
+        </tr>
+    </table>
+
+    <h2 style="text-align: center; text-transform: uppercase;">BÁO CÁO TÌNH TRẠNG LẤP ĐẦY PHÒNG</h2>
+    <p style="text-align: center; font-style: italic; margin-bottom: 20px;">(Ngày trích xuất: @DateTime.Now.ToString("dd/MM/yyyy HH:mm"))</p>
+
+    <div class="summary-box">
+        TỔNG QUAN HỆ THỐNG: TỔNG @tongPhong PHÒNG | ĐÃ THUÊ: @tongDaThue | TRỐNG: @tongTrong
+    </div>
+
+    <div class="chart-container">
+        <h3 style="text-align: center; margin-bottom: 10px; font-size: 15px;">Biểu đồ lấp đầy theo từng cơ sở</h3>
+        <img src="@chartUrl" style="max-width: 100%; height: auto;" />
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên Cơ Sở / Khu Vực</th>
+                <th>Tổng phòng</th>
+                <th>Đã thuê</th>
+                <th>Trống</th>
+                <th>Tần suất sử dụng</th>
+                <th>Tỷ lệ lấp đầy</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                int stt = 1;
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td style="text-align: center;">@(stt++)</td>
+                        <td>@item.TenCoSo</td>
+                        <td style="text-align: center;">@item.TongSoPhong</td>
+                        <td style="text-align: center;">@item.SoPhongDaThue</td>
+                        <td style="text-align: center;">@item.SoPhongTrong</td>
+                        <td style="text-align: center;">@item.TyLeSuDung%</td>
+                        <td style="text-align: center;">@item.TyLeLapDay%</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="note-box">
+        <b>* Ghi chú các chỉ số báo cáo:</b><br />
+        - <b>Tỷ lệ lấp đầy:</b> Thể hiện số lượng phòng đang có khách thuê trên tổng số phòng tại thời điểm xuất báo cáo.<br />
+        - <b>Tần suất sử dụng:</b> Thể hiện hiệu suất khai thác thực tế của phòng, đã trừ đi khoảng thời gian hao hụt.
+    </div>
+
+    <table style="border: none; margin-top: 30px; page-break-inside: avoid;">
+        <tr style="border: none;">
+            <td style="border: none; width: 55%;"></td>
+            <td style="border: none; width: 45%; text-align: center;">
+                <i>Ngày @DateTime.Now.Day tháng @DateTime.Now.Month năm @DateTime.Now.Year</i><br />
+                <b style="font-size: 15px;">Người lập biểu</b><br /><br /><br /><br />
+                <b></b>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

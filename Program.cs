@@ -1,18 +1,21 @@
 using HeThongQuanLyPhongTro.Data;
 using HeThongQuanLyPhongTro.Services;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Đăng ký Database Context
+// Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Đăng ký Session
+// Session
 builder.Services.AddDistributedMemoryCache();
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -20,13 +23,19 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Đăng ký các Service
+// Services
 builder.Services.AddScoped<ThongBaoService>();
 builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// THÊM ROTATIVA Ở ĐÂY
+Rotativa.AspNetCore.RotativaConfiguration.Setup(
+    app.Environment.WebRootPath,
+    "Rotativa"
+);
+
+// Configure pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -34,9 +43,13 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseStaticFiles();
+
 app.UseRouting();
-app.UseSession();      // 👈 Session phải đặt trước UseAuthorization
+
+app.UseSession();
+
 app.UseAuthorization();
 
 app.MapControllerRoute(

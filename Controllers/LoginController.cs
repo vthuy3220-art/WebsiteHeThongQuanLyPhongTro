@@ -1,8 +1,12 @@
 ﻿using HeThongQuanLyPhongTro.Data;
 using HeThongQuanLyPhongTro.Models;
 using HeThongQuanLyPhongTro.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -15,13 +19,15 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        // ĐÃ SỬA TẠI ĐÂY: Lưu lại biến returnUrl vào ViewBag để truyền sang Form HTML
+        public IActionResult Index(string? returnUrl)
         {
+            ViewBag.ReturnUrl = returnUrl;
             return View();
         }
 
         [HttpPost]
-        public IActionResult Index(string tenDangNhap, string matKhau)
+        public IActionResult Index(string tenDangNhap, string matKhau, string? returnUrl)
         {
             var user = _context.TaiKhoan
                 .FirstOrDefault(x => x.TenDangNhap == tenDangNhap && x.MatKhau == matKhau);
@@ -29,6 +35,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (user == null)
             {
                 ViewBag.Error = "Sai tài khoản hoặc mật khẩu";
+                ViewBag.ReturnUrl = returnUrl; // Giữ lại giá trị khi lỗi
                 return View();
             }
 
@@ -36,6 +43,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (user.TrangThai == "Khóa")
             {
                 ViewBag.Error = "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên!";
+                ViewBag.ReturnUrl = returnUrl;
                 return View();
             }
 
@@ -76,14 +84,21 @@ namespace HeThongQuanLyPhongTro.Controllers
                 }
             }
 
+            // ĐÃ SỬA TẠI ĐÂY: Nếu có returnUrl thì điều hướng thẳng tới đó (vùng đăng tin mới)
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
             return RedirectToAction("Index", "Dashboard");
         }
 
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
-            return RedirectToAction("Index");
+            return RedirectToAction("Index", "Home");
         }
+
         // =========================================
         // LUỒNG QUÊN MẬT KHẨU
         // =========================================
@@ -96,8 +111,6 @@ namespace HeThongQuanLyPhongTro.Controllers
         [HttpPost]
         public async Task<IActionResult> ForgotPassword(string email)
         {
-            // Tìm trong bảng TaiKhoan xem có ai dùng email này không
-            // (Đảm bảo bảng TaiKhoan của cậu đã được thêm cột Email nhé)
             var user = _context.TaiKhoan.FirstOrDefault(x => x.Email == email);
             if (user == null)
             {
@@ -105,15 +118,12 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return View();
             }
 
-            // Sinh mã OTP 6 số
             Random rd = new Random();
             string otp = rd.Next(100000, 999999).ToString();
 
-            // Lưu mã vào bộ nhớ tạm Session để sang trang sau kiểm tra
             HttpContext.Session.SetString("ResetOTP", otp);
             HttpContext.Session.SetString("ResetEmail", email);
 
-            // Gọi hàm gửi mail vừa tạo ở Bước 1
             var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
             bool isSent = await emailService.GuiEmailOTP(email, otp);
 
@@ -130,7 +140,6 @@ namespace HeThongQuanLyPhongTro.Controllers
 
         public IActionResult VerifyOTP()
         {
-            // Nếu vô tình vào trang này mà chưa nhập email thì đuổi về
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("ResetEmail")))
                 return RedirectToAction("ForgotPassword");
 
@@ -142,7 +151,6 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             string? sessionOtp = HttpContext.Session.GetString("ResetOTP");
 
-            // So sánh mã người dùng nhập với mã đã sinh ra
             if (string.IsNullOrEmpty(sessionOtp) || sessionOtp != otp)
             {
                 ViewBag.Error = "Mã xác thực không đúng hoặc đã hết hạn!";
@@ -174,10 +182,9 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (user != null)
             {
-                user.MatKhau = matKhauMoi; // Lưu mật khẩu mới
+                user.MatKhau = matKhauMoi;
                 _context.SaveChanges();
 
-                // Xóa thông tin tạm
                 HttpContext.Session.Remove("ResetOTP");
                 HttpContext.Session.Remove("ResetEmail");
 

@@ -7,7 +7,6 @@
     var baiDang = ViewBag.BaiDang as HeThongQuanLyPhongTro.Models.BaiDang;
     var anhChinh = images.FirstOrDefault(i => i.IsMain) ?? images.FirstOrDefault();
 }
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -56,7 +55,6 @@
 </head>
 <body class="bg-gray-100">
 
-    <!-- Header -->
     <nav class="bg-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3">
             <div class="flex justify-between items-center">
@@ -85,9 +83,7 @@
             {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                    <!-- Cột trái: GALLERY ẢNH (NHIỀU ẢNH) -->
                     <div>
-                        <!-- Ảnh chính lớn -->
                         <div class="bg-white rounded-xl shadow-md overflow-hidden mb-4">
                             <div class="main-image">
                                 @if (anhChinh != null)
@@ -101,7 +97,6 @@
                             </div>
                         </div>
 
-                        <!-- Danh sách ảnh nhỏ (thumbnail) - NHIỀU ẢNH -->
                         @if (images.Count > 0)
                         {
                             <div class="grid grid-cols-4 gap-3">
@@ -122,7 +117,6 @@
                         }
                     </div>
 
-                    <!-- Cột phải: THÔNG TIN PHÒNG + MÔ TẢ BÀI ĐĂNG -->
                     <div>
                         <div class="bg-white rounded-xl shadow-md overflow-hidden">
                             <div class="p-6">
@@ -145,6 +139,21 @@
                                         <span class="text-gray-500">Diện tích</span>
                                         <span class="font-semibold">@Model.DienTich m²</span>
                                     </div>
+
+                                    <div class="flex justify-between py-2 border-b items-start">
+                                        <span class="text-gray-500 shrink-0">Cơ sở vật chất</span>
+                                        <span class="font-semibold text-right text-sm text-gray-700 max-w-[70%]">
+                                            @if (Model.CoSoVatChats != null && Model.CoSoVatChats.Any())
+                                            {
+                                                @string.Join(", ", Model.CoSoVatChats.Select(c => c.TenThietBi))
+                                            }
+                                            else
+                                            {
+                                                <span class="text-gray-400 font-normal">Chưa cập nhật</span>
+                                            }
+                                        </span>
+                                    </div>
+
                                     <div class="flex justify-between py-2 border-b">
                                         <span class="text-gray-500">Trạng thái</span>
                                         @if (Model.TrangThai == "Trống")
@@ -161,36 +170,7 @@
                                         }
                                     </div>
                                 </div>
-                                <!-- Cơ sở vật chất -->
-                                <div class="mt-6 bg-white rounded-xl shadow-md p-6">
-                                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                                        <i class="fas fa-microchip text-purple-500 mr-2"></i>
-                                        Cơ sở vật chất trong phòng
-                                    </h3>
 
-                                    @if (ViewBag.CSVCNhanh != null && ((List<HeThongQuanLyPhongTro.Models.CoSoVatChat>)ViewBag.CSVCNhanh).Any())
-                                    {
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            @foreach (var item in ViewBag.CSVCNhanh)
-                                            {
-                                                <div class="border rounded-lg p-3 flex justify-between items-center">
-                                                    <div>
-                                                        <p class="font-semibold text-gray-800">@item.TenThietBi</p>
-                                                        <p class="text-xs text-gray-500">Số lượng: @item.SoLuong</p>
-                                                    </div>
-                                                    <span class="text-xs px-2 py-1 rounded-full @(item.TinhTrang == "Tốt" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700")">
-                                                        @item.TinhTrang
-                                                    </span>
-                                                </div>
-                                            }
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <p class="text-gray-400 text-center py-4">Chưa có cơ sở vật chất nào</p>
-                                    }
-                                </div>
-                                <!-- MÔ TẢ CHI TIẾT TỪ BÀI ĐĂNG -->
                                 @if (baiDang != null)
                                 {
                                     <div class="mt-4 pt-4 border-t">
@@ -204,12 +184,10 @@
                                     </div>
                                 }
 
-                                <!-- Liên hệ -->
                                 <div class="mt-6 bg-yellow-50 rounded-lg p-4">
                                     <p class="text-yellow-800 flex items-center">
                                         <i class="fas fa-phone-alt mr-2"></i>
                                         Liên hệ ngay: <strong class="ml-1">0869 189 018</strong>
-                                        Email: <strong class="ml-1">phongtroxinhh@gmail.com</strong>
                                     </p>
                                 </div>
                             </div>
@@ -222,17 +200,16 @@
 
     <script>
         function changeImage(src, element) {
-            document.getElementById('mainImage').src = src;
+        document.getElementById('mainImage').src = src;
 
-            // Xóa active class khỏi tất cả thumbnails
-            document.querySelectorAll('.thumbnail').forEach(thumb => {
-                thumb.classList.remove('active-thumb');
-            });
+        // Xóa active class khỏi tất cả thumbnails
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+        thumb.classList.remove('active-thumb');
+        });
 
-            // Thêm active class cho thumbnail được click
-            element.querySelector('.thumbnail').classList.add('active-thumb');
+        // Thêm active class cho thumbnail được click
+        element.querySelector('.thumbnail').classList.add('active-thumb');
         }
     </script>
-
 </body>
 </html>

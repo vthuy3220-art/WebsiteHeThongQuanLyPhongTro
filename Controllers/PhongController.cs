@@ -61,23 +61,14 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (phong == null) return NotFound();
 
-            var csvcList = await _context.CoSoVatChat
-                .Where(c => c.MaPhong == id)
-                .ToListAsync();
-
-            // LOG ra Output của Visual Studio
-            System.Diagnostics.Debug.WriteLine($"=== DEBUG: MaPhong={id}, So luong CSVC={csvcList.Count} ===");
-            foreach (var item in csvcList)
-            {
-                System.Diagnostics.Debug.WriteLine($" - {item.TenThietBi}");
-            }
-
-            ViewBag.CSVCNhanh = csvcList;
-            ViewBag.Images = await _context.PhongImages
+            // Load TẤT CẢ ẢNH của phòng này (không phân biệt người dùng)
+            var images = await _context.PhongImages
                 .Where(i => i.MaPhong == id)
-                .OrderByDescending(i => i.IsMain)
-                .ThenByDescending(i => i.NgayUpload)
+                .OrderByDescending(i => i.IsMain)      // Ảnh chính lên đầu
+                .ThenByDescending(i => i.NgayUpload)   // Ảnh mới nhất sau
                 .ToListAsync();
+
+            ViewBag.Images = images;
 
             return View(phong);
         }
@@ -289,6 +280,31 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // ==================== XÓA ẢNH ====================
+        // ==================== GIAO DIỆN XÁC NHẬN XÓA ẢNH (GET) ====================
+        [HttpGet]
+        public async Task<IActionResult> DeleteImage(int? id)
+        {
+            if (HttpContext.Session.GetInt32("UserId") == null)
+            {
+                return RedirectToAction("Index", "Login");
+            }
+
+            if (id == null || id.Value <= 0)
+            {
+                return NotFound();
+            }
+
+            // Tìm thông tin ảnh cần xóa
+            var image = await _context.PhongImages.FindAsync(id.Value);
+            if (image == null)
+            {
+                return NotFound();
+            }
+
+            return View(image); // Trả về trang Views/Phong/DeleteImage.cshtml
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> DeleteImage(int maImage, int maPhong)
         {

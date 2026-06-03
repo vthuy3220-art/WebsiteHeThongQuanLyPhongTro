@@ -23,6 +23,7 @@ namespace HeThongQuanLyPhongTro.Models
         public decimal DoanhThuThangNay { get; set; }
         public decimal DoanhThuNamNay { get; set; }
         public decimal DoanhThuTatCa { get; set; }
+        public List<LapDayTheoThang> LapDayTheoThangList { get; set; } = new();
 
         // Công nợ
         public decimal TongNoHienTai { get; set; }
@@ -41,6 +42,9 @@ namespace HeThongQuanLyPhongTro.Models
         public int SoBaiDangAn { get; set; }
         public int SoBaiDangThangNay { get; set; }
         public List<BaiDangGanDay> BaiDangGanDayList { get; set; } = new();
+        // === COPY VÀ CHÈN THÊM 2 THUỘC TÍNH NÀY VÀO ĐÂY ===
+        public List<TopPhongSuDung> TopPhongList { get; set; } = new();
+        public List<ThongBao> ThongBaoGanDayList { get; set; } = new();
     }
 
     // ==================== HỢP ĐỒNG SẮP HẾT HẠN ====================
@@ -90,4 +94,21 @@ namespace HeThongQuanLyPhongTro.Models
         public string TrangThai { get; set; } = string.Empty;
         public int LuotXem { get; set; }
     }
+    // ==================== TOP PHÒNG SỬ DỤNG (BỔ SUNG) ====================
+    public class TopPhongSuDung
+    {
+        public int MaPhong { get; set; }
+        public string TenPhong { get; set; } = string.Empty;
+        public string TenCoSo { get; set; } = string.Empty;
+        public int SoHoaDon { get; set; }
+        public decimal TongDoanhThu { get; set; }
+    }
+    // ==================== THỐNG KÊ LẤP ĐẦY THEO THÁNG (BỔ SUNG) ====================
+    public class LapDayTheoThang
+    {
+        public int Thang { get; set; }
+        public int Nam { get; set; }
+        public double TyLeLapDay { get; set; }
+    }
+    // Dấu đóng ngoặc cuối cùng của file
 }

@@ -1,0 +1,59 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.ThongBao>
+
+@{
+    ViewData["Title"] = "Tất cả thông báo";
+}
+
+<div class="bg-white p-6 rounded-xl shadow-md max-w-4xl mx-auto mt-6">
+    <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h2 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-bell text-blue-500 mr-2"></i>Tất cả thông báo
+        </h2>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="space-y-3">
+            @foreach (var item in Model)
+            {
+                // Xác định giao diện cho thông báo đã đọc/chưa đọc
+                var bgClass = item.DaXem ? "bg-white border" : "bg-blue-50/40 border border-blue-100";
+                var textClass = item.DaXem ? "font-medium text-gray-700" : "font-bold text-black";
+                var contentClass = item.DaXem ? "text-gray-500" : "font-semibold text-gray-800";
+                var timeClass = item.DaXem ? "text-gray-400" : "text-blue-600 font-medium";
+
+                // Đã xóa bỏ tam giác cam. Mặc định là chuông xanh, nếu báo thành công (success) thì tích xanh.
+                var iconClass = "fa-bell text-blue-500";
+                if (item.Loai == "success") iconClass = "fa-check-circle text-green-500";
+
+                <div class="p-4 rounded-xl flex items-start gap-4 transition-colors hover:bg-gray-50 @bgClass cursor-pointer"
+                     onclick="viewNotification('@item.MaThongBao', '@item.DuongDan')">
+
+                    <div class="mt-1 w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm border border-gray-100">
+                        <i class="fas @iconClass text-2xl"></i>
+                    </div>
+
+                    <div class="flex-1">
+                        <h4 class="text-base @textClass">@item.TieuDe</h4>
+                        <p class="text-sm mt-1 @contentClass">@item.NoiDung</p>
+                        <div class="text-xs mt-2 flex items-center @timeClass">
+                            <i class="far fa-clock mr-1"></i> @item.NgayTao.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+
+                    @if (!item.DaXem)
+                    {
+                        <div class="w-3 h-3 bg-blue-600 rounded-full mt-3 shrink-0 shadow-sm"></div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-12 text-gray-500">
+            <i class="fas fa-inbox text-5xl mb-4 text-gray-300"></i>
+            <p>Bạn không có thông báo nào.</p>
+        </div>
+    }
+</div>

@@ -55,8 +55,10 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             // THÊM: Lấy ảnh đại diện cho từng phòng
             var phongImages = await _context.PhongImages.ToListAsync();
-            var dictAnh = phongImages.GroupBy(i => i.MaPhong)
-                .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.ImagePath);
+            var dictAnh = phongImages
+                .Where(i => i != null)
+                .GroupBy(i => i.MaPhong)
+                .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.ImagePath ?? string.Empty);
 
             ViewBag.TongSo = danhSachPhong.Count;
             ViewBag.PhongNoiBat = danhSachPhong;
@@ -72,13 +74,16 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             return View(baiDangs);
         }
-        // Chi tiết phòng
+
+        // Chi tiết phòng - ĐÃ SỬA TẠI ĐÂY
+
         public async Task<IActionResult> ChiTietPhong(int? id)
         {
             if (id == null) return NotFound();
 
             var phong = await _context.Phong
                 .Include(p => p.CoSo)
+                .Include(p => p.CoSoVatChats) // Đã gọi đúng tên thuộc tính vừa thêm ở Model
                 .FirstOrDefaultAsync(p => p.MaPhong == id);
 
             if (phong == null) return NotFound();
