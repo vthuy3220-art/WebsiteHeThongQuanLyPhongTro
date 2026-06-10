@@ -1,6 +1,7 @@
 using HeThongQuanLyPhongTro.Data;
 using HeThongQuanLyPhongTro.Services;
 using Microsoft.EntityFrameworkCore;
+using Rotativa.AspNetCore;
 using System;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,7 +23,7 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
-
+// Trong hàm Configure hoặc cấu hình dịch vụ
 // Services
 builder.Services.AddScoped<ThongBaoService>();
 builder.Services.AddScoped<EmailService>();

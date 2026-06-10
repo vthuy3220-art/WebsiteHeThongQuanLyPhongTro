@@ -3,25 +3,19 @@
     ViewData["Title"] = "Admin Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    // --- TÍNH TOÁN TỶ LỆ ĐỘNG CHUẨN XÁC ĐẾN 1 CHỮ SỐ THẬP PHÂN BẰNG C# ---
     double tyLeLapDay = Model.TongSoPhong > 0 ? Math.Round((double)Model.SoPhongDaThue / Model.TongSoPhong * 100, 1) : 0;
     double tyLePhongTrong = Model.TongSoPhong > 0 ? Math.Round((double)Model.SoPhongTrong / Model.TongSoPhong * 100, 1) : 0;
 }
 
 <style>
     @Html.Raw("@") import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap');
-
     .mantis-theme {
         font-family: 'Public Sans', sans-serif;
         background-color: #fafafb;
     }
 
     .card-shadow {
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
-    }
-
-    .mantis-tooltip {
-        box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 1px 2px 0 rgba(0,0,0,0.03), 0 1px 6px -1px rgba(0,0,0,0.02), 0 2px 4px 0 rgba(0,0,0,0.02);
     }
 
     .custom-scroll::-webkit-scrollbar {
@@ -36,13 +30,30 @@
         .custom-scroll::-webkit-scrollbar-thumb:hover {
             background: #bfbfbf;
         }
+
+    .clickable-row {
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+        .clickable-row:hover {
+            background-color: #f0f7ff !important;
+        }
+
+    .alert-item {
+        cursor: pointer;
+        transition: background 0.15s;
+        border-radius: 8px;
+        padding: 4px;
+        margin: -4px;
+    }
+
+        .alert-item:hover {
+            background-color: #f0f7ff;
+        }
 </style>
 
 <div class="mantis-theme min-h-screen p-6 md:p-8 text-slate-800">
-
-    <div class="mb-6">
-        <h2 class="text-xl font-bold text-slate-800">Admin Dashboard</h2>
-    </div>
 
     @if (TempData["Success"] != null)
     {
@@ -50,7 +61,6 @@
             <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
         </div>
     }
-
     @if (TempData["Info"] != null)
     {
         <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded mb-6 card-shadow text-sm font-medium">
@@ -59,36 +69,29 @@
     }
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Ô 1: TỔNG SỐ PHÒNG -->
-        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer">
+        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer" onclick="window.location='@Url.Action("Index", "Phong")'">
             <div class="text-sm font-medium text-slate-500 mb-3">Tổng số phòng</div>
             <div class="flex items-center gap-3 mb-3">
                 <div class="text-3xl font-bold text-slate-800">@Model.TongSoPhong</div>
-                <div class="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-xs font-bold border border-emerald-100 flex items-center" title="Tỷ lệ phòng trống sẵn sàng phục vụ">
+                <div class="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-xs font-bold border border-emerald-100 flex items-center">
                     <i class="fas fa-door-open mr-1 text-[10px]"></i> @tyLePhongTrong% Trống
                 </div>
             </div>
-            <div class="text-xs text-slate-500">
-                Sẵn sàng phục vụ <span class="text-blue-500 font-semibold">@Model.SoPhongTrong</span> phòng trống
-            </div>
+            <div class="text-xs text-slate-500">Sẵn sàng phục vụ <span class="text-blue-500 font-semibold">@Model.SoPhongTrong</span> phòng trống</div>
         </div>
 
-        <!-- Ô 2: PHÒNG ĐÃ THUÊ -->
-        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer">
+        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer" onclick="window.location='@Url.Action("Index", "Phong")'">
             <div class="text-sm font-medium text-slate-500 mb-3">Phòng đã thuê</div>
             <div class="flex items-center gap-3 mb-3">
                 <div class="text-3xl font-bold text-slate-800">@Model.SoPhongDaThue</div>
-                <div class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-bold border border-blue-100 flex items-center" title="Tỷ lệ lấp đầy phòng">
+                <div class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-bold border border-blue-100 flex items-center">
                     <i class="fas fa-chart-line mr-1 text-[10px]"></i> @tyLeLapDay%
                 </div>
             </div>
-            <div class="text-xs text-slate-500">
-                Đang có <span class="text-blue-500 font-semibold">@Model.TongSoKhachHang</span> khách hàng lưu trú
-            </div>
+            <div class="text-xs text-slate-500">Đang có <span class="text-blue-500 font-semibold">@Model.TongSoKhachHang</span> khách hàng lưu trú</div>
         </div>
 
-        <!-- Ô 3: TỔNG SỐ HỢP ĐỒNG -->
-        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer">
+        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer" onclick="window.location='@Url.Action("Index", "HopDong")'">
             <div class="text-sm font-medium text-slate-500 mb-3">Tổng số Hợp đồng</div>
             <div class="flex items-center gap-3 mb-3">
                 <div class="text-3xl font-bold text-slate-800">@(Model.SoHopDongHieuLuc + Model.SoHopDongHetHan)</div>
@@ -96,35 +99,25 @@
                     <i class="fas fa-file-contract mr-1 text-[10px]"></i> @Model.SoHopDongHetHan kết thúc
                 </div>
             </div>
-            <div class="text-xs text-slate-500">
-                Đang có <span class="text-blue-500 font-semibold">@Model.SoHopDongHieuLuc</span> hợp đồng hiệu lực
-            </div>
+            <div class="text-xs text-slate-500">Đang có <span class="text-blue-500 font-semibold">@Model.SoHopDongHieuLuc</span> hợp đồng hiệu lực</div>
         </div>
 
-        <!-- Ô 4: DOANH THU & CÔNG NỢ -->
-        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative">
+        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative cursor-pointer" onclick="window.location='@Url.Action("Index", "HoaDon")'">
             <div class="text-sm font-medium text-slate-500 mb-3">Doanh thu T@(DateTime.Now.Month)</div>
             <div class="flex items-center gap-3 mb-3">
-                <div class="text-3xl font-bold text-slate-800 truncate" title="@Model.DoanhThuThangNay.ToString("N0")">@Model.DoanhThuThangNay.ToString("N0")</div>
+                <div class="text-3xl font-bold text-slate-800" title="@Model.DoanhThuThangNay.ToString("N0")">@Model.DoanhThuThangNay.ToString("N0")</div>
             </div>
-            <div class="text-xs text-slate-500">
-                Ghi nhận công nợ <span class="text-amber-500 font-semibold">@Model.TongNoHienTai.ToString("N0") đ</span>
-            </div>
+            <div class="text-xs text-slate-500">Ghi nhận công nợ <span class="text-amber-500 font-semibold">@Model.TongNoHienTai.ToString("N0") đ</span></div>
         </div>
     </div>
 
-    <!-- KHỐI BIỂU ĐỒ VÀ BẢNG THÔNG TIN -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div class="bg-white rounded-lg card-shadow border border-slate-100 p-6 lg:col-span-2 flex flex-col">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-base font-semibold text-slate-800">Lưu lượng tài chính</h3>
                 <div class="flex bg-slate-50 rounded-md border border-slate-200 p-1">
-                    <button id="btnThang" onclick="switchPeriod('Thang')" class="px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all">
-                        Tháng
-                    </button>
-                    <button id="btnTuan" onclick="switchPeriod('Tuan')" class="px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all">
-                        Tuần
-                    </button>
+                    <button id="btnThang" onclick="switchPeriod('Thang')" class="px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all">Tháng</button>
+                    <button id="btnTuan" onclick="switchPeriod('Tuan')" class="px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all">Tuần</button>
                 </div>
             </div>
             <div class="flex-grow relative w-full h-[320px]">
@@ -151,10 +144,11 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
         <div class="bg-white rounded-lg card-shadow border border-slate-100 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                 <h3 class="text-base font-semibold text-slate-800">Giao dịch tài chính gần đây</h3>
-                <a href="@Url.Action("ThongKeHoaDon", "ThongKe")" class="text-xs text-blue-500 hover:text-blue-700 font-medium">Xem tất cả</a>
+                <a href="@Url.Action("Index", "HoaDon")" class="text-xs text-blue-500 hover:text-blue-700 font-medium">Xem tất cả</a>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
@@ -167,24 +161,26 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="border-b border-slate-50 hover:bg-slate-50/50">
-                            <td class="px-6 py-4 text-slate-800 font-medium">HD-8901</td>
-                            <td class="px-6 py-4 text-slate-600">Phòng 101</td>
-                            <td class="px-6 py-4 text-right font-medium">3,500,000</td>
-                            <td class="px-6 py-4 text-center"><span class="px-2 py-1 bg-green-50 text-green-600 rounded text-[11px] font-semibold border border-green-100">Đã thanh toán</span></td>
-                        </tr>
-                        <tr class="border-b border-slate-50 hover:bg-slate-50/50">
-                            <td class="px-6 py-4 text-slate-800 font-medium">HD-8902</td>
-                            <td class="px-6 py-4 text-slate-600">Phòng 203</td>
-                            <td class="px-6 py-4 text-right font-medium">4,200,000</td>
-                            <td class="px-6 py-4 text-center"><span class="px-2 py-1 bg-amber-50 text-amber-600 rounded text-[11px] font-semibold border border-amber-100">Chờ thanh toán</span></td>
-                        </tr>
-                        <tr class="hover:bg-slate-50/50">
-                            <td class="px-6 py-4 text-slate-800 font-medium">HD-8903</td>
-                            <td class="px-6 py-4 text-slate-600">Phòng 405</td>
-                            <td class="px-6 py-4 text-right font-medium">3,800,000</td>
-                            <td class="px-6 py-4 text-center"><span class="px-2 py-1 bg-green-50 text-green-600 rounded text-[11px] font-semibold border border-green-100">Đã thanh toán</span></td>
-                        </tr>
+                        @if (Model.HoaDonGanDayList != null && Model.HoaDonGanDayList.Any())
+                        {
+                            foreach (var hd in Model.HoaDonGanDayList)
+                            {
+                                <tr class="border-b border-slate-50 clickable-row" onclick="showInvoiceDetails(@hd.MaHoaDon)">
+                                    <td class="px-6 py-4 text-slate-800 font-medium">HD-@hd.MaHoaDon</td>
+                                    <td class="px-6 py-4 text-slate-600">@hd.TenPhong</td>
+                                    <td class="px-6 py-4 text-right font-medium">@hd.TongTien.ToString("N0") đ</td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span class="px-2 py-1 bg-green-50 text-green-600 rounded text-[11px] font-semibold border border-green-100">Đã thanh toán</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="px-6 py-4 text-center text-slate-400 text-sm">Chưa có giao dịch nào được thanh toán.</td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
@@ -199,13 +195,16 @@
                 {
                     foreach (var item in Model.HopDongSapHetHanList.Take(3))
                     {
-                        <div class="flex items-start gap-4">
+                        <div class="flex items-start gap-4 alert-item" onclick="showContractDetails(@item.MaHopDong)">
                             <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
                                 <i class="fas fa-bell"></i>
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-slate-800">Hợp đồng phòng @item.TenPhong sắp hết hạn</h4>
-                                <p class="text-xs text-slate-500 mt-1">Khách thuê @item.TenKhachHang - Hết hạn ngày @item.NgayKetThuc.ToString("dd/MM/yyyy") (Còn <span class="text-orange-500 font-bold">@item.SoNgayConLai</span> ngày)</p>
+                                <h4 class="text-sm font-semibold text-slate-800">Hợp đồng @item.TenPhong sắp hết hạn</h4>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    Khách thuê @item.TenKhachHang - Hết hạn ngày @item.NgayKetThuc.ToString("dd/MM/yyyy")
+                                    (Còn <span class="text-orange-500 font-bold">@item.SoNgayConLai</span> ngày)
+                                </p>
                             </div>
                         </div>
                     }
@@ -231,7 +230,6 @@
                         <h4 class="text-sm font-semibold text-slate-800">Nhắc nhở công nợ</h4>
                         <div class="text-xs text-slate-500 mt-1 flex items-center flex-wrap gap-1">
                             <span>Có @Model.SoHoaDonChuaThanhToan hóa đơn chưa thu tiền.</span>
-                            <!-- Form ngầm xử lý nút bấm gửi thông báo hàng loạt bằng lệnh POST -->
                             <form asp-controller="Dashboard" asp-action="GuiThongBaoNhacNo" method="post" class="inline">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="text-blue-500 font-semibold hover:text-blue-700 hover:underline bg-transparent border-none p-0 cursor-pointer transition-all">
@@ -246,16 +244,85 @@
     </div>
 </div>
 
+<div id="invoiceModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
+        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-base" id="modalTitle">Chi tiết hóa đơn</h3>
+            <button onclick="closeInvoiceModal()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 text-sm">
+            <div class="grid grid-cols-2 gap-y-2 border-b border-slate-100 pb-3 text-slate-600">
+                <div>Phòng trọ:</div><div class="font-semibold text-slate-800 text-right" id="lblRoom">N/A</div>
+                <div>Khách đại diện:</div><div class="font-semibold text-slate-800 text-right" id="lblCustomer">N/A</div>
+                <div>Kỳ hóa đơn:</div><div class="text-right" id="lblPeriod">N/A</div>
+                <div>Ngày xác nhận:</div><div class="text-right text-emerald-600 font-medium" id="lblPayDate">N/A</div>
+            </div>
+            <div>
+                <p class="font-semibold text-slate-700 mb-2">Chi tiết dịch vụ tiêu thụ:</p>
+                <div class="bg-slate-50 rounded-lg p-3 max-h-40 overflow-y-auto border border-slate-100">
+                    <table class="w-full text-xs text-left" id="tblInvoiceItems">
+                        <thead>
+                            <tr class="text-slate-400 border-b pb-1 font-medium">
+                                <th class="pb-2">Khoản thu</th>
+                                <th class="pb-2 text-center">SL</th>
+                                <th class="pb-2 text-right">Đơn giá</th>
+                                <th class="pb-2 text-right">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-600">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="flex justify-between items-center pt-3 border-t border-slate-100">
+                <span class="font-bold text-slate-800">Tổng cộng thanh toán:</span>
+                <span class="text-xl font-bold text-blue-600" id="lblTotal">0 đ</span>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button onclick="closeInvoiceModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-semibold text-xs rounded-md hover:bg-slate-300 transition-colors">Đóng lại</button>
+        </div>
+    </div>
+</div>
+
+<div id="contractModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
+        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-base" id="contractModalTitle">Chi tiết hợp đồng</h3>
+            <button onclick="closeContractModal()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 text-sm">
+            <div class="grid grid-cols-2 gap-y-3 text-slate-600">
+                <div>Mã hợp đồng:</div><div class="font-bold text-slate-800 text-right" id="lblConId">N/A</div>
+                <div>Phòng thuê:</div><div class="font-semibold text-slate-800 text-right text-blue-600" id="lblConRoom">N/A</div>
+                <div>Khách thuê đại diện:</div><div class="font-semibold text-slate-800 text-right" id="lblConCustomer">N/A</div>
+                <div>Số điện thoại:</div><div class="text-right" id="lblConPhone">N/A</div>
+                <hr class="col-span-2 border-slate-100 my-1">
+                <div>Ngày bắt đầu:</div><div class="text-right" id="lblConStartDate">N/A</div>
+                <div>Ngày kết thúc:</div><div class="text-right font-medium text-slate-800" id="lblConEndDate">N/A</div>
+                <div>Thời gian còn lại:</div><div class="text-right text-red-500 font-bold" id="lblConDaysLeft">N/A</div>
+                <hr class="col-span-2 border-slate-100 my-1">
+                <div>Giá thuê phòng:</div><div class="font-semibold text-slate-800 text-right" id="lblConPrice">0 đ</div>
+                <div>Tiền đặt cọc:</div><div class="font-semibold text-slate-800 text-right" id="lblConDeposit">0 đ</div>
+                <div>Trạng thái:</div><div class="text-right" id="lblConStatus">N/A</div>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+            <a href="@Url.Action("Index", "HopDong")" class="px-4 py-2 bg-blue-500 text-white font-semibold text-xs rounded-md hover:bg-blue-600 transition-colors flex items-center"><i class="fas fa-edit mr-1"></i> Quản lý hợp đồng</a>
+            <button onclick="closeContractModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-semibold text-xs rounded-md hover:bg-slate-300 transition-colors">Đóng lại</button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
     <script>
-        // --- 1. BIỂU ĐỒ MIỀN (AREA CHART) ---
         var rawData = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]");
-        var labelsThang = [];
-        var dataThucTeThang = [];
-        var dataDaThuThang = [];
+        var labelsThang = [], dataThucTeThang = [], dataDaThuThang = [];
 
         if (rawData && rawData.length > 0) {
         var dataCopy = [...rawData].reverse();
@@ -273,11 +340,9 @@
         var dataDaThuTuan = [80000000, 1500000, 3000000, 1000000];
 
         var ctxArea = document.getElementById('areaChart').getContext('2d');
-
         var gradientBlue = ctxArea.createLinearGradient(0, 0, 0, 400);
         gradientBlue.addColorStop(0, 'rgba(24, 144, 255, 0.35)');
         gradientBlue.addColorStop(1, 'rgba(24, 144, 255, 0.01)');
-
         var gradientLight = ctxArea.createLinearGradient(0, 0, 0, 400);
         gradientLight.addColorStop(0, 'rgba(24, 144, 255, 0.1)');
         gradientLight.addColorStop(1, 'rgba(24, 144, 255, 0)');
@@ -287,51 +352,17 @@
         data: {
         labels: labelsThang,
         datasets: [
-        {
-        label: 'Tổng Doanh Thu',
-        data: dataThucTeThang,
-        borderColor: '#1890ff',
-        backgroundColor: gradientBlue,
-        borderWidth: 2,
-        fill: true,
-        tension: 0,
-        pointBackgroundColor: '#fff',
-        pointBorderColor: '#1890ff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6
-        },
-        {
-        label: 'Đã Thu Tiền',
-        data: dataDaThuThang,
-        borderColor: '#91caff',
-        backgroundColor: gradientLight,
-        borderWidth: 2,
-        fill: true,
-        tension: 0,
-        pointRadius: 0,
-        pointHoverRadius: 4
-        }
+        { label: 'Tổng Doanh Thu', data: dataThucTeThang, borderColor: '#1890ff', backgroundColor: gradientBlue, borderWidth: 2, fill: true, tension: 0, pointBackgroundColor: '#fff', pointBorderColor: '#1890ff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6 },
+        { label: 'Đã Thu Tiền', data: dataDaThuThang, borderColor: '#91caff', backgroundColor: gradientLight, borderWidth: 2, fill: true, tension: 0, pointRadius: 0, pointHoverRadius: 4 }
         ]
         },
         options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: { legend: { display: false } },
         scales: {
-        x: { grid: { display: false }, ticks: { color: '#8c8c8c', font: { family: 'Public Sans' } }, border: { display: false } },
-        y: {
-        grid: { color: '#f0f0f0', drawBorder: false },
-        ticks: {
-        color: '#8c8c8c', font: { family: 'Public Sans' },
-        callback: function(value) {
-        if(value >= 1000000) return (value / 1000000) + 'Tr';
-        return value;
-        }
-        },
-        border: { display: false }
-        }
+        x: { grid: { display: false }, ticks: { color: '#8c8c8c' }, border: { display: false } },
+        y: { grid: { color: '#f0f0f0' }, ticks: { color: '#8c8c8c', callback: function(v) { return v >= 1000000 ? (v/1000000)+'Tr' : v; } }, border: { display: false } }
         }
         }
         });
@@ -339,19 +370,15 @@
         function switchPeriod(type) {
         var btnThang = document.getElementById('btnThang');
         var btnTuan = document.getElementById('btnTuan');
-
         if (type === 'Thang') {
         btnThang.className = "px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all";
         btnTuan.className = "px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all";
-
         areaChartInstance.data.labels = labelsThang;
         areaChartInstance.data.datasets[0].data = dataThucTeThang;
         areaChartInstance.data.datasets[1].data = dataDaThuThang;
-        }
-        else if (type === 'Tuan') {
+        } else {
         btnTuan.className = "px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all";
         btnThang.className = "px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all";
-
         areaChartInstance.data.labels = labelsTuan;
         areaChartInstance.data.datasets[0].data = dataThucTeTuan;
         areaChartInstance.data.datasets[1].data = dataDaThuTuan;
@@ -359,53 +386,127 @@
         areaChartInstance.update();
         }
 
-        // --- 2. BIỂU ĐỒ CỘT (BAR CHART) ĐỘNG THEO THÁNG ---
         var rawTop = @Html.Raw(Model.TopPhongList != null ? Json.Serialize(Model.TopPhongList) : "[]");
-
-        var barLabels = [];
-        var barData = [];
-
+        var barLabels = [], barData = [];
         if (rawTop && rawTop.length > 0) {
         barLabels = rawTop.map(x => (x.TenPhong !== undefined ? x.TenPhong : x.tenPhong));
         barData = rawTop.map(x => (x.TongDoanhThu !== undefined ? x.TongDoanhThu : x.tongDoanhThu));
-
-        var tongTienThat = barData.reduce((a, b) => a + b, 0);
-        document.getElementById('topRevenueText').innerText = tongTienThat.toLocaleString('vi-VN');
+        document.getElementById('topRevenueText').innerText = barData.reduce((a, b) => a + b, 0).toLocaleString('vi-VN');
         } else {
         barLabels = ['Chưa có dữ liệu'];
         barData = [0];
-        document.getElementById('topRevenueText').innerText = '0';
         }
 
         var ctxBar = document.getElementById('barChart').getContext('2d');
         new Chart(ctxBar, {
         type: 'bar',
-        data: {
-        labels: barLabels,
-        datasets: [{
-        data: barData,
-        backgroundColor: '#87e8de',
-        hoverBackgroundColor: '#36cfc9',
-        borderRadius: 2,
-        barPercentage: 0.5
-        }]
-        },
+        data: { labels: barLabels, datasets: [{ data: barData, backgroundColor: '#87e8de', hoverBackgroundColor: '#36cfc9', borderRadius: 2, barPercentage: 0.5 }] },
         options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-        legend: { display: false },
-        tooltip: {
-        callbacks: {
-        label: function(context) { return 'Doanh thu tháng này: ' + context.parsed.y.toLocaleString('vi-VN') + ' đ'; }
-        }
-        }
-        },
-        scales: {
-        x: { grid: { display: false }, border: { display: false }, ticks: { color: '#8c8c8c', font: { size: 10, family: 'Public Sans' } } },
-        y: { display: false, grid: { display: false } }
-        }
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return 'Doanh thu: ' + c.parsed.y.toLocaleString('vi-VN') + ' đ'; } } } },
+        scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: '#8c8c8c', font: { size: 10 } } }, y: { display: false } }
         }
         });
+
+        function showInvoiceDetails(id) {
+        fetch('/Dashboard/GetInvoiceDetails?id=' + id)
+        .then(res => {
+        if (!res.ok) throw new Error("Lỗi tải hóa đơn");
+        return res.json();
+        })
+        .then(data => {
+        document.getElementById('modalTitle').innerText = 'Chi tiết hóa đơn HD-' + data.maHoaDon;
+        document.getElementById('lblRoom').innerText = 'Phòng ' + data.tenPhong;
+        document.getElementById('lblCustomer').innerText = data.tenKhachHang;
+        document.getElementById('lblPeriod').innerText = 'Tháng ' + data.thang + ' / Năm ' + data.nam;
+        document.getElementById('lblPayDate').innerText = '⏰ ' + data.ngayThanhToan;
+        document.getElementById('lblTotal').innerText = data.tongTien.toLocaleString('vi-VN') + ' đ';
+
+        const tbody = document.querySelector('#tblInvoiceItems tbody');
+        if (data.chiTietList && data.chiTietList.length > 0) {
+        tbody.innerHTML = data.chiTietList.map(item => `
+        <tr class="border-b border-slate-100">
+        <td class="py-2 font-medium text-slate-700">${item.khoanThu}</td>
+        <td class="py-2 text-center">${item.soLuong ?? 1}</td>
+        <td class="py-2 text-right">${item.donGia.toLocaleString('vi-VN')}</td>
+        <td class="py-2 text-right font-semibold text-slate-800">${item.thanhTien.toLocaleString('vi-VN')} đ</td>
+        </tr>
+        `).join('');
+        } else {
+        tbody.innerHTML = `
+        <tr class="border-b border-slate-100">
+        <td class="py-2 font-medium text-slate-700">Tiền thuê phòng (Mặc định)</td>
+        <td class="py-2 text-center">1</td>
+        <td class="py-2 text-right">${data.tongTien.toLocaleString('vi-VN')}</td>
+        <td class="py-2 text-right font-semibold text-slate-800">${data.tongTien.toLocaleString('vi-VN')} đ</td>
+        </tr>
+        `;
+        }
+
+        const modal = document.getElementById('invoiceModal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.transform').classList.remove('scale-95');
+        }, 10);
+        })
+        .catch(err => {
+        console.error(err);
+        alert("Không thể tải thông tin chi tiết của hóa đơn này!");
+        });
+        }
+
+        function closeInvoiceModal() {
+        const modal = document.getElementById('invoiceModal');
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => {
+        modal.classList.add('hidden');
+        }, 300);
+        }
+
+        function showContractDetails(id) {
+        fetch('/Dashboard/GetContractDetails?id=' + id)
+        .then(res => {
+        if (!res.ok) throw new Error("Lỗi tải thông tin hợp đồng");
+        return res.json();
+        })
+        .then(data => {
+        document.getElementById('contractModalTitle').innerText = 'Chi tiết hợp đồng sắp hết hạn';
+        document.getElementById('lblConId').innerText = 'HĐ-' + data.maHopDong;
+        document.getElementById('lblConRoom').innerText = 'Phòng ' + data.tenPhong;
+        document.getElementById('lblConCustomer').innerText = data.tenKhachHang;
+        document.getElementById('lblConPhone').innerText = data.sdtKhachHang;
+        document.getElementById('lblConStartDate').innerText = data.ngayBatDau;
+        document.getElementById('lblConEndDate').innerText = data.ngayKetThuc;
+        document.getElementById('lblConDaysLeft').innerText = data.soNgayConLai + ' ngày nữa';
+        document.getElementById('lblConPrice').innerText = data.giaThue.toLocaleString('vi-VN') + ' đ / tháng';
+        document.getElementById('lblConDeposit').innerText = data.tienCoc.toLocaleString('vi-VN') + ' đ';
+
+        const statusLbl = document.getElementById('lblConStatus');
+        statusLbl.innerText = data.trangThai;
+        statusLbl.className = "text-right font-bold text-orange-500";
+
+        const modal = document.getElementById('contractModal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.transform').classList.remove('scale-95');
+        }, 10);
+        })
+        .catch(err => {
+        console.error(err);
+        alert("Không thể tải thông tin chi tiết hợp đồng!");
+        });
+        }
+
+        function closeContractModal() {
+        const modal = document.getElementById('contractModal');
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => {
+        modal.classList.add('hidden');
+        }, 300);
+        }
     </script>
 }

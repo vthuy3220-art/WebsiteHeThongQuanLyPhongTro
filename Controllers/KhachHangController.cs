@@ -464,16 +464,17 @@ namespace HeThongQuanLyPhongTro.Controllers
             var khachHang = await _context.KhachHang.FindAsync(id);
             if (khachHang != null)
             {
-                // Xóa luôn tài khoản đăng nhập liên kết với khách hàng này (nếu có)
-                if (khachHang.MaTaiKhoan != null)
+                // KIỂM TRA XEM CÓ HỢP ĐỒNG KHÔNG
+                var coHopDong = await _context.HopDong.AnyAsync(h => h.MaKhachHang == id);
+                if (coHopDong)
                 {
-                    var taiKhoan = await _context.TaiKhoan.FindAsync(khachHang.MaTaiKhoan);
-                    if (taiKhoan != null) _context.TaiKhoan.Remove(taiKhoan);
+                    TempData["Error"] = "Không thể xóa khách hàng này vì đã có hợp đồng!";
+                    return RedirectToAction(nameof(QuanLy));
                 }
 
                 _context.KhachHang.Remove(khachHang);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = "Xóa khách hàng và tài khoản liên kết thành công!";
+                TempData["Success"] = "Xóa khách hàng thành công!";
             }
 
             return RedirectToAction(nameof(QuanLy));

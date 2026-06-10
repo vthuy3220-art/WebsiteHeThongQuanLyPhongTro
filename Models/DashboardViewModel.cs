@@ -42,9 +42,12 @@ namespace HeThongQuanLyPhongTro.Models
         public int SoBaiDangAn { get; set; }
         public int SoBaiDangThangNay { get; set; }
         public List<BaiDangGanDay> BaiDangGanDayList { get; set; } = new();
-        // === COPY VÀ CHÈN THÊM 2 THUỘC TÍNH NÀY VÀO ĐÂY ===
+
         public List<TopPhongSuDung> TopPhongList { get; set; } = new();
         public List<ThongBao> ThongBaoGanDayList { get; set; } = new();
+
+        // ✅ MỚI: Hóa đơn gần đây thực tế
+        public List<HoaDonGanDay> HoaDonGanDayList { get; set; } = new();
     }
 
     // ==================== HỢP ĐỒNG SẮP HẾT HẠN ====================
@@ -55,6 +58,15 @@ namespace HeThongQuanLyPhongTro.Models
         public string TenKhachHang { get; set; } = string.Empty;
         public DateTime NgayKetThuc { get; set; }
         public int SoNgayConLai { get; set; }
+    }
+
+    // ==================== HÓA ĐƠN GẦN ĐÂY ====================
+    public class HoaDonGanDay
+    {
+        public int MaHoaDon { get; set; }
+        public string TenPhong { get; set; } = string.Empty;
+        public decimal TongTien { get; set; }
+        public string TrangThai { get; set; } = string.Empty;
     }
 
     // ==================== DOANH THU THEO THÁNG ====================
@@ -94,7 +106,8 @@ namespace HeThongQuanLyPhongTro.Models
         public string TrangThai { get; set; } = string.Empty;
         public int LuotXem { get; set; }
     }
-    // ==================== TOP PHÒNG SỬ DỤNG (BỔ SUNG) ====================
+
+    // ==================== TOP PHÒNG SỬ DỤNG ====================
     public class TopPhongSuDung
     {
         public int MaPhong { get; set; }
@@ -103,12 +116,12 @@ namespace HeThongQuanLyPhongTro.Models
         public int SoHoaDon { get; set; }
         public decimal TongDoanhThu { get; set; }
     }
-    // ==================== THỐNG KÊ LẤP ĐẦY THEO THÁNG (BỔ SUNG) ====================
+
+    // ==================== THỐNG KÊ LẤP ĐẦY THEO THÁNG ====================
     public class LapDayTheoThang
     {
         public int Thang { get; set; }
         public int Nam { get; set; }
         public double TyLeLapDay { get; set; }
     }
-    // Dấu đóng ngoặc cuối cùng của file
 }
