@@ -1,0 +1,227 @@
+﻿@model HeThongQuanLyPhongTro.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "SuperAdmin Dashboard";
+    Layout = "_Layout";
+}
+
+<div class="space-y-6">
+
+
+
+    <!-- 4 Cards thống kê chính -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wide">Cơ sở (Khu vực)</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1">@Model.TongSoPhong</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-map-marked-alt text-blue-500 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-xs text-gray-400">
+                <span class="text-green-500">●</span> Đang hoạt động
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wide">Chủ trọ</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1">@Model.SoHopDongHieuLuc</p>
+                </div>
+                <div class="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-users-cog text-green-500 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-xs text-gray-400">
+                <span class="text-green-500">●</span> Đã kích hoạt
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wide">Phòng trọ</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1">@Model.SoPhongDaThue</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-door-open text-purple-500 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-xs text-gray-400">
+                <span class="text-yellow-500">●</span> Đã thuê: @Model.SoPhongDaThue | Trống: @Model.SoPhongTrong
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-wide">Bài đăng</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1">@Model.TongSoBaiDang</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-newspaper text-orange-500 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-xs text-gray-400">
+                <span class="text-green-500">●</span> Hiển thị: @Model.SoBaiDangHienThi | Ẩn: @Model.SoBaiDangAn
+            </div>
+        </div>
+    </div>
+
+    <!-- Lối tắt quản trị -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h3 class="font-semibold text-gray-800">Lối tắt quản trị nhanh</h3>
+            <p class="text-xs text-gray-400 mt-1">Thao tác nhanh với các chức năng quản lý hệ thống</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a asp-controller="CoSo" asp-action="Index"
+                   class="group flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all">
+                    <div class="w-10 h-10 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center transition">
+                        <i class="fas fa-building text-blue-500 text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-700 group-hover:text-blue-700">Cơ sở</p>
+                        <p class="text-xs text-gray-400">Quản lý khu vực</p>
+                    </div>
+                </a>
+
+                <a asp-controller="TaiKhoans" asp-action="Index"
+                   class="group flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-green-50 hover:border-green-200 transition-all">
+                    <div class="w-10 h-10 rounded-full bg-green-50 group-hover:bg-green-100 flex items-center justify-center transition">
+                        <i class="fas fa-user-plus text-green-500 text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-700 group-hover:text-green-700">Tài khoản</p>
+                        <p class="text-xs text-gray-400">Cấp tk Chủ trọ</p>
+                    </div>
+                </a>
+
+                <a asp-controller="BaiDang" asp-action="Index"
+                   class="group flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-orange-50 hover:border-orange-200 transition-all">
+                    <div class="w-10 h-10 rounded-full bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center transition">
+                        <i class="fas fa-newspaper text-orange-500 text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-700 group-hover:text-orange-700">Bài đăng</p>
+                        <p class="text-xs text-gray-400">Kiểm duyệt tin</p>
+                    </div>
+                </a>
+
+                <a asp-controller="ThongKe" asp-action="Index"
+                   class="group flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-purple-50 hover:border-purple-200 transition-all">
+                    <div class="w-10 h-10 rounded-full bg-purple-50 group-hover:bg-purple-100 flex items-center justify-center transition">
+                        <i class="fas fa-chart-line text-purple-500 text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-700 group-hover:text-purple-700">Thống kê</p>
+                        <p class="text-xs text-gray-400">Báo cáo chi tiết</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách chủ trọ gần đây -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <div>
+                <h3 class="font-semibold text-gray-800">Danh sách Chủ trọ</h3>
+                <p class="text-xs text-gray-400 mt-1">Các chủ trọ đã đăng ký trên hệ thống</p>
+            </div>
+            <a asp-controller="TaiKhoans" asp-action="Index" class="text-sm text-blue-500 hover:text-blue-700">Xem tất cả →</a>
+        </div>
+        <div class="p-4">
+            @if (ViewBag.DanhSachChuTro != null && ((List<HeThongQuanLyPhongTro.Models.TaiKhoan>)ViewBag.DanhSachChuTro).Any())
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="text-gray-400 border-b">
+                            <tr class="border-b">
+                                <th class="text-left py-3 px-3">Mã</th>
+                                <th class="text-left py-3 px-3">Tên đăng nhập</th>
+                                <th class="text-left py-3 px-3">Email</th>
+                                <th class="text-left py-3 px-3">Trạng thái</th>
+                                <th class="text-center py-3 px-3">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ViewBag.DanhSachChuTro)
+                            {
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="py-2 px-3">@item.MaTaiKhoan</td>
+                                    <td class="py-2 px-3 font-medium">@item.TenDangNhap</td>
+                                    <td class="py-2 px-3">@item.Email</td>
+                                    <td class="py-2 px-3">
+                                        @if (item.TrangThai == "Hoạt động")
+                                        {
+                                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Hoạt động</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Khóa</span>
+                                        }
+                                    </td>
+                                    <td class="py-2 px-3 text-center">
+                                        <a asp-controller="TaiKhoans" asp-action="Edit" asp-route-id="@item.MaTaiKhoan" class="text-blue-500 hover:text-blue-700">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-center py-6 text-gray-400 text-sm">Chưa có chủ trọ nào</p>
+            }
+        </div>
+    </div>
+
+    <!-- Cơ sở vật chất thống kê -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h3 class="font-semibold text-gray-800">Thống kê thiết bị</h3>
+            <p class="text-xs text-gray-400 mt-1">Tổng quan cơ sở vật chất trong hệ thống</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div class="w-16 h-16 mx-auto bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                        <i class="fas fa-wind text-blue-500 text-2xl"></i>
+                    </div>
+                    <p class="font-bold text-gray-800">Điều hòa</p>
+                    <p class="text-sm text-gray-400">128 cái</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 mx-auto bg-green-50 rounded-full flex items-center justify-center mb-2">
+                        <i class="fas fa-thermometer-half text-green-500 text-2xl"></i>
+                    </div>
+                    <p class="font-bold text-gray-800">Bình nóng lạnh</p>
+                    <p class="text-sm text-gray-400">96 cái</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 mx-auto bg-yellow-50 rounded-full flex items-center justify-center mb-2">
+                        <i class="fas fa-bed text-yellow-500 text-2xl"></i>
+                    </div>
+                    <p class="font-bold text-gray-800">Giường</p>
+                    <p class="text-sm text-gray-400">156 cái</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 mx-auto bg-purple-50 rounded-full flex items-center justify-center mb-2">
+                        <i class="fas fa-tshirt text-purple-500 text-2xl"></i>
+                    </div>
+                    <p class="font-bold text-gray-800">Tủ quần áo</p>
+                    <p class="text-sm text-gray-400">142 cái</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

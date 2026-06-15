@@ -2,6 +2,8 @@
 using HeThongQuanLyPhongTro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -14,34 +16,87 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context = context;
         }
 
-        // GET: Danh sách cơ sở
-        public async Task<IActionResult> Index()
+        // Helper lấy thông tin user
+        private int GetCurrentUserId()
         {
-            // Kiểm tra đăng nhập
-            if (HttpContext.Session.GetInt32("UserId") == null)
+            return HttpContext.Session.GetInt32("UserId") ?? 0;
+        }
+
+        private string GetCurrentRole()
+        {
+            return HttpContext.Session.GetString("Role") ?? "";
+        }
+
+        private bool IsSuperAdmin()
+        {
+            var role = GetCurrentRole();
+            return role == "SuperAdmin" || role == "Admin";
+        }
+
+        // ==================== DANH SÁCH CƠ SỞ ====================
+        public async Task<IActionResult> Index(string searchString)
+        {
+            if (GetCurrentUserId() == 0)
             {
                 return RedirectToAction("Index", "Login");
             }
 
-            var danhSachCoSo = await _context.CoSo.ToListAsync();
-            return View(danhSachCoSo);
+            var coSos = _context.CoSo.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                coSos = coSos.Where(c => c.TenCoSo.Contains(searchString));
+            }
+
+            ViewBag.SearchString = searchString;
+            ViewBag.Role = GetCurrentRole();
+            ViewBag.IsSuperAdmin = IsSuperAdmin();
+
+            return View(await coSos.ToListAsync());
         }
 
-        // GET: Tạo mới cơ sở
+        // ==================== CHI TIẾT CƠ SỞ ====================
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var coSo = await _context.CoSo
+                .FirstOrDefaultAsync(m => m.MaCoSo == id);
+
+            if (coSo == null) return NotFound();
+
+            // Lấy danh sách tòa nhà thuộc cơ sở này
+            var toaNhas = await _context.ToaNha
+                .Where(t => t.MaCoSo == id)
+                .Include(t => t.ChuTro)
+                .ToListAsync();
+            ViewBag.ToaNhas = toaNhas;
+            ViewBag.IsSuperAdmin = IsSuperAdmin();
+
+            return View(coSo);
+        }
+
+        // ==================== THÊM CƠ SỞ (CHỈ SUPERADMIN) ====================
         public IActionResult Create()
         {
-            if (HttpContext.Session.GetInt32("UserId") == null)
+            if (!IsSuperAdmin())
             {
-                return RedirectToAction("Index", "Login");
+                TempData["Error"] = "Bạn không có quyền thêm cơ sở!";
+                return RedirectToAction(nameof(Index));
             }
             return View();
         }
 
-        // POST: Tạo mới cơ sở
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CoSo coSo)
         {
+            if (!IsSuperAdmin())
+            {
+                TempData["Error"] = "Bạn không có quyền thêm cơ sở!";
+                return RedirectToAction(nameof(Index));
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(coSo);
@@ -52,36 +107,34 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(coSo);
         }
 
-        // GET: Chỉnh sửa cơ sở
+        // ==================== CHỈNH SỬA CƠ SỞ (CHỈ SUPERADMIN) ====================
         public async Task<IActionResult> Edit(int? id)
         {
-            if (HttpContext.Session.GetInt32("UserId") == null)
+            if (!IsSuperAdmin())
             {
-                return RedirectToAction("Index", "Login");
+                TempData["Error"] = "Bạn không có quyền sửa cơ sở!";
+                return RedirectToAction(nameof(Index));
             }
 
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var coSo = await _context.CoSo.FindAsync(id);
-            if (coSo == null)
-            {
-                return NotFound();
-            }
+            if (coSo == null) return NotFound();
+
             return View(coSo);
         }
 
-        // POST: Chỉnh sửa cơ sở
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, CoSo coSo)
         {
-            if (id != coSo.MaCoSo)
+            if (!IsSuperAdmin())
             {
-                return NotFound();
+                TempData["Error"] = "Bạn không có quyền sửa cơ sở!";
+                return RedirectToAction(nameof(Index));
             }
+
+            if (id != coSo.MaCoSo) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -93,99 +146,60 @@ namespace HeThongQuanLyPhongTro.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CoSoExists(coSo.MaCoSo))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!CoSoExists(coSo.MaCoSo)) return NotFound();
+                    throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
             return View(coSo);
         }
 
-        // GET: Xóa cơ sở
+        // ==================== XÓA CƠ SỞ (CHỈ SUPERADMIN) ====================
         public async Task<IActionResult> Delete(int? id)
         {
-            if (HttpContext.Session.GetInt32("UserId") == null)
+            if (!IsSuperAdmin())
             {
-                return RedirectToAction("Index", "Login");
+                TempData["Error"] = "Bạn không có quyền xóa cơ sở!";
+                return RedirectToAction(nameof(Index));
             }
 
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var coSo = await _context.CoSo
                 .FirstOrDefaultAsync(m => m.MaCoSo == id);
-            if (coSo == null)
+
+            if (coSo == null) return NotFound();
+
+            // Kiểm tra xem có tòa nhà nào thuộc cơ sở này không
+            var coToaNha = await _context.ToaNha.AnyAsync(t => t.MaCoSo == id);
+            if (coToaNha)
             {
-                return NotFound();
+                TempData["Error"] = "Không thể xóa vì cơ sở này đang có tòa nhà!";
+                return RedirectToAction(nameof(Index));
             }
 
             return View(coSo);
         }
 
-        // POST: Xóa cơ sở
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            if (!IsSuperAdmin())
+            {
+                TempData["Error"] = "Bạn không có quyền xóa cơ sở!";
+                return RedirectToAction(nameof(Index));
+            }
+
             var coSo = await _context.CoSo.FindAsync(id);
             if (coSo != null)
             {
-                // Kiểm tra xem cơ sở có đang có phòng không
-                var coPhong = await _context.Phong.AnyAsync(p => p.MaCoSo == id);
-                if (coPhong)
-                {
-                    TempData["Error"] = "Không thể xóa vì cơ sở này đang có phòng!";
-                    return RedirectToAction(nameof(Index));
-                }
-
                 _context.CoSo.Remove(coSo);
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Xóa cơ sở thành công!";
             }
 
             return RedirectToAction(nameof(Index));
-        }
-
-        // GET: Chi tiết cơ sở
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (HttpContext.Session.GetInt32("UserId") == null)
-            {
-                return RedirectToAction("Index", "Login");
-            }
-
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            //var coSo = await _context.CoSo
-            //   .FirstOrDefaultAsync(m => m.MaCoSo == id);
-            var coSo = _context.CoSo
-       .Include(c => c.Phongs)
-       .FirstOrDefault(m => m.MaCoSo == id);
-            if (coSo == null)
-            {
-                return NotFound();
-            }
-
-            // Lấy danh sách phòng thuộc cơ sở này
-            var danhSachPhong = await _context.Phong
-                .Where(p => p.MaCoSo == id)
-                .ToListAsync();
-
-            ViewBag.DanhSachPhong = danhSachPhong;
-            ViewBag.SoLuongPhong = danhSachPhong.Count;
-
-            return View(coSo);
         }
 
         private bool CoSoExists(int id)

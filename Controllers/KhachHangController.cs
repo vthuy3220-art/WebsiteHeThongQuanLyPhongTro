@@ -2,8 +2,11 @@
 using HeThongQuanLyPhongTro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using System.Security.Cryptography;
+using System.Linq;
+using System.Threading.Tasks;
+using QRCoder;
+using System.Drawing;
+using System.IO;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -15,13 +18,57 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             _context = context;
         }
-        // ==================== TRANG CHỦ MẶC ĐỊNH CỦA KHÁCH HÀNG ====================
+        public IActionResult GenerateQR(string data)
+        {
+            using (QRCodeGenerator generator = new QRCodeGenerator())
+            {
+                QRCodeData qrData = generator.CreateQrCode(data, QRCodeGenerator.ECCLevel.Q);
+                using (QRCode qrCode = new QRCode(qrData))
+                {
+                    using (Bitmap bitmap = qrCode.GetGraphic(20))
+                    {
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                            return File(ms.ToArray(), "image/png");
+                        }
+                    }
+                }
+            }
+        }
+        // Helper lấy thông tin user
+        private int GetCurrentUserId()
+        {
+            return HttpContext.Session.GetInt32("UserId") ?? 0;
+        }
+
+        private string GetCurrentRole()
+        {
+            return HttpContext.Session.GetString("Role") ?? "";
+        }
+
+        private int GetCurrentMaChuTro()
+        {
+            return HttpContext.Session.GetInt32("MaChuTro") ?? 0;
+        }
+
+        // ==================== TRANG CHỦ MẶC ĐỊNH ====================
         public IActionResult Index()
         {
-            var role = HttpContext.Session.GetString("Role");
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0)
+            {
+                return RedirectToAction("Index", "Login");
+            }
 
             // Phân luồng tùy theo vai trò
-            if (role == "Admin")
+            if (role == "Admin" || role == "SuperAdmin")
+            {
+                return RedirectToAction("QuanLy");
+            }
+            else if (role == "ChuTro")
             {
                 return RedirectToAction("QuanLy");
             }
@@ -30,17 +77,16 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Dashboard");
             }
 
-            // Nếu chưa đăng nhập hoặc mất Session thì đuổi về trang Login
             return RedirectToAction("Index", "Login");
         }
+
         // ==================== DASHBOARD CHO KHÁCH HÀNG ====================
         public async Task<IActionResult> Dashboard()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            var role = HttpContext.Session.GetString("Role");
-            var username = HttpContext.Session.GetString("Username");
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
 
-            if (userId == null || role != "Khach")
+            if (userId == 0 || role != "Khach")
             {
                 return RedirectToAction("Index", "Login");
             }
@@ -51,53 +97,156 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (khachHang == null)
             {
-                khachHang = await _context.KhachHang
-                    .FirstOrDefaultAsync(k => k.Email == username || k.SoDienThoai == username);
-            }
-
-            if (khachHang == null)
-            {
                 return RedirectToAction("Index", "Login");
             }
 
             // Lấy hợp đồng hiện tại
             var hopDong = await _context.HopDong
                 .Include(h => h.PhongNavigation)
+                    .ThenInclude(p => p.ToaNha)
                 .FirstOrDefaultAsync(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai == "Hiệu lực");
 
-            // Dùng ViewBag
             ViewBag.KhachHang = khachHang;
             ViewBag.HopDong = hopDong;
 
             return View("Index");
-
         }
-        // ==================== HỢP ĐỒNG CỦA TÔI ====================
+
+        // ==================== QUẢN LÝ KHÁCH HÀNG (CHO ADMIN & CHỦ TRỌ) ====================
+        public async Task<IActionResult> QuanLy(string searchString)
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0)
+            {
+                return RedirectToAction("Index", "Login");
+            }
+
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro")
+            {
+                return RedirectToAction("Index", "Login");
+            }
+            var khachHangs = _context.KhachHang.AsQueryable();  // Bỏ .Include
+                                                                // 👇 PHÂN QUYỀN: Chủ trọ chỉ thấy khách hàng đã thuê phòng của mình
+            if (role == "ChuTro")
+            {
+                var maChuTro = GetCurrentMaChuTro();
+
+                // Lấy danh sách phòng của chủ trọ này
+                var phongIds = await _context.Phong
+                    .Where(p => p.MaChuTro == maChuTro)
+                    .Select(p => p.MaPhong)
+                    .ToListAsync();
+
+                // Lấy danh sách khách hàng có hợp đồng với các phòng đó
+                var khachHangIds = await _context.HopDong
+                    .Where(h => phongIds.Contains(h.MaPhong))
+                    .Select(h => h.MaKhachHang)
+                    .Distinct()
+                    .ToListAsync();
+
+                khachHangs = khachHangs.Where(k => khachHangIds.Contains(k.MaKhachHang));
+            }
+
+            // Tìm kiếm
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                khachHangs = khachHangs.Where(k =>
+                    k.HoTen.Contains(searchString) ||
+                    (k.SoDienThoai != null && k.SoDienThoai.Contains(searchString)) ||
+                    (k.CCCD != null && k.CCCD.Contains(searchString)));
+            }
+
+            ViewBag.SearchString = searchString;
+            ViewBag.Role = role;
+            return View(await khachHangs.ToListAsync());
+        }
+
+        // ==================== HỢP ĐỒNG CỦA TÔI (CHO KHÁCH) ====================
         public async Task<IActionResult> HopDongCuaToi()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null) return RedirectToAction("Index", "Login");
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0) return RedirectToAction("Index", "Login");
+
+            if (role != "Khach")
+            {
+                return RedirectToAction("Index", "Login");
+            }
 
             var khachHang = await _context.KhachHang
                 .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
 
             if (khachHang == null) return RedirectToAction("Index", "Login");
 
-            // CHỈ LẤY HỢP ĐỒNG CỦA KHÁCH NÀY
             var hopDongs = await _context.HopDong
                 .Include(h => h.PhongNavigation)
-                .Where(h => h.MaKhachHang == khachHang.MaKhachHang)  // Quan trọng!
+                    .ThenInclude(p => p.ToaNha)
+                .Where(h => h.MaKhachHang == khachHang.MaKhachHang)
                 .OrderByDescending(h => h.NgayBatDau)
                 .ToListAsync();
 
             return View(hopDongs);
         }
 
-        // ==================== HÓA ĐƠN CỦA TÔI ====================
+        // ==================== CHI TIẾT HỢP ĐỒNG (CHO KHÁCH) ====================
+        public async Task<IActionResult> HopDongChiTiet(int id)
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0 || role != "Khach")
+            {
+                return RedirectToAction("Index", "Login");
+            }
+
+            var khachHang = await _context.KhachHang
+                .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
+
+            if (khachHang == null)
+            {
+                return RedirectToAction("Index", "Login");
+            }
+
+            var hopDong = await _context.HopDong
+                .Include(h => h.PhongNavigation)
+                    .ThenInclude(p => p.ToaNha)
+                .FirstOrDefaultAsync(h => h.MaHopDong == id && h.MaKhachHang == khachHang.MaKhachHang);
+
+            if (hopDong == null)
+            {
+                TempData["Error"] = "Không tìm thấy hợp đồng hoặc bạn không có quyền xem!";
+                return RedirectToAction("HopDongCuaToi");
+            }
+
+            var nguoiOList = await _context.NguoiOHopDong
+                .Where(n => n.MaHopDong == id)
+                .ToListAsync();
+
+            var hoaDons = await _context.HoaDon
+                .Where(h => h.MaHopDong == id)
+                .OrderByDescending(h => h.Nam)
+                .ThenByDescending(h => h.Thang)
+                .ToListAsync();
+
+            ViewBag.NguoiOList = nguoiOList;
+            ViewBag.HoaDons = hoaDons;
+
+            return View(hopDong);
+        }
+
+        // ==================== HÓA ĐƠN CỦA TÔI (CHO KHÁCH) ====================
         public async Task<IActionResult> HoaDonCuaToi()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null) return RedirectToAction("Index", "Login");
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0 || role != "Khach")
+            {
+                return RedirectToAction("Index", "Login");
+            }
 
             var khachHang = await _context.KhachHang
                 .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
@@ -118,30 +267,31 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(hoaDons);
         }
 
-        // ==================== CHI TIẾT HÓA ĐƠN ====================
         // ==================== CHI TIẾT HÓA ĐƠN (CHO KHÁCH) ====================
         public async Task<IActionResult> HoaDonChiTiet(int id)
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null) return RedirectToAction("Index", "Login");
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0) return RedirectToAction("Index", "Login");
 
             var khachHang = await _context.KhachHang
                 .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
 
             if (khachHang == null) return RedirectToAction("Index", "Login");
 
-            // Lấy hóa đơn và kiểm tra quyền sở hữu
             var hoaDon = await _context.HoaDon
                 .Include(h => h.HopDongNavigation)
                     .ThenInclude(h => h.PhongNavigation)
+                        .ThenInclude(p => p.ToaNha)
                 .Include(h => h.HopDongNavigation)
                     .ThenInclude(h => h.KhachHangNavigation)
                 .FirstOrDefaultAsync(h => h.MaHoaDon == id);
 
             if (hoaDon == null) return NotFound();
 
-            // Kiểm tra hóa đơn có thuộc về khách này không
-            if (hoaDon.HopDongNavigation?.MaKhachHang != khachHang.MaKhachHang)
+            // Kiểm tra quyền sở hữu
+            if (role == "Khach" && hoaDon.HopDongNavigation?.MaKhachHang != khachHang.MaKhachHang)
             {
                 TempData["Error"] = "Bạn không có quyền xem hóa đơn này!";
                 return RedirectToAction("HoaDonCuaToi");
@@ -151,12 +301,10 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .Where(ct => ct.MaHoaDon == id)
                 .ToListAsync();
 
-            // Lấy số người ở
             int soNguoiO = await _context.NguoiOHopDong
                 .CountAsync(n => n.MaHopDong == hoaDon.MaHopDong);
             int soNguoi = soNguoiO + 1;
 
-            // Lấy chỉ số từ chi tiết hóa đơn
             var chiSoDienCu = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện cũ")?.SoLuong ?? 0;
             var chiSoDienMoi = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện mới")?.SoLuong ?? 0;
             var chiSoNuocCu = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số nước cũ")?.SoLuong ?? 0;
@@ -165,9 +313,8 @@ namespace HeThongQuanLyPhongTro.Controllers
             var giaNuoc = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Đơn giá nước")?.DonGia ?? 30000;
             var tienPhatSinh = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Phí phát sinh")?.ThanhTien ?? 0;
 
-            // Tính toán
-            var soDien = Math.Max(0, chiSoDienMoi - chiSoDienCu);
-            var soNuoc = Math.Max(0, chiSoNuocMoi - chiSoNuocCu);
+            var soDien = Math.Max(0, (chiSoDienMoi - chiSoDienCu));
+            var soNuoc = Math.Max(0, (chiSoNuocMoi - chiSoNuocCu));
             var tienDien = soDien * giaDien;
             var tienNuoc = soNuoc * giaNuoc;
             var tienDichVu = soNguoi * 200000;
@@ -186,14 +333,18 @@ namespace HeThongQuanLyPhongTro.Controllers
             ViewBag.TongTien = tongTien;
 
             return View(hoaDon);
-
         }
 
-        // ==================== LỊCH SỬ THANH TOÁN ====================
+        // ==================== LỊCH SỬ THANH TOÁN (CHO KHÁCH) ====================
         public async Task<IActionResult> LichSuThanhToan()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null) return RedirectToAction("Index", "Login");
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0 || role != "Khach")
+            {
+                return RedirectToAction("Index", "Login");
+            }
 
             var khachHang = await _context.KhachHang
                 .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
@@ -221,14 +372,19 @@ namespace HeThongQuanLyPhongTro.Controllers
         // ==================== ĐỔI MẬT KHẨU ====================
         public IActionResult DoiMatKhau()
         {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return RedirectToAction("Index", "Login");
+            }
             return View();
         }
 
         [HttpPost]
         public async Task<IActionResult> DoiMatKhau(string matKhauCu, string matKhauMoi, string xacNhanMatKhau)
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null) return RedirectToAction("Index", "Login");
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Index", "Login");
 
             var taiKhoan = await _context.TaiKhoan.FindAsync(userId);
             if (taiKhoan == null) return RedirectToAction("Index", "Login");
@@ -258,81 +414,55 @@ namespace HeThongQuanLyPhongTro.Controllers
             TempData["Success"] = "Đổi mật khẩu thành công!";
             return RedirectToAction("Dashboard");
         }
-        // ==================== CHI TIẾT HỢP ĐỒNG (CHO KHÁCH) ====================
-        public async Task<IActionResult> HopDongChiTiet(int id)
-        {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            var role = HttpContext.Session.GetString("Role");
 
-            if (userId == null || role != "Khach")
+        // ==================== CHI TIẾT KHÁCH HÀNG ====================
+        public async Task<IActionResult> Details(int? id)
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0)
             {
                 return RedirectToAction("Index", "Login");
             }
 
-            // Tìm khách hàng
+            if (id == null) return NotFound();
+
             var khachHang = await _context.KhachHang
-                .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
+        // .Include(k => k.TaiKhoan)  // COMMENT DÒNG NÀY
+        .FirstOrDefaultAsync(m => m.MaKhachHang == id);
+            if (khachHang == null) return NotFound();
 
-            if (khachHang == null)
+            // 👇 PHÂN QUYỀN: Chủ trọ chỉ xem được khách hàng của mình
+            if (role == "ChuTro")
             {
-                return RedirectToAction("Index", "Login");
+                var maChuTro = GetCurrentMaChuTro();
+                var phongIds = await _context.Phong
+                    .Where(p => p.MaChuTro == maChuTro)
+                    .Select(p => p.MaPhong)
+                    .ToListAsync();
+
+                var hopDongExists = await _context.HopDong
+                    .AnyAsync(h => h.MaKhachHang == id && phongIds.Contains(h.MaPhong));
+
+                if (!hopDongExists)
+                {
+                    TempData["Error"] = "Bạn không có quyền xem khách hàng này!";
+                    return RedirectToAction("QuanLy");
+                }
             }
 
-            // Lấy hợp đồng và kiểm tra quyền sở hữu
-            var hopDong = await _context.HopDong
-                .Include(h => h.PhongNavigation)
-                .ThenInclude(p => p.CoSo)
-                .FirstOrDefaultAsync(h => h.MaHopDong == id && h.MaKhachHang == khachHang.MaKhachHang);
-
-            if (hopDong == null)
-            {
-                TempData["Error"] = "Không tìm thấy hợp đồng hoặc bạn không có quyền xem!";
-                return RedirectToAction("HopDongCuaToi");
-            }
-
-            // Lấy danh sách người ở
-            var nguoiOList = await _context.NguoiOHopDong
-                .Where(n => n.MaHopDong == id)
-                .ToListAsync();
-
-            // Lấy danh sách hóa đơn
-            var hoaDons = await _context.HoaDon
-                .Where(h => h.MaHopDong == id)
-                .OrderByDescending(h => h.Nam)
-                .ThenByDescending(h => h.Thang)
-                .ToListAsync();
-
-            ViewBag.NguoiOList = nguoiOList;
-            ViewBag.HoaDons = hoaDons;
-
-            return View(hopDong);
+            return View(khachHang);
         }
 
-        // ==================== QUẢN LÝ KHÁCH HÀNG (CHO CHỦ TRỌ) ====================
-        public async Task<IActionResult> QuanLy(string searchString)
-        {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin") return RedirectToAction("Index", "Login");
-
-            var khachHangs = _context.KhachHang.AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                khachHangs = khachHangs.Where(k =>
-                    k.HoTen.Contains(searchString) ||
-                    (k.SoDienThoai != null && k.SoDienThoai.Contains(searchString)) ||
-                    (k.CCCD != null && k.CCCD.Contains(searchString)));
-            }
-
-            ViewBag.SearchString = searchString;
-            return View(await khachHangs.ToListAsync());
-        }
-
-        // GET: Thêm khách hàng mới (có tạo tài khoản)
+        // ==================== THÊM KHÁCH HÀNG ====================
         public IActionResult Create()
         {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin") return RedirectToAction("Index", "Login");
+            var role = GetCurrentRole();
+            if (role != "Admin" && role != "SuperAdmin")
+            {
+                return RedirectToAction("Index", "Login");
+            }
             return View();
         }
 
@@ -340,12 +470,14 @@ namespace HeThongQuanLyPhongTro.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(KhachHang khachHang, string tenDangNhap, string matKhau)
         {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin") return RedirectToAction("Index", "Login");
+            var role = GetCurrentRole();
+            if (role != "Admin" && role != "SuperAdmin")
+            {
+                return RedirectToAction("Index", "Login");
+            }
 
             if (ModelState.IsValid)
             {
-                // Kiểm tra tên đăng nhập đã tồn tại
                 var existingAccount = await _context.TaiKhoan
                     .FirstOrDefaultAsync(t => t.TenDangNhap == tenDangNhap);
 
@@ -355,7 +487,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                     return View(khachHang);
                 }
 
-                // Tạo tài khoản mới
                 var taiKhoan = new TaiKhoan
                 {
                     TenDangNhap = tenDangNhap,
@@ -367,7 +498,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 _context.TaiKhoan.Add(taiKhoan);
                 await _context.SaveChangesAsync();
 
-                // Gán MaTaiKhoan cho khách hàng
                 khachHang.MaTaiKhoan = taiKhoan.MaTaiKhoan;
                 _context.KhachHang.Add(khachHang);
                 await _context.SaveChangesAsync();
@@ -378,28 +508,14 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(khachHang);
         }
 
-
-        // ==================== XEM CHI TIẾT KHÁCH HÀNG (CHO ADMIN) ====================
-        public async Task<IActionResult> Details(int? id)
-        {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin") return RedirectToAction("Index", "Login");
-
-            if (id == null) return NotFound();
-
-            var khachHang = await _context.KhachHang
-                .FirstOrDefaultAsync(m => m.MaKhachHang == id);
-
-            if (khachHang == null) return NotFound();
-
-            return View(khachHang);
-        }
-
-        // ==================== SỬA KHÁCH HÀNG (CHO ADMIN) ====================
+        // ==================== SỬA KHÁCH HÀNG ====================
         public async Task<IActionResult> Edit(int? id)
         {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin") return RedirectToAction("Index", "Login");
+            var role = GetCurrentRole();
+            if (role != "Admin" && role != "SuperAdmin")
+            {
+                return RedirectToAction("Index", "Login");
+            }
 
             if (id == null) return NotFound();
 
@@ -413,8 +529,11 @@ namespace HeThongQuanLyPhongTro.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, KhachHang khachHang)
         {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin") return RedirectToAction("Index", "Login");
+            var role = GetCurrentRole();
+            if (role != "Admin" && role != "SuperAdmin")
+            {
+                return RedirectToAction("Index", "Login");
+            }
 
             if (id != khachHang.MaKhachHang) return NotFound();
 
@@ -438,11 +557,14 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(khachHang);
         }
 
-        // ==================== XÓA KHÁCH HÀNG (CHO ADMIN) ====================
+        // ==================== XÓA KHÁCH HÀNG ====================
         public async Task<IActionResult> Delete(int? id)
         {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin") return RedirectToAction("Index", "Login");
+            var role = GetCurrentRole();
+            if (role != "Admin" && role != "SuperAdmin")
+            {
+                return RedirectToAction("Index", "Login");
+            }
 
             if (id == null) return NotFound();
 
@@ -458,13 +580,15 @@ namespace HeThongQuanLyPhongTro.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin") return RedirectToAction("Index", "Login");
+            var role = GetCurrentRole();
+            if (role != "Admin" && role != "SuperAdmin")
+            {
+                return RedirectToAction("Index", "Login");
+            }
 
             var khachHang = await _context.KhachHang.FindAsync(id);
             if (khachHang != null)
             {
-                // KIỂM TRA XEM CÓ HỢP ĐỒNG KHÔNG
                 var coHopDong = await _context.HopDong.AnyAsync(h => h.MaKhachHang == id);
                 if (coHopDong)
                 {

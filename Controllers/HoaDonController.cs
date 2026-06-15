@@ -17,7 +17,7 @@ namespace HeThongQuanLyPhongTro.Controllers
         public HoaDonController(ApplicationDbContext context, ThongBaoService thongBaoService)
         {
             _context = context;
-            _thongBaoService = thongBaoService; 
+            _thongBaoService = thongBaoService;
         }
 
         // ==================== DANH SÁCH HÓA ĐƠN (CHỈ HIỆN HỢP ĐỒNG CÒN HIỆU LỰC) ====================
@@ -1007,4 +1007,3 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
     }  // ← Dấu đóng ngoặc của class HoaDonController
 }
-

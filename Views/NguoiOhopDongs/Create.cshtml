@@ -4,48 +4,74 @@
     ViewData["Title"] = "Thêm người ở";
 }
 
-<div class="max-w-2xl mx-auto">
-    <div class="bg-white rounded-xl shadow p-6">
-        <h1 class="text-xl font-bold mb-4">Thêm người ở</h1>
-
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-red-500"></div>
-
-            <div class="mb-3">
-                <label asp-for="MaHopDong" class="block font-medium">Hợp đồng</label>
-                <select asp-for="MaHopDong" class="w-full border rounded p-2" asp-items="ViewBag.MaHopDong">
-                    <option value="">-- Chọn hợp đồng --</option>
-                </select>
-                <span asp-validation-for="MaHopDong" class="text-red-500"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="HoTen" class="block font-medium">Họ tên</label>
-                <input asp-for="HoTen" class="w-full border rounded p-2" />
-                <span asp-validation-for="HoTen" class="text-red-500"></span>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                    <label asp-for="CCCD" class="block font-medium">CCCD</label>
-                    <input asp-for="CCCD" class="w-full border rounded p-2" />
+<div class="max-w-2xl mx-auto mt-6 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <!-- Header mới: Tiết chế loang màu nhẹ nhàng từ Xanh dương sang Slate trầm ổn, trang nhã -->
+        <div class="bg-gradient-to-r from-blue-600 to-slate-700 px-6 py-5 flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center shadow-inner">
+                    <i class="fas fa-user-plus text-white text-base"></i>
                 </div>
                 <div>
-                    <label asp-for="SoDienThoai" class="block font-medium">SĐT</label>
-                    <input asp-for="SoDienThoai" class="w-full border rounded p-2" />
+                    <h1 class="text-lg font-bold text-white tracking-wide">Đăng ký thành viên ở cùng</h1>
+                    <p class="text-xs text-blue-100 mt-0.5">Thêm thông tin người lưu trú mới vào hệ thống phòng trọ</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form nhập liệu với nền trắng xám nhẹ bên dưới làm nổi bật ô Input -->
+        <form asp-controller="NguoiOhopDongs" asp-action="Create" method="post" class="p-6 space-y-5 bg-gradient-to-b from-white to-gray-50/30">
+            <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm bg-red-50 p-3 rounded-xl border border-red-100"></div>
+
+            <!-- Chọn Phòng & Người đại diện phòng -->
+            <div>
+                <label asp-for="MaHopDong" class="block font-semibold text-gray-700 text-sm mb-1.5 flex items-center gap-1.5">
+                    <i class="fas fa-home text-blue-500 text-xs"></i> Phòng trọ / Người đại diện phòng
+                </label>
+                <div class="relative rounded-xl shadow-sm">
+                    <select asp-for="MaHopDong" class="w-full border border-gray-200 rounded-xl p-3 bg-white text-gray-800 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all appearance-none cursor-pointer shadow-inner" asp-items="ViewBag.MaHopDong">
+                        <option value="">-- Click để chọn phòng trọ / người đại diện --</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+                <span asp-validation-for="MaHopDong" class="text-red-500 text-xs mt-1 block font-medium"></span>
+            </div>
+
+            <!-- Họ và tên thành viên -->
+            <div>
+                <label asp-for="HoTen" class="block font-semibold text-gray-700 text-sm mb-1.5 flex items-center gap-1.5">
+                    <i class="fas fa-user text-blue-500 text-xs"></i> Họ và tên thành viên ở cùng
+                </label>
+                <input asp-for="HoTen" placeholder="Nhập đầy đủ họ và tên..." class="w-full border border-gray-200 rounded-xl p-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm" />
+                <span asp-validation-for="HoTen" class="text-red-500 text-xs mt-1 block font-medium"></span>
+            </div>
+
+            <!-- Grid CCCD và SĐT -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label asp-for="CCCD" class="block font-semibold text-gray-700 text-sm mb-1.5 flex items-center gap-1.5">
+                        <i class="fas fa-id-card text-blue-500 text-xs"></i> Số CCCD/CMND
+                    </label>
+                    <input asp-for="CCCD" placeholder="Nhập mã 12 số định danh..." class="w-full border border-gray-200 rounded-xl p-3 text-sm font-mono tracking-wide font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm" />
+                </div>
+                <div>
+                    <label asp-for="SoDienThoai" class="block font-semibold text-gray-700 text-sm mb-1.5 flex items-center gap-1.5">
+                        <i class="fas fa-phone text-blue-500 text-xs"></i> Số điện thoại liên hệ
+                    </label>
+                    <input asp-for="SoDienThoai" placeholder="Nhập số điện thoại di động..." class="w-full border border-gray-200 rounded-xl p-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm" />
                 </div>
             </div>
 
-            <!-- SỬA: dùng name thay vì asp-for -->
-            <div class="flex items-center mb-4">
-                <input type="checkbox" name="LaNguoiDaiDien" value="true" class="mr-2" />
-                <label>Là người đại diện</label>
-                <input type="hidden" name="LaNguoiDaiDien" value="false" />
-            </div>
-
-            <div class="flex justify-end space-x-3">
-                <a asp-action="Index" class="px-4 py-2 border rounded">Hủy</a>
-                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Lưu</button>
+            <!-- Thanh nút thao tác đồng bộ nhẹ nhàng -->
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100 mt-6">
+                <a asp-controller="Dashboard" asp-action="QuanLyNguoiO" class="px-5 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-100 active:bg-gray-200 transition-all shadow-sm">
+                    Hủy bỏ
+                </a>
+                <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-500/20 flex items-center gap-1.5 transform active:scale-95">
+                    <i class="fas fa-save text-xs"></i> Lưu thông tin
+                </button>
             </div>
         </form>
     </div>

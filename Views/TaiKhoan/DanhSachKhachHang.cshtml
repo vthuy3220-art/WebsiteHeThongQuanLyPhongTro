@@ -1,0 +1,97 @@
+﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.TaiKhoan>
+
+@{
+    ViewData["Title"] = "Danh sách tài khoản khách hàng";
+    Layout = "_Layout";
+}
+
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Danh sách tài khoản khách hàng</h1>
+            <p class="text-sm text-gray-500 mt-1">Quản lý tài khoản khách thuê phòng</p>
+        </div>
+        <a asp-action="TaoTaiKhoanKhach" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all">
+            <i class="fas fa-user-plus mr-2"></i> Tạo tài khoản khách
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
+            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+        </div>
+    }
+
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr class="border-b">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên đăng nhập</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach (var item in Model)
+                    {
+                        <tr class="hover:bg-gray-50 transition-all">
+                            <td class="px-6 py-4 text-sm">@item.MaTaiKhoan</td>
+                            <td class="px-6 py-4 font-medium">@item.TenDangNhap</td>
+                            <td class="px-6 py-4 text-sm">@(string.IsNullOrEmpty(item.Email) ? "Chưa cập nhật" : item.Email)</td>
+                            <td class="px-6 py-4 text-center">
+                                @if (item.TrangThai == "Hoạt động")
+                                {
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                                        <i class="fas fa-check-circle"></i> Hoạt động
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
+                                        <i class="fas fa-lock"></i> Khóa
+                                    </span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex justify-center space-x-2">
+                                    <a asp-action="Details" asp-route-id="@item.MaTaiKhoan"
+                                       class="text-blue-500 hover:text-blue-700 transition" title="Chi tiết">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.MaTaiKhoan"
+                                       class="text-yellow-500 hover:text-yellow-700 transition" title="Sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.MaTaiKhoan"
+                                       class="text-red-500 hover:text-red-700 transition" title="Xóa"
+                                       onclick="return confirm('Bạn có chắc muốn xóa tài khoản @item.TenDangNhap?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center py-12">
+                <i class="fas fa-users text-gray-300 text-5xl mb-3"></i>
+                <p class="text-gray-500">Chưa có tài khoản khách hàng nào</p>
+                <a asp-action="TaoTaiKhoanKhach" class="inline-block mt-3 text-green-500 hover:underline">Tạo tài khoản đầu tiên</a>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,106 @@
+﻿@model HeThongQuanLyPhongTro.Models.ToaNha
+
+@{
+    ViewData["Title"] = "Chi tiết tòa nhà";
+    Layout = "_Layout";
+    var phongs = ViewBag.Phongs as List<HeThongQuanLyPhongTro.Models.Phong>;
+}
+
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
+            <h2 class="text-xl font-bold text-white">📋 Chi tiết tòa nhà</h2>
+        </div>
+
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="text-gray-600 font-medium">Mã tòa nhà:</span>
+                    <span class="font-semibold">@Model.MaToaNha</span>
+                </div>
+                <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="text-gray-600 font-medium">Tên tòa nhà:</span>
+                    <span class="font-semibold">@Model.TenToaNha</span>
+                </div>
+                <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="text-gray-600 font-medium">Địa chỉ:</span>
+                    <span class="font-semibold">@Model.DiaChi</span>
+                </div>
+                <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="text-gray-600 font-medium">Khu vực:</span>
+                    <span class="font-semibold">@Model.CoSo?.TenCoSo</span>
+                </div>
+                <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="text-gray-600 font-medium">Chủ trọ:</span>
+                    <span class="font-semibold">@Model.ChuTro?.TenDangNhap</span>
+                </div>
+                <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="text-gray-600 font-medium">Mô tả:</span>
+                    <span class="font-semibold">@(Model.MoTa ?? "Chưa có mô tả")</span>
+                </div>
+            </div>
+
+            <!-- Danh sách phòng trong tòa nhà -->
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-door-open text-blue-500 mr-2"></i>
+                    Danh sách phòng trong tòa nhà
+                </h3>
+                @if (phongs != null && phongs.Any())
+                {
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr class="border-b">
+                                    <th class="p-2 text-left">Mã phòng</th>
+                                    <th class="p-2 text-left">Tên phòng</th>
+                                    <th class="p-2 text-right">Giá phòng</th>
+                                    <th class="p-2 text-left">Trạng thái</th>
+                                    <th class="p-2 text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var phong in phongs)
+                                {
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="p-2">@phong.MaPhong</td>
+                                        <td class="p-2 font-medium">@phong.TenPhong</td>
+                                        <td class="p-2 text-right">@String.Format("{0:N0}", phong.GiaPhong) đ</td>
+                                        <td class="p-2">
+                                            @if (phong.TrangThai == "Trống")
+                                            {
+                                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Trống</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Đã thuê</span>
+                                            }
+                                        </td>
+                                        <td class="p-2 text-center">
+                                            <a asp-controller="Phong" asp-action="Details" asp-route-id="@phong.MaPhong" class="text-blue-500 hover:text-blue-700">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-gray-400 text-center py-4">Chưa có phòng nào trong tòa nhà này</p>
+                }
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <a asp-action="Edit" asp-route-id="@Model.MaToaNha" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-edit mr-2"></i> Sửa
+                </a>
+                <a asp-action="Index" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,64 @@
+﻿@model HeThongQuanLyPhongTro.Models.ToaNha
+
+@{
+    ViewData["Title"] = "Thêm tòa nhà";
+    Layout = "_Layout";
+    var coSoList = ViewBag.CoSoList as List<HeThongQuanLyPhongTro.Models.CoSo>;
+}
+
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-gradient-to-r from-green-600 to-teal-700 px-6 py-4">
+        <h2 class="text-xl font-bold text-white">🏢 Thêm tòa nhà mới</h2>
+    </div>
+
+    <div class="p-6">
+        <form asp-action="Create" method="post">
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Tên tòa nhà *</label>
+                <input asp-for="TenToaNha" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <span asp-validation-for="TenToaNha" class="text-red-500 text-sm"></span>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Địa chỉ *</label>
+                <input asp-for="DiaChi" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <span asp-validation-for="DiaChi" class="text-red-500 text-sm"></span>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Khu vực *</label>
+                <select name="MaCoSo" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <option value="">-- Chọn khu vực --</option>
+                    @if (coSoList != null)
+                    {
+                        foreach (var cs in coSoList)
+                        {
+                            <option value="@cs.MaCoSo">@cs.TenCoSo</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Mô tả</label>
+                <textarea asp-for="MoTa" rows="3" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <span asp-validation-for="MoTa" class="text-red-500 text-sm"></span>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-all">
+                    <i class="fas fa-save mr-2"></i> Lưu
+                </button>
+                <a asp-action="Index" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-center py-2 rounded-lg transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i> Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

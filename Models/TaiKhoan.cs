@@ -2,10 +2,9 @@
 
 namespace HeThongQuanLyPhongTro.Models
 {
-    // Bảng tài khoản: lưu thông tin đăng nhập và phân quyền
     public class TaiKhoan
     {
-        [Key] // Khóa chính, tự động tăng
+        [Key]
         public int MaTaiKhoan { get; set; }
 
         [Required(ErrorMessage = "Tên đăng nhập không được để trống")]
@@ -15,12 +14,34 @@ namespace HeThongQuanLyPhongTro.Models
         [Required(ErrorMessage = "Mật khẩu không được để trống")]
         [StringLength(255)]
         public string MatKhau { get; set; } = string.Empty;
+
         [StringLength(100)]
         public string? Email { get; set; }
 
+        // ===== THÊM 2 DÒNG NÀY =====
+        [StringLength(20)]
+        public string? SoDienThoai { get; set; }
+
+        [StringLength(255)]
+        public string? DiaChi { get; set; }
+        // ===== KẾT THÚC =====
+
         [Required]
-        public string VaiTro { get; set; } = "Khach"; // Admin hoặc Khach
+        public string VaiTro { get; set; } = "Khach"; // SuperAdmin, ChuTro, Khach
 
         public string? TrangThai { get; set; } = "Hoạt động"; // Hoạt động / Khóa
+
+        // ===== Thông tin ngân hàng (dùng cho QR thanh toán) =====
+        [StringLength(100)]
+        public string? TenNganHang { get; set; }
+
+        [StringLength(50)]
+        public string? SoTaiKhoan { get; set; }
+
+        [StringLength(100)]
+        public string? ChuTaiKhoan { get; set; }
+
+        // 1 Chủ trọ quản lý nhiều Tòa nhà
+        public virtual ICollection<ToaNha> ToaNhas { get; set; } = new List<ToaNha>();
     }
 }

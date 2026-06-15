@@ -69,7 +69,7 @@
                                 @foreach (var img in images)
                                 {
                                     <div class="cursor-pointer border-2 rounded-lg overflow-hidden hover:border-blue-500
-                                                            @(img.IsMain ? "border-blue-500" : "border-gray-200")"
+                                                    @(img.IsMain ? "border-blue-500" : "border-gray-200")"
                                          onclick="document.getElementById('mainImage').src='@img.ImagePath'">
                                         <img src="@img.ImagePath" class="w-full h-20 object-cover" />
                                     </div>
@@ -78,7 +78,7 @@
                         }
                     </div>
 
-                    <!-- Cột phải: Thông tin phòng -->
+                    <!-- Cột phải: Thông tin phòng (ĐÃ CẬP NHẬT THEO CẤU TRÚC MỚI) -->
                     <div>
                         <div class="bg-white rounded-xl shadow-md overflow-hidden">
                             <div class="p-6">
@@ -86,12 +86,16 @@
 
                                 <div class="space-y-3">
                                     <div class="flex justify-between py-2 border-b">
-                                        <span class="text-gray-500">Cơ sở:</span>
-                                        <span class="font-semibold">@(Model.CoSo?.TenCoSo ?? "N/A")</span>
+                                        <span class="text-gray-500">Tòa nhà:</span>
+                                        <span class="font-semibold">@(Model.ToaNha?.TenToaNha ?? "N/A")</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 border-b">
+                                        <span class="text-gray-500">Khu vực:</span>
+                                        <span class="font-semibold">@(Model.ToaNha?.CoSo?.TenCoSo ?? "N/A")</span>
                                     </div>
                                     <div class="flex justify-between py-2 border-b">
                                         <span class="text-gray-500">Địa chỉ:</span>
-                                        <span class="font-semibold">@(Model.CoSo?.DiaChi ?? "N/A")</span>
+                                        <span class="font-semibold">@(Model.ToaNha?.DiaChi ?? "N/A")</span>
                                     </div>
                                     <div class="flex justify-between py-2 border-b">
                                         <span class="text-gray-500">Giá phòng:</span>
@@ -134,7 +138,7 @@
 
     <script>
         function changeImage(src) {
-            document.getElementById('mainImage').src = src;
+        document.getElementById('mainImage').src = src;
         }
     </script>
 </body>

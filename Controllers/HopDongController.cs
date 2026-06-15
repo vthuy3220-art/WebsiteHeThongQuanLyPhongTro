@@ -16,11 +16,27 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context = context;
         }
 
-        // GET: Xuất PDF hợp đồng
+        // ==================== HELPER METHODS ====================
+        private int GetCurrentUserId()
+        {
+            return HttpContext.Session.GetInt32("UserId") ?? 0;
+        }
+
+        private string GetCurrentRole()
+        {
+            return HttpContext.Session.GetString("Role") ?? "";
+        }
+
+        private bool IsChuTro()
+        {
+            return GetCurrentRole() == "ChuTro";
+        }
+
+        // ==================== XUẤT PDF HỢP ĐỒNG ====================
         public async Task<IActionResult> XuatPdf(int id)
         {
             var hopDong = await _context.HopDong
-                .Include(h => h.PhongNavigation).ThenInclude(p => p.CoSo)
+                .Include(h => h.PhongNavigation).ThenInclude(p => p.ToaNha).ThenInclude(t => t.CoSo)
                 .Include(h => h.KhachHangNavigation)
                 .FirstOrDefaultAsync(h => h.MaHopDong == id);
 
@@ -41,7 +57,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             return File(pdfBytes, "application/pdf", $"HopDong_{hopDong.MaHopDong}.pdf");
         }
 
-        // Hàm tạo nội dung HTML hợp đồng (giữ nguyên mẫu của bạn)
+        // ==================== HTML MẪU HỢP ĐỒNG ====================
         private string TaoNoiDungHopDongHtml(HopDong hopDong, List<NguoiOHopDong> nguoiOList)
         {
             string danhSachNguoiOBang = "";
@@ -112,7 +128,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 </div>
 
 <div style='margin: 15px 0;'>
-    Hôm nay, ngày <strong>{DateTime.Now:dd/MM/yyyy}</strong>, tại địa chỉ: <strong>{hopDong.PhongNavigation?.CoSo?.DiaChi ?? ""}</strong>
+    Hôm nay, ngày <strong>{DateTime.Now:dd/MM/yyyy}</strong>, tại địa chỉ: <strong>{hopDong.PhongNavigation?.ToaNha?.DiaChi ?? ""}</strong>
 </div>
 
 <div class='dieu-title'>CHÚNG TÔI GỒM:</div>
@@ -136,7 +152,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 
 <div class='dieu'>
     <div class='dieu-title'>DANH SÁCH NGƯỜI Ở CHUNG:</div>
-    <table>
+    <tr>
         <thead><tr><th>STT</th><th>Họ và tên</th><th>CCCD/CMND</th><th>Số điện thoại</th><th>Quan hệ</th></tr></thead>
         <tbody>{danhSachNguoiOBang}</tbody>
     </table>
@@ -145,7 +161,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 <div class='dieu'>
     <div class='dieu-title'>Điều 1: ĐỐI TƯỢNG THUÊ</div>
     <div>1.1. Bên A đồng ý cho Bên B thuê căn phòng: <strong>{hopDong.PhongNavigation?.TenPhong}</strong></div>
-    <div>1.2. Địa chỉ: <strong>{hopDong.PhongNavigation?.CoSo?.DiaChi}</strong></div>
+    <div>1.2. Địa chỉ: <strong>{hopDong.PhongNavigation?.ToaNha?.DiaChi}</strong></div>
     <div>1.3. Diện tích: <strong>{hopDong.PhongNavigation?.DienTich} m²</strong></div>
 </div>
 
@@ -184,8 +200,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 </html>";
         }
 
-        // GET: Danh sách hợp đồng
-        // GET: Danh sách hợp đồng (CHỈ ADMIN MỚI ĐƯỢC XEM)
+        // ==================== DANH SÁCH HỢP ĐỒNG ====================
         public async Task<IActionResult> Index(string searchString, string trangThai)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -196,20 +211,24 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
-            // CHỈ ADMIN MỚI ĐƯỢC XEM DANH SÁCH TẤT CẢ HỢP ĐỒNG
-            if (role != "Admin")
-            {
-                if (role == "Khach")
-                {
-                    return RedirectToAction("HopDongCuaToi", "KhachHang");
-                }
-                return RedirectToAction("Index", "Login");
-            }
-
             var hopDongs = _context.HopDong
                 .Include(h => h.PhongNavigation)
                 .Include(h => h.KhachHangNavigation)
                 .AsQueryable();
+
+            // Phân quyền: Chủ trọ chỉ thấy hợp đồng của phòng mình
+            if (role == "ChuTro")
+            {
+                var phongIds = await _context.Phong
+                    .Where(p => p.MaChuTro == userId)
+                    .Select(p => p.MaPhong)
+                    .ToListAsync();
+                hopDongs = hopDongs.Where(h => phongIds.Contains(h.MaPhong));
+            }
+            else if (role == "Khach")
+            {
+                return RedirectToAction("HopDongCuaToi", "KhachHang");
+            }
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -222,13 +241,10 @@ namespace HeThongQuanLyPhongTro.Controllers
             {
                 hopDongs = hopDongs.Where(h => h.TrangThai == trangThai);
             }
-            // ==========================================
-            // PHẦN CODE MỚI THÊM: SẮP XẾP THEO YÊU CẦU
-            // ==========================================
+
             hopDongs = hopDongs
-                .OrderBy(h => h.TrangThai == "Hiệu lực" ? 0 : 1) // 1. Ưu tiên "Hiệu lực" đẩy lên đầu
-                .ThenBy(h => h.PhongNavigation.TenPhong);        // 2. Sau đó sắp xếp theo tên phòng
-                                                                 // ==========================================
+                .OrderBy(h => h.TrangThai == "Hiệu lực" ? 0 : 1)
+                .ThenBy(h => h.PhongNavigation.TenPhong);
 
             ViewBag.SearchString = searchString;
             ViewBag.TrangThai = trangThai;
@@ -237,7 +253,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(await hopDongs.ToListAsync());
         }
 
-        // GET: Tạo hợp đồng mới
+        // ==================== TẠO HỢP ĐỒNG MỚI (GET) ====================
         public async Task<IActionResult> Create()
         {
             if (HttpContext.Session.GetInt32("UserId") == null)
@@ -245,18 +261,24 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
-            ViewBag.PhongList = await _context.Phong
-                .Include(p => p.CoSo)
-                .Where(p => p.TrangThai == "Trống")
-                .ToListAsync();
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
 
+            var queryPhong = _context.Phong
+                .Where(p => p.TrangThai == "Trống");
+
+            if (role == "ChuTro")
+            {
+                queryPhong = queryPhong.Where(p => p.MaChuTro == userId);
+            }
+
+            ViewBag.PhongList = await queryPhong.ToListAsync();
             ViewBag.KhachHangList = await _context.KhachHang.ToListAsync();
 
             return View();
         }
 
-
-        // POST: Tạo hợp đồng mới (CÓ TẠO TÀI KHOẢN VÀ LIÊN KẾT)
+        // ==================== TẠO HỢP ĐỒNG MỚI (POST) ====================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
@@ -264,18 +286,15 @@ namespace HeThongQuanLyPhongTro.Controllers
             DateTime ngayBatDau,
             DateTime ngayKetThuc,
             decimal tienCoc,
-            // Thông tin khách hàng
             string HoTen,
             string SoDienThoai,
             string Email,
             string CCCD,
             string DiaChi,
             DateTime? NgaySinh,
-            // Thông tin tài khoản
             bool taoTaiKhoan,
             string tenDangNhap,
             string matKhau,
-            // Danh sách người ở
             List<string> NguoiOHoTen,
             List<string> NguoiOCCCD,
             List<string> NguoiOSDT)
@@ -292,7 +311,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             int maKhachHangCuoi = 0;
 
             // ========== 1. TẠO HOẶC LẤY KHÁCH HÀNG ==========
-            // Kiểm tra khách hàng đã tồn tại theo số điện thoại
             var khachHangTonTai = await _context.KhachHang
                 .FirstOrDefaultAsync(k => k.SoDienThoai == SoDienThoai);
 
@@ -303,7 +321,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
             else
             {
-                // Tạo khách hàng mới
                 var khachHangMoi = new KhachHang
                 {
                     HoTen = HoTen.Trim(),
@@ -321,7 +338,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             // ========== 2. TẠO TÀI KHOẢN (nếu được chọn) ==========
             if (taoTaiKhoan && !string.IsNullOrEmpty(tenDangNhap) && !string.IsNullOrEmpty(matKhau))
             {
-                // Kiểm tra tên đăng nhập đã tồn tại
                 var tonTai = await _context.TaiKhoan.AnyAsync(t => t.TenDangNhap == tenDangNhap);
                 if (!tonTai)
                 {
@@ -335,7 +351,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                     _context.TaiKhoan.Add(taiKhoan);
                     await _context.SaveChangesAsync();
 
-                    // Liên kết tài khoản với khách hàng
                     var khachHang = await _context.KhachHang.FindAsync(maKhachHangCuoi);
                     if (khachHang != null)
                     {
@@ -357,6 +372,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             {
                 MaPhong = maPhong,
                 MaKhachHang = maKhachHangCuoi,
+                MaChuTro = phong.MaChuTro,
                 NgayBatDau = ngayBatDau,
                 NgayKetThuc = ngayKetThuc,
                 TienCoc = tienCoc,
@@ -397,25 +413,29 @@ namespace HeThongQuanLyPhongTro.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Load dữ liệu cho View Create
         private async Task LoadViewBags()
         {
-            ViewBag.PhongList = await _context.Phong
-                .Include(p => p.CoSo)
-                .Where(p => p.TrangThai == "Trống")
-                .ToListAsync();
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
 
+            var queryPhong = _context.Phong
+                .Where(p => p.TrangThai == "Trống");
+
+            if (role == "ChuTro")
+            {
+                queryPhong = queryPhong.Where(p => p.MaChuTro == userId);
+            }
+
+            ViewBag.PhongList = await queryPhong.ToListAsync();
             ViewBag.KhachHangList = await _context.KhachHang.ToListAsync();
         }
 
-        // POST: Chấm dứt hợp đồng (CHỈ ADMIN)
-        //[HttpPost]
-        [ValidateAntiForgeryToken]
-        // 1. GET: Hiển thị trang giao diện xác nhận thanh lý
+        // ==================== CHẤM DỨT HỢP ĐỒNG ====================
+        [HttpGet]
         public async Task<IActionResult> ChamDut(int? id)
         {
             var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin")
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro")
             {
                 TempData["Error"] = "Bạn không có quyền thực hiện chức năng này!";
                 return RedirectToAction("Index", "Login");
@@ -433,14 +453,14 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(hopDong);
         }
 
-        // 2. POST: Xử lý logic lưu vào Database (Đây chính là đoạn code của bạn)
         [HttpPost, ActionName("ChamDut")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChamDutConfirmed(int id)
         {
             var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
 
-            if (role != "Admin")
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro")
             {
                 TempData["Error"] = "Bạn không có quyền thực hiện chức năng này!";
                 return RedirectToAction("Index", "Login");
@@ -452,16 +472,25 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (hopDong == null) return NotFound();
 
-            // Cập nhật trạng thái hợp đồng (giữ nguyên logic của bạn)
+            // Kiểm tra quyền Chủ trọ
+            if (role == "ChuTro")
+            {
+                var phongCuaChuTro = await _context.Phong.FindAsync(hopDong.MaPhong);
+                if (phongCuaChuTro == null || phongCuaChuTro.MaChuTro != userId)
+                {
+                    TempData["Error"] = "Bạn không có quyền chấm dứt hợp đồng này!";
+                    return RedirectToAction("Index", "Login");
+                }
+            }
+
             hopDong.TrangThai = "Đã hủy";
             _context.Update(hopDong);
 
-            // Cập nhật trạng thái phòng (giữ nguyên logic của bạn)
-            var phong = hopDong.PhongNavigation;
-            if (phong != null)
+            var phongTrong = hopDong.PhongNavigation;
+            if (phongTrong != null)
             {
-                phong.TrangThai = "Trống";
-                _context.Update(phong);
+                phongTrong.TrangThai = "Trống";
+                _context.Update(phongTrong);
             }
 
             await _context.SaveChangesAsync();
@@ -469,7 +498,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Tạo hóa đơn tự động
+        // ==================== TẠO HÓA ĐƠN TỰ ĐỘNG ====================
         private async Task TaoHoaDonChoHopDong(int maHopDong, decimal giaPhong, DateTime ngayBatDau, DateTime ngayKetThuc)
         {
             int currentMonth = ngayBatDau.Month;
@@ -507,7 +536,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             await _context.SaveChangesAsync();
         }
 
-        // GET: Chi tiết hợp đồng
+        // ==================== CHI TIẾT HỢP ĐỒNG ====================
         public async Task<IActionResult> Details(int? id)
         {
             if (HttpContext.Session.GetInt32("UserId") == null)
@@ -518,13 +547,12 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (id == null) return NotFound();
 
             var hopDong = await _context.HopDong
-                .Include(h => h.PhongNavigation).ThenInclude(p => p.CoSo)
+                .Include(h => h.PhongNavigation).ThenInclude(p => p.ToaNha).ThenInclude(t => t.CoSo)
                 .Include(h => h.KhachHangNavigation)
                 .FirstOrDefaultAsync(m => m.MaHopDong == id);
 
             if (hopDong == null) return NotFound();
 
-            // Kiểm tra nếu là khách hàng thì chỉ cho xem hợp đồng của mình
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
 
@@ -532,7 +560,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             {
                 var khachHang = await _context.KhachHang
                     .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
-
                 if (khachHang == null || hopDong.MaKhachHang != khachHang.MaKhachHang)
                 {
                     TempData["Error"] = "Bạn không có quyền xem hợp đồng này!";
@@ -552,28 +579,29 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             ViewBag.NguoiOList = nguoiOList;
             ViewBag.HoaDons = hoaDons;
-            ViewBag.Role = role;  // Truyền role sang View
+            ViewBag.Role = role;
 
             return View(hopDong);
         }
 
-        // API: Lấy thông tin phòng
+        // ==================== API LẤY THÔNG TIN PHÒNG ====================
         [HttpGet]
         public async Task<IActionResult> GetPhongInfo(int maPhong)
         {
             var phong = await _context.Phong
-                .Include(p => p.CoSo)
                 .FirstOrDefaultAsync(p => p.MaPhong == maPhong);
 
             if (phong == null)
                 return Json(new { success = false });
+
+            var toaNha = await _context.ToaNha.FirstOrDefaultAsync(t => t.MaToaNha == phong.MaToaNha);
 
             return Json(new
             {
                 success = true,
                 giaPhong = phong.GiaPhong,
                 dienTich = phong.DienTich,
-                tenCoSo = phong.CoSo?.TenCoSo
+                tenCoSo = toaNha?.CoSo?.TenCoSo ?? "N/A"
             });
         }
     }

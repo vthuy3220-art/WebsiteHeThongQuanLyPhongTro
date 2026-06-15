@@ -1,39 +1,51 @@
 ﻿@model HeThongQuanLyPhongTro.Models.CoSo
 
-<div class="max-w-3xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Chỉnh sửa cơ sở</h1>
-        <a asp-action="Index" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times"></i></a>
+@{
+    ViewData["Title"] = "Sửa cơ sở";
+    Layout = "_Layout";
+}
+
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-gradient-to-r from-yellow-500 to-orange-600 px-6 py-4">
+        <h2 class="text-xl font-bold text-white">✏️ Sửa cơ sở</h2>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <form asp-action="Edit" method="post" class="space-y-5">
+    <div class="p-6">
+        <form asp-action="Edit" method="post">
             <input type="hidden" asp-for="MaCoSo" />
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">Tên cơ sở</label>
-                <input asp-for="TenCoSo" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Nhập tên cơ sở..." />
-                <span asp-validation-for="TenCoSo" class="text-red-500 text-xs mt-1"></span>
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Tên khu vực *</label>
+                <input asp-for="TenCoSo" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <span asp-validation-for="TenCoSo" class="text-red-500 text-sm"></span>
             </div>
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">Địa chỉ</label>
-                <input asp-for="DiaChi" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Địa chỉ</label>
+                <input asp-for="DiaChi" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <span asp-validation-for="DiaChi" class="text-red-500 text-sm"></span>
             </div>
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">Mô tả</label>
-                <textarea asp-for="MoTa" rows="4" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"></textarea>
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Mô tả</label>
+                <textarea asp-for="MoTa" rows="3" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <span asp-validation-for="MoTa" class="text-red-500 text-sm"></span>
             </div>
 
-            <div class="flex space-x-4 pt-4">
-                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all">
-                    Lưu thay đổi
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-all">
+                    <i class="fas fa-save mr-2"></i> Cập nhật
                 </button>
-                <a asp-action="Index" class="flex-1 bg-gray-50 text-gray-500 font-bold py-3 rounded-xl text-center hover:bg-gray-100 transition-all">
-                    Hủy
+                <a asp-action="Index" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-center py-2 rounded-lg transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i> Hủy
                 </a>
             </div>
         </form>
     </div>
 </div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

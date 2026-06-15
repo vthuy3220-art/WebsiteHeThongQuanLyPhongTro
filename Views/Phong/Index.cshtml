@@ -7,8 +7,7 @@
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex justify-between items-center">
-
-        <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all flex items-center">
+        <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all">
             <i class="fas fa-plus mr-2"></i> Thêm phòng mới
         </a>
     </div>
@@ -67,6 +66,7 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã phòng</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên phòng</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tòa nhà</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cơ sở</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá phòng</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Diện tích</th>
@@ -80,7 +80,8 @@
                         <tr class="hover:bg-gray-50 transition-all">
                             <td class="px-6 py-4">@item.MaPhong</td>
                             <td class="px-6 py-4 font-medium">@item.TenPhong</td>
-                            <td class="px-6 py-4">@item.CoSo?.TenCoSo</td>
+                            <td class="px-6 py-4">@item.ToaNha?.TenToaNha</td>
+                            <td class="px-6 py-4">@item.ToaNha?.CoSo?.TenCoSo</td>
                             <td class="px-6 py-4">@item.GiaPhong.ToString("N0") đ</td>
                             <td class="px-6 py-4">@item.DienTich m²</td>
                             <td class="px-6 py-4">
@@ -127,16 +128,5 @@
                 <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline">Thêm phòng đầu tiên</a>
             </div>
         }
-    </div>
-</div>
-<div class="flex justify-between items-center">
-
-    <div class="flex space-x-3">
-        <a asp-action="ExportExcel" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all flex items-center">
-            <i class="fas fa-file-excel mr-2"></i> Export Excel
-        </a>
-        <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all flex items-center">
-            <i class="fas fa-plus mr-2"></i> Thêm phòng mới
-        </a>
     </div>
 </div>

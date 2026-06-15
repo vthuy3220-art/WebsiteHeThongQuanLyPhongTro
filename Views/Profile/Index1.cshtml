@@ -1,0 +1,90 @@
+﻿@model HeThongQuanLyPhongTro.Models.TaiKhoan
+
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+    Layout = "_Layout";
+}
+
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-6">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-user-circle text-4xl text-white"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Thông tin cá nhân</h2>
+                    <p class="text-blue-100 text-sm">Quản lý thông tin tài khoản của bạn</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-8">
+            @if (TempData["Success"] != null)
+            {
+                <div class="mb-6 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg">
+                    <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+                    <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+                </div>
+            }
+
+            <form method="post" asp-action="CapNhatThongTin">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Tên đăng nhập</label>
+                        <input type="text" value="@Model.TenDangNhap" disabled
+                               class="w-full px-4 py-3 bg-gray-100 border rounded-xl text-gray-600" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Vai trò</label>
+                        <input type="text" value="@Model.VaiTro" disabled
+                               class="w-full px-4 py-3 bg-gray-100 border rounded-xl text-gray-600" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                        <input type="email" name="email" value="@Model.Email"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại</label>
+                        <input type="tel" name="soDienThoai" value="@Model.SoDienThoai"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ</label>
+                        <textarea name="diaChi" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">@Model.DiaChi</textarea>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex gap-3">
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold">
+                        <i class="fas fa-save mr-2"></i> Lưu thay đổi
+                    </button>
+                    <a asp-controller="Dashboard" asp-action="Index" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-center py-3 rounded-xl font-semibold">
+                        Quay lại
+                    </a>
+                </div>
+            </form>
+
+            <div class="mt-6 pt-4 border-t flex gap-3">
+                <a asp-action="ChangePassword1" class="text-yellow-600 hover:text-yellow-700">
+                    <i class="fas fa-key mr-1"></i> Đổi mật khẩu
+                </a>
+                <span class="text-gray-300">|</span>
+                <a asp-controller="TaiKhoan" asp-action="CapNhatNganHang" class="text-green-600 hover:text-green-700">
+                    <i class="fas fa-university mr-1"></i> Tài khoản ngân hàng
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

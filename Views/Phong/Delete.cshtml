@@ -22,7 +22,7 @@
                 </div>
             </div>
 
-            <dl class="space-y-3">
+            <dl class="grid grid-cols-2 gap-3">
                 <div class="flex py-2 border-b">
                     <dt class="w-32 font-medium text-gray-600">Mã phòng:</dt>
                     <dd class="flex-1">@Model.MaPhong</dd>
@@ -32,8 +32,12 @@
                     <dd class="flex-1 font-semibold">@Model.TenPhong</dd>
                 </div>
                 <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Tòa nhà:</dt>
+                    <dd class="flex-1">@Model.ToaNha?.TenToaNha</dd>
+                </div>
+                <div class="flex py-2 border-b">
                     <dt class="w-32 font-medium text-gray-600">Cơ sở:</dt>
-                    <dd class="flex-1">@Model.CoSo?.TenCoSo</dd>
+                    <dd class="flex-1">@Model.ToaNha?.CoSo?.TenCoSo</dd>
                 </div>
                 <div class="flex py-2 border-b">
                     <dt class="w-32 font-medium text-gray-600">Giá phòng:</dt>

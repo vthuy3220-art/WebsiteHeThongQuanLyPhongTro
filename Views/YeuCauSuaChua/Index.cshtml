@@ -4,11 +4,28 @@
     ViewData["Title"] = "Quản lý yêu cầu sửa chữa";
 }
 
-<div class="space-y-6">
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-tools text-blue-500 mr-2"></i> Quản lý yêu cầu sửa chữa
+        </h1>
+    </div>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="mb-4 p-3 bg-green-100 border-l-4 border-green-500 text-green-700 rounded">
+            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+        </div>
+    }
 
     <!-- Bộ lọc -->
-    <div class="bg-white rounded-xl shadow-md p-4">
+    <div class="bg-white rounded-xl shadow-md p-4 mb-6">
         <form method="get" class="flex gap-3">
             <select name="trangThai" class="px-3 py-2 border rounded-lg">
                 @foreach (var item in ViewBag.TrangThaiList)
@@ -23,7 +40,12 @@
                     }
                 }
             </select>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Lọc</button>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                <i class="fas fa-filter mr-2"></i> Lọc
+            </button>
+            <a asp-action="Index" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                <i class="fas fa-sync-alt mr-2"></i> Xóa lọc
+            </a>
         </form>
     </div>
 
@@ -31,41 +53,55 @@
     <div class="bg-white rounded-xl shadow-md overflow-hidden">
         <table class="w-full">
             <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-4 py-3">Mã</th>
-                    <th class="px-4 py-3">Phòng</th>
-                    <th class="px-4 py-3">Khách hàng</th>
-                    <th class="px-4 py-3">Tiêu đề</th>
-                    <th class="px-4 py-3">Ngày tạo</th>
-                    <th class="px-4 py-3">Trạng thái</th>
-                    <th class="px-4 py-3">Thao tác</th>
+                <tr class="border-b">
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Mã</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phòng</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Khách hàng</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tiêu đề</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Ngày tạo</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Trạng thái</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Thao tác</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach (var item in Model)
+            <tbody class="divide-y divide-gray-200">
+                @if (Model.Any())
                 {
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-3">@item.MaYeuCau</td>
-                        <td class="px-4 py-3">@item.PhongNavigation?.TenPhong</td>
-                        <td class="px-4 py-3">@item.KhachHangNavigation?.HoTen</td>
-                        <td class="px-4 py-3">@item.TieuDe</td>
-                        <td class="px-4 py-3">@item.NgayTao.ToString("dd/MM/yyyy")</td>
-                        <td class="px-4 py-3">
-                            @if (item.TrangThai == "Chờ xử lý")
-                            {
-                                <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">⏳ Chờ xử lý</span>
-                            }
-                            else if (item.TrangThai == "Đã tiếp nhận")
-                            {
-                                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">📋 Đã tiếp nhận</span>
-                            }
-                            else
-                            {
-                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">✅ Đã hoàn thành</span>
-                            }
-                        </td>
-                        <td class="px-4 py-3">
-                            <a asp-action="Details" asp-route-id="@item.MaYeuCau" class="text-blue-500">Xử lý</a>
+                    @foreach (var item in Model)
+                    {
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-4 py-3 text-sm">@item.MaYeuCau</td>
+                            <td class="px-4 py-3 text-sm font-medium">@item.PhongNavigation?.TenPhong</td>
+                            <td class="px-4 py-3 text-sm">@item.KhachHangNavigation?.HoTen</td>
+                            <td class="px-4 py-3 text-sm">@item.TieuDe</td>
+                            <td class="px-4 py-3 text-sm">@item.NgayTao.ToString("dd/MM/yyyy")</td>
+                            <td class="px-4 py-3 text-center">
+                                @if (item.TrangThai == "Chờ xử lý")
+                                {
+                                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">⏳ Chờ xử lý</span>
+                                }
+                                else if (item.TrangThai == "Đã tiếp nhận")
+                                {
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">📋 Đã tiếp nhận</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">✅ Đã hoàn thành</span>
+                                }
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <a asp-action="Details" asp-route-id="@item.MaYeuCau" class="text-blue-500 hover:text-blue-700" title="Xử lý">
+                                    <i class="fas fa-edit mr-1"></i> Xử lý
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                            Không có yêu cầu sửa chữa nào
                         </td>
                     </tr>
                 }

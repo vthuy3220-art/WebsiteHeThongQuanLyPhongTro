@@ -1,0 +1,42 @@
+﻿@model HeThongQuanLyPhongTro.Models.ToaNha
+
+@{
+    ViewData["Title"] = "Xóa tòa nhà";
+    Layout = "_Layout";
+}
+
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-exclamation-triangle"></i> Xác nhận xóa
+        </h2>
+    </div>
+
+    <div class="p-6">
+        <div class="text-center mb-6">
+            <i class="fas fa-building text-red-500 text-5xl mb-3"></i>
+            <p class="text-gray-700">Bạn có chắc muốn xóa tòa nhà</p>
+            <p class="font-bold text-lg text-red-600">@Model.TenToaNha</p>
+            <p class="text-sm text-gray-500">Địa chỉ: @Model.DiaChi</p>
+        </div>
+
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                <span class="text-sm text-yellow-700">Lưu ý: Tòa nhà sẽ bị xóa vĩnh viễn!</span>
+            </div>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="MaToaNha" />
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-all">
+                    <i class="fas fa-trash mr-2"></i> Xóa
+                </button>
+                <a asp-action="Index" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-center py-2 rounded-lg transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i> Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

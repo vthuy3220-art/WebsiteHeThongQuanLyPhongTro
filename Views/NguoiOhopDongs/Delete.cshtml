@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Xóa người ở";
 }
-
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-xl shadow p-6">
         <div class="bg-red-500 text-white p-3 rounded-t">
@@ -26,9 +25,9 @@
                 <dd>@Model.HopDongNavigation?.MaHopDong</dd>
             </dl>
 
-            <form asp-action="Delete" class="flex justify-end space-x-3">
-                <input type="hidden" name="id" value="@Model.MaNguoiO" />
-                <a asp-action="Index" class="px-4 py-2 border rounded">Hủy</a>
+            <form asp-controller="NguoiOhopDongs" asp-action="Delete" method="post" class="flex justify-end space-x-3">
+                <input type="hidden" asp-for="MaNguoiO" name="id" />
+                <a asp-controller="Dashboard" asp-action="QuanLyNguoiO" class="px-4 py-2 border rounded">Hủy</a>
                 <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded">Xóa</button>
             </form>
         </div>

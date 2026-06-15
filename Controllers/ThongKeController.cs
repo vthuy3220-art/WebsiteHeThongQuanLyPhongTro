@@ -65,7 +65,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                     .Where(h => h.Thang == mThang.Month && h.Nam == mThang.Year && h.TrangThai == "Đã thanh toán")
                     .SumAsync(h => h.TongTien ?? 0);
 
-                // KHÚC NÀY ĐÃ SỬA CHUẨN: Trả về đúng kiểu DoanhThuTheoThang ban đầu của ông để View vẽ được biểu đồ
                 doanhThuTheoThang.Add(new DoanhThuTheoThang
                 {
                     Thang = mThang.Month,
@@ -73,7 +72,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                     DoanhThu = tienThanhToan + tienHoaDon
                 });
             }
-            model.DoanhThuTheoThangList = doanhThuTheoThang;
 
             model.TopPhongList = await (from h in _context.HoaDon
                                         join hd in _context.HopDong on h.MaHopDong equals hd.MaHopDong
@@ -227,10 +225,20 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(data);
         }
 
+        // ĐÃ SỬA CHUẨN XÁC: So sánh đúng theo chuỗi chữ gốc trong Database tránh lệch pha số 0
         public async Task<IActionResult> XuatPDFChiTietHopDong()
         {
             var role = HttpContext.Session.GetString("Role");
             if (role != "Admin") return RedirectToAction("Index", "Login");
+
+            // Lấy danh sách hợp đồng gốc từ Database để đếm số liệu thật
+            var danhSachGoc = await _context.HopDong.ToListAsync();
+
+            // ĐÃ SỬA: Ép điều kiện đếm trúng chữ gốc lưu trong DB của ông ("Hiệu lực", "Hết hạn", "Đã hủy")
+            ViewBag.TongSo = danhSachGoc.Count;
+            ViewBag.DangHieuLuc = danhSachGoc.Count(x => x.TrangThai == "Hiệu lực");
+            ViewBag.HetHan = danhSachGoc.Count(x => x.TrangThai == "Hết hạn");
+            ViewBag.DaHuy = danhSachGoc.Count(x => x.TrangThai == "Đã hủy");
 
             var query = from h in _context.HopDong
                         join p in _context.Phong on h.MaPhong equals p.MaPhong
@@ -247,11 +255,6 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             var data = await query.ToListAsync();
             data = data.OrderBy(x => x.TrangThai == "Đang hiệu lực" ? 1 : (x.TrangThai == "Hết hạn" ? 2 : 3)).ToList();
-
-            ViewBag.TongSo = data.Count;
-            ViewBag.DangHieuLuc = data.Count(x => x.TrangThai == "Đang hiệu lực");
-            ViewBag.HetHan = data.Count(x => x.TrangThai == "Hết hạn");
-            ViewBag.DaHuy = data.Count(x => x.TrangThai == "Đã hủy");
             ViewBag.Username = HttpContext.Session.GetString("FullName") ?? HttpContext.Session.GetString("Username") ?? "Quản trị viên";
 
             return new ViewAsPdf("ChiTietHopDongPDF", (object)data)
@@ -270,8 +273,8 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (role != "Admin") return RedirectToAction("Index", "Login");
 
             var data = await _context.Phong
-                .Include(p => p.CoSo)
-                .GroupBy(p => p.CoSo.TenCoSo)
+                .Include(p => p.ToaNha)
+                .GroupBy(p => p.ToaNha.TenToaNha)
                 .Select(g => new ThongKeCoSoViewModel
                 {
                     TenCoSo = g.Key ?? "Cơ sở chính",
@@ -294,8 +297,8 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (role != "Admin") return RedirectToAction("Index", "Login");
 
             var data = await _context.Phong
-                .Include(p => p.CoSo)
-                .GroupBy(p => p.CoSo.TenCoSo)
+                .Include(p => p.ToaNha)
+                .GroupBy(p => p.ToaNha.TenToaNha)
                 .Select(g => new ThongKeCoSoViewModel
                 {
                     TenCoSo = g.Key ?? "Cơ sở chính",

@@ -1,0 +1,59 @@
+﻿@model HeThongQuanLyPhongTro.Models.TaiKhoan
+@{
+    ViewData["Title"] = "Xác nhận xóa tài khoản";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+
+    <div class="w-full max-w-md mx-4">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 p-6 text-white text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                    <i class="fas fa-trash-alt text-3xl"></i>
+                </div>
+                <h2 class="text-xl font-bold tracking-wide">Cảnh Báo Xóa Tài Khoản</h2>
+                <p class="text-xs text-red-100 mt-1">Hành động này cực kỳ nguy hiểm và không thể hoàn tác</p>
+            </div>
+
+            <form asp-controller="Admin" asp-action="XoaCoSo" method="post" class="p-6 space-y-4">
+                <input type="hidden" name="id" value="@Model.MaTaiKhoan" />
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Mã tài khoản</label>
+                    <div class="bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-sm font-mono text-gray-700">#@Model.MaTaiKhoan</div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Tên chủ trọ xóa</label>
+                    <input type="text" disabled value="@Model.TenDangNhap" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-800" />
+                </div>
+
+                <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 text-xs text-orange-800 flex items-start space-x-2">
+                    <i class="fas fa-exclamation-triangle text-sm mt-0.5 shrink-0 text-orange-500"></i>
+                    <p class="leading-relaxed"><strong>Cảnh báo dữ liệu:</strong> Việc xóa tài khoản có thể dẫn tới lỗi toàn vẹn khóa ngoại dữ liệu liên kết (Tòa nhà, Phòng trọ, Hợp đồng thuộc chủ trọ này). Bạn nên cân nhắc sử dụng tính năng <strong>Khóa</strong> thay vì Xóa.</p>
+                </div>
+
+                <div class="flex items-center space-x-3 pt-2">
+                    <a href="@Url.Action("Index", "Admin", new { tab = "NguoiDung" })" class="w-1/2 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-bold transition shadow-sm border border-gray-200">
+                        Hủy, quay lại
+                    </a>
+                    <button type="submit" class="w-1/2 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl text-sm font-bold transition shadow-md flex items-center justify-center space-x-2">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                        <span>Vẫn quyết định xóa</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using HeThongQuanLyPhongTro.Models;  // 👈 SỬA LẠI DÒNG NÀY
 
 namespace HeThongQuanLyPhongTro.Models
 {
@@ -14,7 +15,7 @@ namespace HeThongQuanLyPhongTro.Models
         public string? DiaChi { get; set; }
 
         public string? MoTa { get; set; }
-        // Thuộc tính này giúp hệ thống hiểu 1 Cơ sở chứa 1 danh sách các Phòng
-        public virtual ICollection<Phong> Phongs { get; set; } = new List<Phong>();
+
+        public virtual ICollection<ToaNha> ToaNhas { get; set; } = new List<ToaNha>();
     }
 }

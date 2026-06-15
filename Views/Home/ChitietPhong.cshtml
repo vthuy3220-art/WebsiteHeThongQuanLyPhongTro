@@ -5,6 +5,7 @@
     ViewData["Title"] = Model?.TenPhong ?? "Chi tiết phòng";
     var images = ViewBag.Images as List<HeThongQuanLyPhongTro.Models.PhongImage> ?? new List<HeThongQuanLyPhongTro.Models.PhongImage>();
     var baiDang = ViewBag.BaiDang as HeThongQuanLyPhongTro.Models.BaiDang;
+    var csvcList = ViewBag.CSVCNhanh as List<HeThongQuanLyPhongTro.Models.CoSoVatChat>;
     var anhChinh = images.FirstOrDefault(i => i.IsMain) ?? images.FirstOrDefault();
 }
 <!DOCTYPE html>
@@ -83,6 +84,7 @@
             {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
+                    <!-- Cột trái: Gallery ảnh -->
                     <div>
                         <div class="bg-white rounded-xl shadow-md overflow-hidden mb-4">
                             <div class="main-image">
@@ -117,6 +119,7 @@
                         }
                     </div>
 
+                    <!-- Cột phải: Thông tin phòng -->
                     <div>
                         <div class="bg-white rounded-xl shadow-md overflow-hidden">
                             <div class="p-6">
@@ -124,12 +127,16 @@
 
                                 <div class="space-y-3 mb-6">
                                     <div class="flex justify-between py-2 border-b">
-                                        <span class="text-gray-500">Cơ sở</span>
-                                        <span class="font-semibold">@(Model.CoSo?.TenCoSo ?? "N/A")</span>
+                                        <span class="text-gray-500">Tòa nhà</span>
+                                        <span class="font-semibold">@(Model.ToaNha?.TenToaNha ?? "N/A")</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 border-b">
+                                        <span class="text-gray-500">Khu vực</span>
+                                        <span class="font-semibold">@(Model.ToaNha?.CoSo?.TenCoSo ?? "N/A")</span>
                                     </div>
                                     <div class="flex justify-between py-2 border-b">
                                         <span class="text-gray-500">Địa chỉ</span>
-                                        <span class="font-semibold">@(Model.CoSo?.DiaChi ?? "N/A")</span>
+                                        <span class="font-semibold">@(Model.ToaNha?.DiaChi ?? "N/A")</span>
                                     </div>
                                     <div class="flex justify-between py-2 border-b">
                                         <span class="text-gray-500">Giá phòng</span>
@@ -143,9 +150,9 @@
                                     <div class="flex justify-between py-2 border-b items-start">
                                         <span class="text-gray-500 shrink-0">Cơ sở vật chất</span>
                                         <span class="font-semibold text-right text-sm text-gray-700 max-w-[70%]">
-                                            @if (Model.CoSoVatChats != null && Model.CoSoVatChats.Any())
+                                            @if (csvcList != null && csvcList.Any())
                                             {
-                                                @string.Join(", ", Model.CoSoVatChats.Select(c => c.TenThietBi))
+                                                @string.Join(", ", csvcList.Select(c => c.TenThietBi))
                                             }
                                             else
                                             {

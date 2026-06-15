@@ -24,51 +24,52 @@
             @if (!string.IsNullOrEmpty(Model.HinhAnh))
             {
                 <div class="mb-6">
-                    <img src="@Model.HinhAnh" alt="@Model.TieuDe" class="w-full rounded-lg object-cover max-h-96">
+                    <img src="@Model.HinhAnh" alt="@Model.TieuDe" class="w-full rounded-lg object-cover max-h-96 shadow-sm">
                 </div>
             }
+
+            <!-- Tiêu đề -->
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">@Model.TieuDe</h1>
+            </div>
 
             <!-- Thông tin bài đăng -->
             <div class="bg-gray-50 rounded-lg p-5 mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <p class="text-gray-500 text-sm">Tiêu đề</p>
-                        <p class="font-semibold text-lg">@Model.TieuDe</p>
-                    </div>
-                    <div>
                         <p class="text-gray-500 text-sm">Trạng thái</p>
                         @if (Model.TrangThai == "Hiển thị")
                         {
-                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs inline-block mt-1">
                                 <i class="fas fa-eye"></i> Hiển thị
                             </span>
                         }
                         else
                         {
-                            <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs inline-block mt-1">
                                 <i class="fas fa-eye-slash"></i> Ẩn
                             </span>
                         }
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Phòng</p>
-                        <p class="font-semibold">@Model.PhongNavigation?.TenPhong</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Cơ sở</p>
-                        <p class="font-semibold">@Model.PhongNavigation?.CoSo?.TenCoSo</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Địa chỉ</p>
-                        <p class="font-semibold">@Model.PhongNavigation?.CoSo?.DiaChi</p>
                     </div>
                     <div>
                         <p class="text-gray-500 text-sm">Ngày đăng</p>
                         <p class="font-semibold">@Model.NgayDang?.ToString("dd/MM/yyyy HH:mm")</p>
                     </div>
                     <div>
+                        <p class="text-gray-500 text-sm">Phòng</p>
+                        <p class="font-semibold text-lg text-gray-800">@Model.PhongNavigation?.TenPhong</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Tòa nhà</p>
+                        <p class="font-semibold">@Model.PhongNavigation?.ToaNha?.TenToaNha</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Địa chỉ</p>
+                        <p class="font-semibold">@Model.PhongNavigation?.ToaNha?.DiaChi</p>
+                    </div>
+                    <div>
                         <p class="text-gray-500 text-sm">Giá phòng</p>
-                        <p class="font-semibold text-blue-600">@Model.PhongNavigation?.GiaPhong.ToString("N0") đ/tháng</p>
+                        <p class="font-semibold text-blue-600 text-lg">@Model.PhongNavigation?.GiaPhong.ToString("N0") đ/tháng</p>
                     </div>
                     <div>
                         <p class="text-gray-500 text-sm">Diện tích</p>
@@ -77,14 +78,14 @@
                 </div>
             </div>
 
-            <!-- Mô tả -->
+            <!-- Mô tả chi tiết -->
             <div class="mb-6">
                 <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
                     <i class="fas fa-align-left text-indigo-500 mr-2"></i>
                     Mô tả chi tiết
                 </h3>
                 <div class="bg-white border rounded-lg p-4">
-                    <p class="text-gray-700 whitespace-pre-line">@Model.MoTa</p>
+                    <p class="text-gray-700 whitespace-pre-line leading-relaxed">@Model.MoTa</p>
                 </div>
             </div>
 

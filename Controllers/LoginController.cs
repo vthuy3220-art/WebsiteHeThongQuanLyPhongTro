@@ -1,12 +1,7 @@
 ﻿using HeThongQuanLyPhongTro.Data;
 using HeThongQuanLyPhongTro.Models;
-using HeThongQuanLyPhongTro.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -19,181 +14,89 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context = context;
         }
 
-        // ĐÃ SỬA TẠI ĐÂY: Lưu lại biến returnUrl vào ViewBag để truyền sang Form HTML
-        public IActionResult Index(string? returnUrl)
+        public IActionResult Index()
         {
-            ViewBag.ReturnUrl = returnUrl;
+            // Nếu đã đăng nhập rồi thì chuyển hướng
+            if (HttpContext.Session.GetInt32("UserId") != null)
+            {
+                var role = HttpContext.Session.GetString("Role");
+                if (role == "SuperAdmin" || role == "Admin" || role == "ChuTro")
+                {
+                    return RedirectToAction("Index", "Dashboard");
+                }
+                else if (role == "Khach")
+                {
+                    return RedirectToAction("Dashboard", "KhachHang");
+                }
+            }
             return View();
         }
 
         [HttpPost]
-        public IActionResult Index(string tenDangNhap, string matKhau, string? returnUrl)
+        public async Task<IActionResult> Index(string tenDangNhap, string matKhau)
         {
-            var user = _context.TaiKhoan
-                .FirstOrDefault(x => x.TenDangNhap == tenDangNhap && x.MatKhau == matKhau);
+            var user = await _context.TaiKhoan
+                .FirstOrDefaultAsync(x => x.TenDangNhap == tenDangNhap && x.MatKhau == matKhau);
 
             if (user == null)
             {
                 ViewBag.Error = "Sai tài khoản hoặc mật khẩu";
-                ViewBag.ReturnUrl = returnUrl; // Giữ lại giá trị khi lỗi
                 return View();
             }
 
-            // Kiểm tra tài khoản có bị khóa không
             if (user.TrangThai == "Khóa")
             {
                 ViewBag.Error = "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên!";
-                ViewBag.ReturnUrl = returnUrl;
                 return View();
             }
 
+            // Lưu session
             HttpContext.Session.SetInt32("UserId", user.MaTaiKhoan);
             HttpContext.Session.SetString("Role", user.VaiTro);
             HttpContext.Session.SetString("Username", user.TenDangNhap);
 
-            // Xử lý riêng cho Khách hàng
-            if (user.VaiTro == "Khach")
+            // 👇 THÊM: Lưu MaChuTro nếu là Chủ trọ
+            if (user.VaiTro == "ChuTro")
             {
-                // Tìm hoặc tạo thông tin khách hàng
-                var khachHang = _context.KhachHang.FirstOrDefault(k => k.MaTaiKhoan == user.MaTaiKhoan);
-                if (khachHang == null)
-                {
-                    khachHang = new KhachHang
-                    {
-                        MaTaiKhoan = user.MaTaiKhoan,
-                        HoTen = user.TenDangNhap,
-                        SoDienThoai = "",
-                        DiaChi = "",
-                    };
-                    _context.KhachHang.Add(khachHang);
-                    _context.SaveChanges();
-                }
-
-                // Kiểm tra hợp đồng
-                var hopDong = _context.HopDong
-                    .Include(h => h.PhongNavigation)
-                    .FirstOrDefault(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai == "Hiệu lực");
-
-                if (hopDong == null)
-                {
-                    TempData["Warning"] = "Bạn chưa có hợp đồng thuê phòng. Vui lòng liên hệ chủ trọ!";
-                }
-                else
-                {
-                    TempData["Success"] = $"Chào mừng bạn! Phòng: {hopDong.PhongNavigation?.TenPhong}";
-                }
+                HttpContext.Session.SetInt32("MaChuTro", user.MaTaiKhoan);
             }
 
-            // ĐÃ SỬA TẠI ĐÂY: Nếu có returnUrl thì điều hướng thẳng tới đó (vùng đăng tin mới)
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            // Phân quyền chuyển hướng
+            if (user.VaiTro == "SuperAdmin" || user.VaiTro == "Admin")
             {
-                return Redirect(returnUrl);
+                return RedirectToAction("Index", "Dashboard");
             }
-
-            return RedirectToAction("Index", "Dashboard");
+            else if (user.VaiTro == "ChuTro")
+            {
+                // Kiểm tra xem chủ trọ đã có tòa nhà chưa
+                var coToaNha = await _context.ToaNha.AnyAsync(t => t.MaChuTro == user.MaTaiKhoan);
+                if (!coToaNha)
+                {
+                    TempData["Warning"] = "Bạn chưa có tòa nhà nào. Vui lòng thêm tòa nhà trước!";
+                }
+                return RedirectToAction("Index", "Dashboard");
+            }
+            else // Khach
+            {
+                return RedirectToAction("Dashboard", "KhachHang");
+            }
         }
 
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index");
         }
 
-        // =========================================
-        // LUỒNG QUÊN MẬT KHẨU
-        // =========================================
-
-        public IActionResult ForgotPassword()
+        [HttpGet]
+        public IActionResult DangXuat()
         {
-            return View();
-        }
+            // Xóa sạch Session lưu vết đăng nhập của Admin / Chủ trọ
+            HttpContext.Session.Clear();
 
-        [HttpPost]
-        public async Task<IActionResult> ForgotPassword(string email)
-        {
-            var user = _context.TaiKhoan.FirstOrDefault(x => x.Email == email);
-            if (user == null)
-            {
-                ViewBag.Error = "Email không tồn tại trong hệ thống!";
-                return View();
-            }
-
-            Random rd = new Random();
-            string otp = rd.Next(100000, 999999).ToString();
-
-            HttpContext.Session.SetString("ResetOTP", otp);
-            HttpContext.Session.SetString("ResetEmail", email);
-
-            var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
-            bool isSent = await emailService.GuiEmailOTP(email, otp);
-
-            if (isSent)
-            {
-                return RedirectToAction("VerifyOTP");
-            }
-            else
-            {
-                ViewBag.Error = "Lỗi hệ thống khi gửi email, vui lòng thử lại!";
-                return View();
-            }
-        }
-
-        public IActionResult VerifyOTP()
-        {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("ResetEmail")))
-                return RedirectToAction("ForgotPassword");
-
-            return View();
-        }
-
-        [HttpPost]
-        public IActionResult VerifyOTP(string otp)
-        {
-            string? sessionOtp = HttpContext.Session.GetString("ResetOTP");
-
-            if (string.IsNullOrEmpty(sessionOtp) || sessionOtp != otp)
-            {
-                ViewBag.Error = "Mã xác thực không đúng hoặc đã hết hạn!";
-                return View();
-            }
-
-            return RedirectToAction("ResetPassword");
-        }
-
-        public IActionResult ResetPassword()
-        {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("ResetOTP")))
-                return RedirectToAction("ForgotPassword");
-
-            return View();
-        }
-
-        [HttpPost]
-        public IActionResult ResetPassword(string matKhauMoi, string xacNhanMatKhau)
-        {
-            if (matKhauMoi != xacNhanMatKhau)
-            {
-                ViewBag.Error = "Mật khẩu xác nhận không trùng khớp!";
-                return View();
-            }
-
-            string? email = HttpContext.Session.GetString("ResetEmail");
-            var user = _context.TaiKhoan.FirstOrDefault(x => x.Email == email);
-
-            if (user != null)
-            {
-                user.MatKhau = matKhauMoi;
-                _context.SaveChanges();
-
-                HttpContext.Session.Remove("ResetOTP");
-                HttpContext.Session.Remove("ResetEmail");
-
-                TempData["Success"] = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại!";
-                return RedirectToAction("Index");
-            }
-
-            ViewBag.Error = "Có lỗi xảy ra, vui lòng thử lại!";
-            return View();
+            // Đuổi thẳng về trang chủ của sàn
+            return RedirectToAction("Index", "Login");
         }
     }
+
 }

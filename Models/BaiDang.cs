@@ -11,6 +11,9 @@ namespace HeThongQuanLyPhongTro.Models
 
         public int MaPhong { get; set; }
 
+        // 👇 THÊM THUỘC TÍNH NÀY (đã có trong SQL)
+        public int MaChuTro { get; set; }
+
         public string? TieuDe { get; set; }
 
         public string? MoTa { get; set; }
@@ -23,5 +26,9 @@ namespace HeThongQuanLyPhongTro.Models
 
         [ForeignKey("MaPhong")]
         public virtual Phong? PhongNavigation { get; set; }
+
+        // 👇 THÊM NAVIGATION NÀY
+        [ForeignKey("MaChuTro")]
+        public virtual TaiKhoan? ChuTroNavigation { get; set; }
     }
 }

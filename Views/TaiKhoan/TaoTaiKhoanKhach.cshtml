@@ -1,0 +1,92 @@
+﻿@model HeThongQuanLyPhongTro.Models.TaiKhoan
+
+@{
+    ViewData["Title"] = "Tạo tài khoản khách hàng";
+    Layout = "_Layout";
+    var khachHangList = ViewBag.KhachHangList as List<HeThongQuanLyPhongTro.Models.KhachHang>;
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+            <h1 class="text-xl font-bold text-white">Tạo tài khoản khách hàng</h1>
+            <p class="text-green-100 text-sm">Tạo tài khoản đăng nhập cho khách đang thuê phòng</p>
+        </div>
+
+        <form asp-action="TaoTaiKhoanKhach" method="post" class="p-6 space-y-4">
+            @Html.AntiForgeryToken()
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 rounded">
+                    <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded">
+                    <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+                </div>
+            }
+
+            <!-- Chọn khách hàng -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Chọn khách hàng <span class="text-red-500">*</span></label>
+                <select name="maKhachHang" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
+                    <option value="">-- Chọn khách hàng đang thuê phòng --</option>
+                    @if (khachHangList != null)
+                    {
+                        foreach (var kh in khachHangList)
+                        {
+                            <option value="@kh.MaKhachHang">@kh.HoTen - @kh.SoDienThoai - @kh.Email</option>
+                        }
+                    }
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Chỉ hiển thị khách hàng đang thuê phòng và chưa có tài khoản</p>
+            </div>
+
+            <!-- Thông tin tài khoản -->
+            <div class="border-t pt-4">
+                <h3 class="font-bold text-gray-700 mb-3">Thông tin tài khoản đăng nhập</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập <span class="text-red-500">*</span></label>
+                        <input type="text" name="tenDangNhap" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu <span class="text-red-500">*</span></label>
+                        <input type="text" name="matKhau" value="123456" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required />
+                        <p class="text-xs text-gray-400 mt-1">Mặc định: 123456, khách có thể đổi sau</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                    <div class="text-sm text-blue-700">
+                        <p class="font-semibold">Lưu ý:</p>
+                        <ul class="list-disc list-inside mt-1">
+                            <li>Chỉ tạo tài khoản cho khách đã có hợp đồng thuê phòng</li>
+                            <li>Khách sẽ dùng tài khoản này để đăng nhập xem hóa đơn</li>
+                            <li>Có thể tạo nhiều tài khoản cho nhiều khách khác nhau</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+                <a asp-action="DanhSachKhachHang" class="px-4 py-2 border rounded-lg hover:bg-gray-50 transition-all">Hủy</a>
+                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all">
+                    <i class="fas fa-user-plus mr-2"></i> Tạo tài khoản
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

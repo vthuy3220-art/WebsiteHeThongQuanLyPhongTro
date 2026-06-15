@@ -3,6 +3,9 @@ using HeThongQuanLyPhongTro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -15,50 +18,79 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context = context;
         }
 
-        // Danh sách
-        public async Task<IActionResult> Index()
+        // Không dùng Index gốc nữa vì đã chuyển sang Dashboard, đá về Dashboard luôn nếu ai cố tình gõ link
+        public IActionResult Index()
         {
-            var nguoiO = await _context.NguoiOHopDong
-                .Include(n => n.HopDongNavigation)
-                .ThenInclude(h => h.PhongNavigation)
-                .ToListAsync();
-            return View(nguoiO);
+            return RedirectToAction("QuanLyNguoiO", "Dashboard");
         }
 
-        // Chi tiết
+        // Chi tiết người ở cùng
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
             var nguoiO = await _context.NguoiOHopDong
                 .Include(n => n.HopDongNavigation)
+                .ThenInclude(h => h.PhongNavigation)
                 .FirstOrDefaultAsync(m => m.MaNguoiO == id);
 
             if (nguoiO == null) return NotFound();
             return View(nguoiO);
         }
 
-        // Thêm mới - GET
-        public IActionResult Create()
+        // Thêm mới - GET (Chỉ hiển thị hợp đồng của chủ trọ đang đăng nhập)
+        // ==================== THÊM MỚI - GET ====================
+        public async Task<IActionResult> Create()
         {
-            ViewBag.MaHopDong = new SelectList(_context.HopDong, "MaHopDong", "MaHopDong");
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (role != "ChuTro" || userId == null) return RedirectToAction("Index", "Login");
+
+            // ĐỒNG BỘ: Include cả Phong và KhachHang để hiển thị tên người đại diện
+            var danhSachHopDong = await _context.HopDong
+                .Include(h => h.PhongNavigation)
+                .Include(h => h.KhachHangNavigation)
+                .Where(h => h.MaChuTro == userId.Value && h.TrangThai == "Hiệu lực")
+                .Select(h => new
+                {
+                    MaHopDong = h.MaHopDong,
+                    HienThi = $"🏠 {(h.PhongNavigation != null ? h.PhongNavigation.TenPhong : "N/A")} - (Đại diện: {(h.KhachHangNavigation != null ? h.KhachHangNavigation.HoTen : "Chưa rõ")})"
+                })
+                .ToListAsync();
+
+            ViewBag.MaHopDong = new SelectList(danhSachHopDong, "MaHopDong", "HienThi");
             return View();
         }
 
-        // Thêm mới - POST
-        // Trong Create POST, Bind phải bao gồm LaNguoiDaiDien
+        // ==================== THÊM MỚI - POST ====================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MaHopDong,HoTen,CCCD,SoDienThoai,LaNguoiDaiDien")] NguoiOHopDong nguoiO)
+        public async Task<IActionResult> Create([Bind("MaHopDong,HoTen,CCCD,SoDienThoai")] NguoiOHopDong nguoiO)
         {
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+
             if (ModelState.IsValid)
             {
                 _context.Add(nguoiO);
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Thêm thành công!";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("QuanLyNguoiO", "Dashboard");
             }
-            ViewBag.MaHopDong = new SelectList(_context.HopDong, "MaHopDong", "MaHopDong", nguoiO.MaHopDong);
+
+            // FIX TẠI ĐÂY: Nạp lại Dropdown chuẩn định dạng nếu form nhập bị lỗi validation
+            var danhSachHopDong = await _context.HopDong
+                .Include(h => h.PhongNavigation)
+                .Include(h => h.KhachHangNavigation)
+                .Where(h => h.MaChuTro == userId.Value && h.TrangThai == "Hiệu lực")
+                .Select(h => new {
+                    MaHopDong = h.MaHopDong,
+                    HienThi = $"🏠 {(h.PhongNavigation != null ? h.PhongNavigation.TenPhong : "N/A")} - (Đại diện: {(h.KhachHangNavigation != null ? h.KhachHangNavigation.HoTen : "Chưa rõ")})"
+                })
+                .ToListAsync();
+
+            ViewBag.MaHopDong = new SelectList(danhSachHopDong, "MaHopDong", "HienThi", nguoiO.MaHopDong);
             return View(nguoiO);
         }
 
@@ -67,19 +99,38 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             if (id == null) return NotFound();
 
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (role != "ChuTro" || userId == null) return RedirectToAction("Index", "Login");
+
             var nguoiO = await _context.NguoiOHopDong.FindAsync(id);
             if (nguoiO == null) return NotFound();
 
-            ViewBag.MaHopDong = new SelectList(_context.HopDong, "MaHopDong", "MaHopDong", nguoiO.MaHopDong);
+            // Lọc Dropdown hợp đồng đảm bảo chủ trọ không sửa nhầm sang phòng người khác
+            var danhSachHopDong = await _context.HopDong
+                .Include(h => h.PhongNavigation)
+                .Include(h => h.KhachHangNavigation)
+                .Where(h => h.MaChuTro == userId.Value && h.TrangThai == "Hiệu lực")
+                .Select(h => new {
+                    MaHopDong = h.MaHopDong,
+                    HienThi = $"🏠 {(h.PhongNavigation != null ? h.PhongNavigation.TenPhong : "N/A")} - (Đại diện: {(h.KhachHangNavigation != null ? h.KhachHangNavigation.HoTen : "Chưa rõ")})"
+                })
+                   .ToListAsync();
+
+            ViewBag.MaHopDong = new SelectList(danhSachHopDong, "MaHopDong", "HienThi", nguoiO.MaHopDong);
             return View(nguoiO);
         }
 
         // Chỉnh sửa - POST
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("MaNguoiO,MaHopDong,HoTen,CCCD,SoDienThoai,LaNguoiDaiDien")] NguoiOHopDong nguoiO)
+        public async Task<IActionResult> Edit(int id, [Bind("MaNguoiO,MaHopDong,HoTen,CCCD,SoDienThoai")] NguoiOHopDong nguoiO)
         {
             if (id != nguoiO.MaNguoiO) return NotFound();
+
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
 
             if (ModelState.IsValid)
             {
@@ -94,29 +145,46 @@ namespace HeThongQuanLyPhongTro.Controllers
                     if (!_context.NguoiOHopDong.Any(e => e.MaNguoiO == id)) return NotFound();
                     else throw;
                 }
-                return RedirectToAction(nameof(Index));
+
+                // CHUYỂN HƯỚNG QUAN TRỌNG: Quay trở lại trang Quản lý của Chủ trọ ở Dashboard
+                return RedirectToAction("QuanLyNguoiO", "Dashboard");
             }
-            ViewBag.MaHopDong = new SelectList(_context.HopDong, "MaHopDong", "MaHopDong", nguoiO.MaHopDong);
+
+            var danhSachHopDong = await _context.HopDong
+                .Include(h => h.PhongNavigation)
+                .Where(h => h.MaChuTro == userId.Value && h.TrangThai == "Hiệu lực")
+                .Select(h => new {
+                    MaHopDong = h.MaHopDong,
+                    HienThi = $"HĐ #{h.MaHopDong} - Phòng: {(h.PhongNavigation != null ? h.PhongNavigation.TenPhong : "N/A")}"
+                })
+                .ToListAsync();
+
+            ViewBag.MaHopDong = new SelectList(danhSachHopDong, "MaHopDong", "HienThi", nguoiO.MaHopDong);
             return View(nguoiO);
         }
 
-        // Xóa - GET
+        // ==================== SỬA DỨT ĐIỂM HÀM XÓA (GET) DÒNG 165 ====================
+        // Xóa - GET: Hiển thị trang xác nhận xóa
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
             var nguoiO = await _context.NguoiOHopDong
                 .Include(n => n.HopDongNavigation)
+                .ThenInclude(h => h.PhongNavigation)
                 .FirstOrDefaultAsync(m => m.MaNguoiO == id);
 
             if (nguoiO == null) return NotFound();
+
+
             return View(nguoiO);
         }
 
 
-        // Xóa - POST
+        // Xóa - POST: Thực hiện xóa khi bấm nút xác nhận
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var nguoiO = await _context.NguoiOHopDong.FindAsync(id);
@@ -126,7 +194,8 @@ namespace HeThongQuanLyPhongTro.Controllers
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Xóa thành công!";
             }
-            return RedirectToAction(nameof(Index));
+
+            return RedirectToAction("QuanLyNguoiO", "Dashboard");
         }
     }
 }

@@ -22,96 +22,130 @@
     var tienDichVu = soNguoi * 200000;
 }
 
-<div class="max-w-3xl mx-auto space-y-4">
-    @if (Model.TrangThai == "Đã thanh toán")
+<div style="max-width: 900px; margin: 0 auto;">
+
+    @if (TempData["Success"] != null)
     {
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 rounded">
-            <i class="fas fa-check-circle mr-2"></i> ✅ Hóa đơn này đã được thanh toán.
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 mb-3 rounded">
+            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 mb-3 rounded">
+            <i class="fas fa-exclamation-triangle mr-2"></i> @TempData["Warning"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-3 rounded">
+            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
         </div>
     }
 
-    <!-- Hóa đơn -->
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-3">
-            <h2 class="text-xl font-bold text-white">🧾 HÓA ĐƠN TIỀN PHÒNG</h2>
-            <p class="text-white text-sm">Mã: @Model.MaHoaDon.ToString("00000")</p>
+    @if (Model.TrangThai == "Đã thanh toán")
+    {
+        <div style="background: #d4edda; padding: 10px; margin-bottom: 20px; text-align: center; border-radius: 5px;">
+            ✅ Hóa đơn này đã được thanh toán.
         </div>
-        <div class="p-5">
-            <div class="grid grid-cols-2 gap-3 text-sm mb-4 pb-3 border-b">
-                <div><span class="font-semibold">Phòng:</span> @phong?.TenPhong</div>
-                <div><span class="font-semibold">Khách hàng:</span> @hopDong?.KhachHangNavigation?.HoTen</div>
-                <div><span class="font-semibold">Tháng:</span> @Model.Thang/@Model.Nam</div>
-                <div><span class="font-semibold">Hạn thanh toán:</span> <span class="text-red-600">@(Model.NgayTao?.AddDays(7).ToString("dd/MM/yyyy") ?? "N/A")</span></div>
-            </div>
+    }
 
-            <table class="w-full text-sm">
-                <thead class="bg-gray-100">
-                    <tr class="border-b">
-                        <th class="p-2 text-left">Khoản mục</th>
-                        <th class="p-2 text-left">Chi tiết</th>
-                        <th class="p-2 text-right">Thành tiền</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="border-b"><td class="p-2">Tiền phòng</td><td class="p-2">@phong?.TenPhong</td><td class="p-2 text-right">@String.Format("{0:N0}", phong?.GiaPhong) đ</td></tr>
-                    <tr class="border-b"><td class="p-2">Tiền điện</td><td class="p-2">@soDien kWh × @String.Format("{0:N0}", giaDien) đ</td><td class="p-2 text-right">@String.Format("{0:N0}", tienDien) đ</td></tr>
-                    <tr class="border-b"><td class="p-2">Tiền nước</td><td class="p-2">@soNuoc m³ × @String.Format("{0:N0}", giaNuoc) đ</td><td class="p-2 text-right">@String.Format("{0:N0}", tienNuoc) đ</td></tr>
-                    <tr class="border-b"><td class="p-2">Phí dịch vụ</td><td class="p-2">@soNguoi người × 200.000đ</td><td class="p-2 text-right">@String.Format("{0:N0}", tienDichVu) đ</td></tr>
-                    @if (tienPhatSinh > 0)
-                    {
-                        <tr class="border-b"><td class="p-2">Phí phát sinh</td><td class="p-2">Sửa chữa/phát sinh</td><td class="p-2 text-right">@String.Format("{0:N0}", tienPhatSinh) đ</td></tr>
-                    }
-                </tbody>
-                <tfoot class="bg-yellow-50">
-                    <tr><td colspan="2" class="p-2 font-bold">Tổng cộng</td><td class="p-2 text-right font-bold text-red-600">@String.Format("{0:N0}", tongTien) đ</td></tr>
-                </tfoot>
+    @{
+        // Lấy thông tin ngân hàng từ Chủ trọ
+        var chuTro = phong?.ChuTro;
+        string tenNganHang = chuTro?.TenNganHang ?? "Techcombank";
+        string soTaiKhoan = chuTro?.SoTaiKhoan ?? "19072789933016";
+        string chuTaiKhoan = chuTro?.ChuTaiKhoan ?? "Vu Thi Thanh Thuy";
+
+        // Tạo QR code đúng định dạng VietQR
+        var amount = tongTien.ToString().Replace(",", "");
+        var qrUrl = $"https://img.vietqr.io/image/{tenNganHang}-{soTaiKhoan}-compact.png?amount={amount}&addInfo=TT_HD_{Model.MaHoaDon}_{Model.Thang}{Model.Nam}&accountName={chuTaiKhoan.Replace(" ", "%20")}";
+    }
+
+    <!-- QR Code và thông tin chuyển khoản -->
+    <div class="bg-white rounded-lg shadow p-4 text-center mb-4">
+        <h3 class="font-bold text-lg mb-3">📱 Quét mã QR để thanh toán</h3>
+        <img src="@qrUrl" class="mx-auto w-40 h-40 border rounded-lg" onerror="this.onerror=null; this.src='https://placehold.co/180x180?text=QR+Code'" />
+        <div class="mt-4 text-left bg-gray-50 p-3 rounded-lg">
+            <p><strong>Ngân hàng:</strong> @tenNganHang</p>
+            <p><strong>Số tài khoản:</strong> @soTaiKhoan</p>
+            <p><strong>Chủ tài khoản:</strong> @chuTaiKhoan</p>
+            <p><strong>Nội dung chuyển khoản:</strong> <span class="font-mono text-blue-600">TT_HD_@Model.MaHoaDon@DateTime.Now.ToString("_yyyyMMdd")</span></p>
+            <p><strong>Số tiền:</strong> <span class="font-bold text-red-600">@tongTien.ToString("N0") đ</span></p>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">* Mở app ngân hàng, chọn "Quét mã QR" để thanh toán</p>
+    </div>
+
+    <!-- Nút xác nhận cho khách -->
+    @if (Model.TrangThai == "Chưa thanh toán" && Model.KhachXacNhan != true)
+    {
+        <div class="bg-yellow-50 rounded-lg p-4 mb-4">
+            <p class="text-yellow-800 mb-2">⚠️ Sau khi chuyển khoản thành công, bấm nút bên dưới để xác nhận!</p>
+            <form method="post" asp-action="KhachXacNhan" asp-controller="HoaDon">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.MaHoaDon" />
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg w-full">
+                    <i class="fas fa-check-circle mr-2"></i> Tôi đã chuyển khoản
+                </button>
+            </form>
+        </div>
+    }
+
+    @if (Model.TrangThai == "Đã thanh toán")
+    {
+        <div class="bg-green-100 rounded-lg p-4 text-center mb-4">
+            <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
+            <p class="text-green-700 font-semibold">✅ Hóa đơn đã được thanh toán</p>
+        </div>
+    }
+
+    <!-- HÓA ĐƠN -->
+    <div id="hoaDon" style="background: white; border: 1px solid #ddd; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="margin: 0; font-size: 22px;">PHÒNG TRỌ XINH</h1>
+            <p style="margin: 5px 0; font-size: 12px;">Quản lý phòng trọ</p>
+            <hr />
+            <h2 style="margin: 10px 0;">HÓA ĐƠN TIỀN PHÒNG</h2>
+            <p><strong>Mã hóa đơn: @Model.MaHoaDon.ToString("00000")</strong></p>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <table style="width: 100%;">
+                <tr><td style="width: 120px;"><strong>Phòng:</strong></td><td><strong>@phong?.TenPhong</strong></td></tr>
+                <tr><td><strong>Khách hàng:</strong></td><td><strong>@hopDong?.KhachHangNavigation?.HoTen</strong></td></tr>
+                <tr><td><strong>Email:</strong></td><td><strong>@hopDong?.KhachHangNavigation?.Email</strong></td></tr>
+                <tr><td><strong>Số điện thoại:</strong></td><td><strong>@hopDong?.KhachHangNavigation?.SoDienThoai</strong></td></tr>
+                <tr><td><strong>Ngày lập:</strong></td><td><strong>@(Model.NgayTao?.ToString("dd/MM/yyyy") ?? DateTime.Now.ToString("dd/MM/yyyy"))</strong></td></tr>
+                <tr><td><strong>Hạn thanh toán:</strong></td><td style="color: red;"><strong>@(Model.NgayTao?.AddDays(7).ToString("dd/MM/yyyy") ?? DateTime.Now.AddDays(7).ToString("dd/MM/yyyy"))</strong></td></tr>
             </table>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr><th>Tiêu đề</th><th>Mô tả</th><th>Giá</th><th>Tổng</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Tiền phòng</td><td>@phong?.TenPhong - tháng @Model.Thang/@Model.Nam</td><td class="text-right">@(phong?.GiaPhong.ToString("N0") ?? "0") đ</td><td class="text-right">@(phong?.GiaPhong.ToString("N0") ?? "0") đ</td></tr>
+                <tr><td>Tiền điện</td><td>Số điện: @soDien kWh × @giaDien.ToString("N0") đ</td><td class="text-right">@tienDien.ToString("N0") đ</td><td class="text-right">@tienDien.ToString("N0") đ</td></tr>
+                <tr><td>Tiền nước</td><td>Số nước: @soNuoc m³ × @giaNuoc.ToString("N0") đ</td><td class="text-right">@tienNuoc.ToString("N0") đ</td><td class="text-right">@tienNuoc.ToString("N0") đ</td></tr>
+                <tr><td>Phí dịch vụ</td><td>@soNguoi người × 200.000đ</td><td class="text-right">@tienDichVu.ToString("N0") đ</td><td class="text-right">@tienDichVu.ToString("N0") đ</td></tr>
+                @if (tienPhatSinh > 0)
+                {
+                    <tr><td>Phí phát sinh</td><td>Sửa chữa/phát sinh</td><td class="text-right">@tienPhatSinh.ToString("N0") đ</td><td class="text-right">@tienPhatSinh.ToString("N0") đ</td></tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr><td colspan="3">Tổng cộng:</td><td class="text-right font-bold text-red-600">@tongTien.ToString("N0") đ</td></tr>
+            </tfoot>
+        </table>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <p>Cảm ơn bạn đã hợp tác!</p>
         </div>
     </div>
 
-    <!-- QR và nút xác nhận -->
-    @if (Model.TrangThai == "Chưa thanh toán")
-    {
-        <div class="bg-white rounded-xl shadow-md p-5 text-center">
-            <h3 class="font-bold text-lg mb-3">📱 Quét mã QR để thanh toán</h3>
-            <img src="/images/qr_code.jpg" class="mx-auto w-36 h-36" />
-            <div class="mt-3 text-left bg-gray-50 p-3 rounded-lg text-sm">
-                <p><strong>Ngân hàng:</strong> Techcombank</p>
-                <p><strong>Số tài khoản:</strong> 19072789933016</p>
-                <p><strong>Chủ tài khoản:</strong> Vũ Thị Thanh Thúy</p>
-                <p><strong>Nội dung:</strong> <span class="font-mono text-blue-600">TT_HD@Model.MaHoaDon_@Model.Thang@Model.Nam</span></p>
-                <p><strong>Số tiền:</strong> <span class="font-bold text-red-600">@String.Format("{0:N0}", tongTien) đ</span></p>
-            </div>
-
-            @if (Model.KhachXacNhan != true)
-            {
-                <div class="bg-yellow-50 rounded-lg p-3 mt-4">
-                    <p class="text-yellow-800 text-sm mb-2">Sau khi chuyển khoản thành công, bấm nút bên dưới để xác nhận!</p>
-                    <form method="post" asp-action="KhachXacNhan" asp-controller="HoaDon" id="frmXacNhan">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@Model.MaHoaDon" />
-                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg w-full hover:bg-blue-600">
-                            <i class="fas fa-check-circle mr-2"></i> Tôi đã chuyển khoản
-                        </button>
-                    </form>
-                </div>
-            }
-            else
-            {
-                <div class="bg-green-50 rounded-lg p-3 mt-4">
-                    <p class="text-green-800">Đã gửi xác nhận! Chủ trọ sẽ kiểm tra và cập nhật.</p>
-                </div>
-            }
-        </div>
-    }
-
-    <!-- Nút quay lại -->
-    <div class="flex gap-3">
-        <a asp-action="HoaDonCuaToi" class="bg-gray-500 text-white px-4 py-2 rounded-lg text-center hover:bg-gray-600">
-            <i class="fas fa-arrow-left mr-2"></i> Quay lại
-        </a>
-        <a asp-action="XuatPdf" asp-controller="HoaDon" asp-route-id="@Model.MaHoaDon" target="_blank" class="bg-red-500 text-white px-4 py-2 rounded-lg text-center hover:bg-red-600">
-            <i class="fas fa-file-pdf mr-2"></i> Xuất PDF
-        </a>
+    <div style="text-align: center; margin-top: 20px;">
+        <a asp-action="HoaDonCuaToi" class="bg-gray-500 text-white px-4 py-2 rounded inline-block">Quay lại</a>
+        <a href="@Url.Action("XuatPdf", "HoaDon", new { id = Model.MaHoaDon })" target="_blank" class="bg-red-500 text-white px-4 py-2 rounded inline-block ml-2">Xuất PDF</a>
     </div>
 </div>

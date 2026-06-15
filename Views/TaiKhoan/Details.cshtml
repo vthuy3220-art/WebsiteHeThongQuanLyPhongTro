@@ -1,0 +1,67 @@
+﻿@model HeThongQuanLyPhongTro.Models.TaiKhoan
+
+@{
+    ViewData["Title"] = "Chi tiết tài khoản khách hàng";
+    Layout = "_Layout";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-white">Chi tiết tài khoản</h1>
+                    <p class="text-blue-100 text-sm">Thông tin tài khoản khách hàng</p>
+                </div>
+                <a asp-action="DanhSachKhachHang" class="text-white hover:text-blue-200">
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Mã:</dt>
+                    <dd class="flex-1">@Model.MaTaiKhoan</dd>
+                </div>
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Tên đăng nhập:</dt>
+                    <dd class="flex-1 font-semibold">@Model.TenDangNhap</dd>
+                </div>
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Vai trò:</dt>
+                    <dd class="flex-1">
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">Khách hàng</span>
+                    </dd>
+                </div>
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Trạng thái:</dt>
+                    <dd class="flex-1">
+                        @if (Model.TrangThai == "Hoạt động")
+                        {
+                            <span class="text-green-600"><i class="fas fa-check-circle"></i> Hoạt động</span>
+                        }
+                        else
+                        {
+                            <span class="text-red-600"><i class="fas fa-lock"></i> Khóa</span>
+                        }
+                    </dd>
+                </div>
+                <div class="flex py-2 border-b">
+                    <dt class="w-32 font-medium text-gray-600">Email:</dt>
+                    <dd class="flex-1">@(string.IsNullOrEmpty(Model.Email) ? "Chưa cập nhật" : Model.Email)</dd>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+                <a asp-action="Edit" asp-route-id="@Model.MaTaiKhoan" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all">
+                    <i class="fas fa-edit mr-2"></i> Sửa
+                </a>
+                <a asp-action="DanhSachKhachHang" class="px-4 py-2 border rounded-lg hover:bg-gray-50 transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
