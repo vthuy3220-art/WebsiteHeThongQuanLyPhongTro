@@ -46,6 +46,7 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // GET: Danh sách phòng
+        // GET: Danh sách phòng
         public async Task<IActionResult> Index(string searchString, string trangThai)
         {
             if (GetCurrentUserId() == 0) return RedirectToAction("Index", "Login");
@@ -55,6 +56,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             var phongs = _context.Phong
                 .Include(p => p.ToaNha)
                     .ThenInclude(t => t.CoSo)
+
                 .AsQueryable();
 
             // Phân quyền: Chủ trọ chỉ thấy phòng của mình
@@ -62,7 +64,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             {
                 phongs = phongs.Where(p => p.MaChuTro == userId);
             }
-            // Admin thấy tất cả
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -82,34 +83,39 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // GET: Chi tiết phòng
+
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null || id.Value <= 0) return NotFound();
+
 
             var phong = await _context.Phong
                 .Include(p => p.ToaNha)
                     .ThenInclude(t => t.CoSo)
-                .FirstOrDefaultAsync(m => m.MaPhong == id);
+                .FirstOrDefaultAsync(m => m.MaPhong == id.Value);
 
             if (phong == null) return NotFound();
 
-            // Kiểm tra quyền
+
             if (IsChuTro() && phong.MaChuTro != GetCurrentUserId())
             {
                 TempData["Error"] = "Bạn không có quyền xem phòng này!";
                 return RedirectToAction(nameof(Index));
             }
 
+
             var csvcList = await _context.CoSoVatChat
-                .Where(c => c.MaPhong == id)
+                .Where(c => c.MaPhong == id.Value)
                 .ToListAsync();
             ViewBag.CSVCNhanh = csvcList;
 
+
             var images = await _context.PhongImage
-                .Where(i => i.MaPhong == id)
+                .Where(i => i.MaPhong == phong.MaPhong) // Ép chuẩn tìm theo đúng khóa chính MaPhong
                 .OrderByDescending(i => i.IsMain)
                 .ThenByDescending(i => i.NgayUpload)
                 .ToListAsync();
+
 
             ViewBag.Images = images;
 
@@ -269,39 +275,44 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             return View(phong);
         }
-
+        // POST: Phong/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            // 1. Tìm căn phòng cần xóa dựa vào id (MaPhong)
             var phong = await _context.Phong.FindAsync(id);
-            if (phong != null)
+
+            if (phong == null)
             {
-                var coHopDong = await _context.HopDong
-                    .AnyAsync(h => h.MaPhong == id && h.TrangThai == "Hiệu lực");
-
-                if (coHopDong)
-                {
-                    TempData["Error"] = "Không thể xóa vì phòng này đang có hợp đồng hiệu lực!";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                _context.Phong.Remove(phong);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "Xóa phòng thành công!";
+                return NotFound(); // Nếu không tìm thấy phòng thì trả về trang lỗi 404
             }
 
+            // 2. Tìm tất cả các Cơ sở vật chất có liên kết với căn phòng này (MaPhong == id)
+            var danhSachCSVC = _context.CoSoVatChat.Where(csvc => csvc.MaPhong == id);
+
+            // 3. Thực hiện xóa hàng loạt các Cơ sở vật chất vừa tìm được ra khỏi DbContext
+            _context.CoSoVatChat.RemoveRange(danhSachCSVC);
+
+            // 4. Tiến hành xóa chính căn phòng đó
+            _context.Phong.Remove(phong);
+
+            // 5. Lưu tất cả thay đổi (Xóa cả CSVC và Phong) xuống SQL Server trong cùng 1 phiên giao dịch
+            await _context.SaveChangesAsync();
+
+            // 6. Quay trở lại trang danh sách phòng sau khi xóa thành công
             return RedirectToAction(nameof(Index));
         }
 
         // ==================== UPLOAD ẢNH ====================
+
         [HttpPost]
-        public async Task<IActionResult> UploadImage(int id, IFormFile file, bool isMain = false)
+        public async Task<IActionResult> UploadImage(int maPhong, IFormFile file, bool isMain = false) // ← Sửa tham số nhận vào thành maPhong
         {
             if (file == null || file.Length == 0)
             {
                 TempData["Error"] = "Vui lòng chọn file ảnh!";
-                return RedirectToAction("Details", new { id });
+                return RedirectToAction("Details", new { id = maPhong });
             }
 
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
@@ -309,14 +320,14 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (!allowedExtensions.Contains(extension))
             {
                 TempData["Error"] = "Chỉ chấp nhận file ảnh (jpg, jpeg, png, gif, webp)!";
-                return RedirectToAction("Details", new { id });
+                return RedirectToAction("Details", new { id = maPhong });
             }
 
             var uploadFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "phongs");
             if (!Directory.Exists(uploadFolder))
                 Directory.CreateDirectory(uploadFolder);
 
-            var fileName = $"{id}_{DateTime.Now.Ticks}{extension}";
+            var fileName = $"{maPhong}_{DateTime.Now.Ticks}{extension}";
             var filePath = Path.Combine(uploadFolder, fileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -327,14 +338,14 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (isMain)
             {
                 var oldMain = await _context.PhongImage
-                    .FirstOrDefaultAsync(i => i.MaPhong == id && i.IsMain);
+                    .FirstOrDefaultAsync(i => i.MaPhong == maPhong && i.IsMain);
                 if (oldMain != null)
                     oldMain.IsMain = false;
             }
 
             var phongImage = new PhongImage
             {
-                MaPhong = id,
+                MaPhong = maPhong, // ← Lưu chuẩn theo mã phòng
                 ImagePath = $"/images/phongs/{fileName}",
                 IsMain = isMain,
                 NgayUpload = DateTime.Now
@@ -344,7 +355,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Upload ảnh thành công!";
-            return RedirectToAction("Details", new { id });
+            return RedirectToAction("Details", new { id = maPhong });
         }
 
         // GET: Xóa ảnh

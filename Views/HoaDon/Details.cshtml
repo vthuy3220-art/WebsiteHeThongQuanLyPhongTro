@@ -2,6 +2,14 @@
 
 @{
     ViewData["Title"] = "Chi tiết hóa đơn";
+
+    // ✅ TỰ ĐỘNG PHÁT HIỆN: Xem từ chuông thông báo (AJAX Modal) hay xem trực tiếp
+    var isAjax = Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+    if (isAjax)
+    {
+        Layout = null; // Không dùng layout khi nhúng vào modal
+    }
+
     var hopDong = ViewBag.HopDong as HeThongQuanLyPhongTro.Models.HopDong;
     var phong = hopDong?.PhongNavigation;
     var soNguoi = ViewBag.SoNguoi ?? 1;
@@ -33,7 +41,20 @@
     string chuTaiKhoan = chuTro?.ChuTaiKhoan?.Replace(" ", "%20") ?? "Vu%20Thi%20Thanh%20Thuy";
 }
 
-<div style="max-width: 900px; margin: 0 auto;">
+<div style="max-width: 900px; margin: 0 auto;" class="@(isAjax ? "p-4" : "")">
+
+    @if (isAjax)
+    {
+        <div class="mb-4 flex items-center justify-between border-b pb-3">
+            <div>
+                <h3 class="font-bold text-slate-800 text-base">Chi tiết hóa đơn #@Model.MaHoaDon.ToString("00000")</h3>
+                <p class="text-xs text-slate-400">Trạng thái hiện tại: <span class="font-bold text-orange-500">@Model.TrangThai</span></p>
+            </div>
+            <button onclick="closeNotificationModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all">
+                <i class="fas fa-times mr-1"></i> Đóng
+            </button>
+        </div>
+    }
 
     @if (TempData["Success"] != null)
     {
@@ -61,8 +82,8 @@
         </div>
     }
 
-    <!-- FORM CẬP NHẬT CHỈ SỐ (CHỈ CHỦ TRỌ) -->
-    @if (isChuTro && Model.TrangThai == "Chưa thanh toán")
+    <!-- FORM CẬP NHẬT CHỈ SỐ (CHỈ CHỦ TRỌ, KHÔNG HIỆN KHI XEM TRONG MODAL) -->
+    @if (!isAjax && isChuTro && Model.TrangThai == "Chưa thanh toán")
     {
         <div style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd;">
             <h4 style="margin: 0 0 10px 0;">⚡ Cập nhật chỉ số điện nước</h4>
@@ -108,8 +129,8 @@
         </div>
     }
 
-    <!-- QR CODE CHO KHÁCH (VietQR động) -->
-    @if (isKhach && Model.TrangThai == "Chưa thanh toán")
+    <!-- QR CODE CHO KHÁCH (VietQR động), không hiện trong modal thông báo -->
+    @if (!isAjax && isKhach && Model.TrangThai == "Chưa thanh toán")
     {
         var qrUrl = $"https://img.vietqr.io/image/{tenNganHang}-{soTaiKhoan}-compact.png?amount={tongTien}&addInfo=TT_HD_{Model.MaHoaDon}_{DateTime.Now:yyyyMMdd}&accountName={chuTaiKhoan}";
 
@@ -127,8 +148,8 @@
         </div>
     }
 
-    <!-- NÚT KHÁCH XÁC NHẬN -->
-    @if (isKhach && Model.TrangThai == "Chưa thanh toán" && Model.KhachXacNhan != true)
+    <!-- NÚT KHÁCH XÁC NHẬN (chỉ khi xem trực tiếp, không phải modal) -->
+    @if (!isAjax && isKhach && Model.TrangThai == "Chưa thanh toán" && Model.KhachXacNhan != true)
     {
         <div class="bg-yellow-50 rounded-lg p-4 mb-4">
             <p class="text-yellow-800 mb-2">⚠️ Sau khi chuyển khoản thành công, bấm nút bên dưới để xác nhận!</p>
@@ -208,9 +229,12 @@
         </div>
     </div>
 
-    <div style="text-align: center; margin-top: 20px;">
-        <a href="@Url.Action("XuatPdf", "HoaDon", new { id = Model.MaHoaDon })" target="_blank" class="bg-red-500 text-white px-4 py-2 rounded inline-block">Xuất PDF</a>
-    </div>
+    @if (!isAjax)
+    {
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="@Url.Action("XuatPdf", "HoaDon", new { id = Model.MaHoaDon })" target="_blank" class="bg-red-500 text-white px-4 py-2 rounded inline-block">Xuất PDF</a>
+        </div>
+    }
 </div>
 
 <script>
@@ -233,7 +257,6 @@
         let tienDichVu = soNguoi * 200000;
         let tong = giaPhong + tienDien + tienNuoc + tienDichVu + phatSinh;
 
-        // Cập nhật hiển thị
         document.getElementById('soDienSpan').innerText = soDien;
         document.getElementById('giaDienSpan').innerText = gDien.toLocaleString('vi-VN');
         document.getElementById('tienDienTd').innerText = tienDien.toLocaleString('vi-VN') + ' đ';
@@ -246,7 +269,6 @@
 
         document.getElementById('tongCongTd').innerText = tong.toLocaleString('vi-VN') + ' đ';
 
-        // Cập nhật số tiền trên QR (nếu có)
         let qrSoTien = document.getElementById('qrSoTien');
         if (qrSoTien) qrSoTien.innerText = tong.toLocaleString('vi-VN') + ' đ';
     }

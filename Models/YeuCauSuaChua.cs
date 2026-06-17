@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HeThongQuanLyPhongTro.Models
@@ -13,9 +14,6 @@ namespace HeThongQuanLyPhongTro.Models
 
         [Required(ErrorMessage = "Vui lòng chọn khách hàng")]
         public int MaKhachHang { get; set; }
-
-        // 👇 THÊM THUỘC TÍNH NÀY (đã có trong SQL)
-        public int MaChuTro { get; set; }
 
         [Required(ErrorMessage = "Tiêu đề không được để trống")]
         [StringLength(200)]
@@ -41,9 +39,5 @@ namespace HeThongQuanLyPhongTro.Models
 
         [ForeignKey("MaKhachHang")]
         public virtual KhachHang? KhachHangNavigation { get; set; }
-
-        // 👇 THÊM NAVIGATION NÀY
-        [ForeignKey("MaChuTro")]
-        public virtual TaiKhoan? ChuTroNavigation { get; set; }
     }
 }

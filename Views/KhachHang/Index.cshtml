@@ -147,25 +147,80 @@
     <div class="bg-white rounded-xl shadow-md p-6">
         <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
             <i class="fas fa-receipt text-purple-500 mr-2"></i>
-            Hóa đơn gần đây
+            Hóa đơn thanh toán gần đây
         </h3>
         <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr class="border-b">
-                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Tháng</th>
-                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Tổng tiền</th>
-                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Trạng thái</th>
-                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Thao tác</th>
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold text-gray-600">Kỳ hóa đơn</th>
+                        <th class="px-4 py-3 font-semibold text-gray-600">Tổng số tiền</th>
+                        <th class="px-4 py-3 font-semibold text-gray-600">Trạng thái</th>
+                        <th class="px-4 py-3 font-semibold text-gray-600">Thời gian thanh toán</th>
+                        <th class="px-4 py-3 font-semibold text-gray-600 text-center">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="4" class="text-center py-6 text-gray-500">
-                            <i class="fas fa-inbox text-3xl mb-2 block"></i>
-                            Chưa có hóa đơn nào
-                        </td>
-                    </tr>
+                <tbody class="divide-y divide-gray-100">
+                    @{
+                        var hoaDonsGanDay = ViewBag.HoaDonsGanDay as List<HeThongQuanLyPhongTro.Models.HoaDon>;
+                        var thanhToansMap = ViewBag.ThanhToansMap as List<HeThongQuanLyPhongTro.Models.ThanhToan> ?? new List<HeThongQuanLyPhongTro.Models.ThanhToan>();
+                    }
+
+                    @if (hoaDonsGanDay != null && hoaDonsGanDay.Any())
+                    {
+                        foreach (var hd in hoaDonsGanDay)
+                        {
+                            // Tìm bản ghi thanh toán tương ứng để lấy ngày giờ
+                            var lichSuPay = thanhToansMap.FirstOrDefault(t => t.MaHoaDon == hd.MaHoaDon);
+
+                            <tr class="hover:bg-gray-50/80 transition-colors">
+                                <td class="px-4 py-3 font-semibold text-gray-700">Tháng @hd.Thang/@hd.Nam</td>
+                                <td class="px-4 py-3 text-blue-600 font-bold">@((hd.TongTien ?? 0).ToString("N0")) đ</td>
+                                <td class="px-4 py-3">
+                                    @if (hd.TrangThai == "Đã thanh toán" || hd.TrangThai == "Paid" || lichSuPay != null)
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                                            <i class="fas fa-check-circle mr-1"></i> Đã thanh toán
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold animate-pulse">
+                                            <i class="fas fa-spinner mr-1"></i> Chờ thanh toán
+                                        </span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3 text-gray-500 font-medium">
+                                    @if (lichSuPay != null && lichSuPay.NgayThanhToan.HasValue)
+                                    {
+                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">
+                                            <i class="far fa-clock mr-1 text-gray-400"></i> @lichSuPay.NgayThanhToan.Value.ToString("HH:mm - dd/MM/yyyy")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-400 italic">--/--</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <a href="@Url.Action("HoaDonChiTiet", "KhachHang", new { id = hd.MaHoaDon, from = "Dashboard" })"
+                                       class="inline-flex items-center space-x-1 bg-purple-50 hover:bg-purple-100 text-purple-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm border border-purple-100">
+                                        <i class="fas fa-search text-[10px]"></i>
+                                        <span>Chi tiết</span>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-gray-400">
+                                <i class="fas fa-inbox text-3xl mb-2 block text-gray-300"></i>
+                                Bạn chưa có hóa đơn thanh toán nào trong lịch sử.
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>

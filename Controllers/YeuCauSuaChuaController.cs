@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -230,9 +231,10 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (khachHang == null)
                 return RedirectToAction("Index", "Login");
 
-            // Lấy phòng đang thuê
+            // Lấy phòng đang thuê (kèm Tòa nhà để xác định Chủ trọ cần báo)
             var hopDong = await _context.HopDong
                 .Include(h => h.PhongNavigation)
+                    .ThenInclude(p => p.ToaNha)
                 .FirstOrDefaultAsync(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai == "Hiệu lực");
 
             if (hopDong == null)
@@ -280,13 +282,32 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context.YeuCauSuaChua.Add(yeuCau);
             await _context.SaveChangesAsync();
 
-            // Gửi thông báo cho Admin và Chủ trọ
-            await _thongBaoService.GuiAdmin(
-                "🔧 Yêu cầu sửa chữa mới",
-                $"Khách {khachHang.HoTen} - Phòng {hopDong.PhongNavigation?.TenPhong} vừa gửi yêu cầu: {tieuDe}",
-                "warning",
-                $"/YeuCauSuaChua/Details/{yeuCau.MaYeuCau}"
-            );
+            // Gửi thông báo cho Chủ trọ của tòa nhà chứa phòng này
+            string tieuDeThongBao = "🔧 Yêu cầu sửa chữa mới";
+            string noiDungThongBao = $"Khách {khachHang.HoTen} - Phòng {hopDong.PhongNavigation?.TenPhong} vừa gửi yêu cầu: {tieuDe}";
+            string duongDanThongBao = $"/YeuCauSuaChua/Details/{yeuCau.MaYeuCau}";
+
+            var maChuTro = hopDong.PhongNavigation?.ToaNha?.MaChuTro;
+            if (maChuTro.HasValue && maChuTro.Value > 0)
+            {
+                await _thongBaoService.GuiChuTro(
+                    maChuTro.Value,
+                    tieuDeThongBao,
+                    noiDungThongBao,
+                    "warning",
+                    duongDanThongBao
+                );
+            }
+            else
+            {
+                // Fallback: nếu không xác định được chủ trọ của phòng, báo cho Admin
+                await _thongBaoService.GuiAdmin(
+                    tieuDeThongBao,
+                    noiDungThongBao,
+                    "warning",
+                    duongDanThongBao
+                );
+            }
 
             TempData["Success"] = "Đã gửi yêu cầu sửa chữa! Chủ trọ sẽ xử lý sớm.";
             return RedirectToAction("Index", "Dashboard");
@@ -371,8 +392,8 @@ namespace HeThongQuanLyPhongTro.Controllers
                     Nam = namHienTai,
                     TongTien = phong?.GiaPhong ?? 0,
                     TrangThai = "Chưa thanh toán",
-                    NgayTao = DateTime.Now,
-                    MaChuTro = hopDong.MaChuTro
+                    NgayTao = DateTime.Now
+                    // ĐÃ XÓA BỎ CỘT LỖI MaChuTro Ở ĐÂY ĐỂ TRÁNH CRASH SQL SERVER VÌ TRONG MODEL HOA ĐƠN KHÔNG CÓ CỘT NÀY
                 };
                 _context.HoaDon.Add(hoaDon);
                 await _context.SaveChangesAsync();

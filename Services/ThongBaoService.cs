@@ -47,6 +47,23 @@ namespace HeThongQuanLyPhongTro.Services
             await _context.SaveChangesAsync();
         }
 
+        // Gửi thông báo cho Chủ trọ cụ thể
+        public async Task GuiChuTro(int maTaiKhoanChuTro, string tieuDe, string noiDung, string loai = "info", string duongDan = "")
+        {
+            var thongBao = new ThongBao
+            {
+                TieuDe = tieuDe,
+                NoiDung = noiDung,
+                Loai = loai,
+                DuongDan = duongDan,
+                NguoiNhan = maTaiKhoanChuTro,
+                NgayTao = DateTime.Now,
+                DaXem = false
+            };
+            _context.ThongBao.Add(thongBao);
+            await _context.SaveChangesAsync();
+        }
+
         // Lấy thông báo cho Admin
         public async Task<List<ThongBao>> GetThongBaoAdmin()
         {

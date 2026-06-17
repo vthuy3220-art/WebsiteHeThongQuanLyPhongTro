@@ -7,292 +7,306 @@ using System.Threading.Tasks;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
-	public class CoSoVatChatsController : Controller
-	{
-		private readonly ApplicationDbContext _context;
+    public class CoSoVatChatsController : Controller
+    {
+        private readonly ApplicationDbContext _context;
 
-		public CoSoVatChatsController(ApplicationDbContext context)
-		{
-			_context = context;
-		}
+        public CoSoVatChatsController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
-		private int GetCurrentUserId()
-		{
-			return HttpContext.Session.GetInt32("UserId") ?? 0;
-		}
+        private int GetCurrentUserId()
+        {
+            return HttpContext.Session.GetInt32("UserId") ?? 0;
+        }
 
-		private string GetCurrentRole()
-		{
-			return HttpContext.Session.GetString("Role") ?? "";
-		}
+        private string GetCurrentRole()
+        {
+            return HttpContext.Session.GetString("Role") ?? "";
+        }
 
-		private int GetCurrentMaChuTro()
-		{
-			return HttpContext.Session.GetInt32("MaChuTro") ?? 0;
-		}
+        private int GetCurrentMaChuTro()
+        {
+            return HttpContext.Session.GetInt32("MaChuTro") ?? 0;
+        }
 
-		private bool IsAdmin()
-		{
-			var role = GetCurrentRole();
-			return role == "Admin" || role == "SuperAdmin";
-		}
+        private bool IsAdmin()
+        {
+            var role = GetCurrentRole();
+            return role == "Admin" || role == "SuperAdmin";
+        }
 
-		// GET: Danh sách CSVC (Admin xem hết, Chủ trọ xem của mình)
-		public async Task<IActionResult> Index()
-		{
-			var userId = GetCurrentUserId();
-			if (userId == 0) return RedirectToAction("Index", "Login");
+        // GET: Danh sách CSVC (Admin xem hết, Chủ trọ xem của mình)
+        public async Task<IActionResult> Index(string searchString, int? maPhong)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Index", "Login");
 
-			var csvcList = _context.CoSoVatChat
-				.Include(c => c.PhongNavigation)
-					.ThenInclude(p => p.ToaNha)
-				.AsQueryable();
+            var csvcList = _context.CoSoVatChat
+                .Include(c => c.PhongNavigation)
+                    .ThenInclude(p => p.ToaNha)
+                .AsQueryable();
 
-			// Chủ trọ: chỉ thấy CSVC của phòng mình
-			if (!IsAdmin())
-			{
-				var maChuTro = GetCurrentMaChuTro();
-				csvcList = csvcList.Where(c => c.PhongNavigation.ToaNha.MaChuTro == maChuTro);
-			}
-			// Admin: thấy tất cả (không cần lọc)
+            // Chủ trọ: chỉ thấy CSVC của phòng mình
+            List<Phong> phongListForFilter;
+            if (!IsAdmin())
+            {
+                var maChuTro = GetCurrentMaChuTro();
+                csvcList = csvcList.Where(c => c.PhongNavigation.ToaNha.MaChuTro == maChuTro);
 
-			return View(await csvcList.ToListAsync());
-		}
+                phongListForFilter = await _context.Phong
+                    .Include(p => p.ToaNha)
+                    .Where(p => p.ToaNha.MaChuTro == maChuTro)
+                    .OrderBy(p => p.TenPhong)
+                    .ToListAsync();
+            }
+            else
+            {
+                // Admin: thấy tất cả phòng để lọc
+                phongListForFilter = await _context.Phong
+                    .Include(p => p.ToaNha)
+                    .OrderBy(p => p.TenPhong)
+                    .ToListAsync();
+            }
 
-		// GET: Chi tiết CSVC
-		public async Task<IActionResult> Details(int? id)
-		{
-			var userId = GetCurrentUserId();
-			if (userId == 0) return RedirectToAction("Index", "Login");
-			if (id == null) return NotFound();
+            // Lọc theo phòng
+            if (maPhong.HasValue && maPhong.Value > 0)
+                csvcList = csvcList.Where(c => c.MaPhong == maPhong.Value);
 
-			var csvc = await _context.CoSoVatChat
-				.Include(c => c.PhongNavigation)
-					.ThenInclude(p => p.ToaNha)
-				.FirstOrDefaultAsync(m => m.MaCSVC == id);
+            // Tìm kiếm theo tên thiết bị
+            if (!string.IsNullOrEmpty(searchString))
+                csvcList = csvcList.Where(c => c.TenThietBi != null && c.TenThietBi.Contains(searchString));
 
-			if (csvc == null) return NotFound();
+            ViewBag.PhongListForFilter = phongListForFilter;
+            ViewBag.MaPhong = maPhong;
+            ViewBag.SearchString = searchString;
 
-			// Kiểm tra quyền xem
-			if (!IsAdmin())
-			{
-				var maChuTro = GetCurrentMaChuTro();
-				if (csvc.PhongNavigation?.ToaNha?.MaChuTro != maChuTro)
-				{
-					TempData["Error"] = "Bạn không có quyền xem thiết bị này!";
-					return RedirectToAction(nameof(Index));
-				}
-			}
+            return View(await csvcList.ToListAsync());
+        }
 
-			return View(csvc);
-		}
+        // GET: Chi tiết CSVC
+        public async Task<IActionResult> Details(int? id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Index", "Login");
+            if (id == null) return NotFound();
 
-		// GET: Tạo mới (CHỈ CHỦ TRỌ)
-		public async Task<IActionResult> Create()
-		{
-			var userId = GetCurrentUserId();
-			var role = GetCurrentRole();
+            var csvc = await _context.CoSoVatChat
+                .Include(c => c.PhongNavigation)
+                    .ThenInclude(p => p.ToaNha)
+                .FirstOrDefaultAsync(m => m.MaCSVC == id);
 
-			if (userId == 0) return RedirectToAction("Index", "Login");
+            if (csvc == null) return NotFound();
 
-			// Admin KHÔNG được tạo
-			if (IsAdmin())
-			{
-				TempData["Error"] = "Admin không có quyền thêm cơ sở vật chất!";
-				return RedirectToAction(nameof(Index));
-			}
+            if (!IsAdmin())
+            {
+                var maChuTro = GetCurrentMaChuTro();
+                if (csvc.PhongNavigation?.ToaNha?.MaChuTro != maChuTro)
+                {
+                    TempData["Error"] = "Bạn không có quyền xem thiết bị này!";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
 
-			// Chỉ lấy phòng của chủ trọ hiện tại
-			if (role == "ChuTro")
-			{
-				var maChuTro = GetCurrentMaChuTro();
-				ViewBag.PhongList = await _context.Phong
-					.Include(p => p.ToaNha)
-					.Where(p => p.ToaNha.MaChuTro == maChuTro)
-					.ToListAsync();
-			}
+            return View(csvc);
+        }
 
-			return View();
-		}
+        // GET: Tạo mới (CHỈ CHỦ TRỌ)
+        public async Task<IActionResult> Create()
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
 
-		// POST: Tạo mới (CHỈ CHỦ TRỌ)
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create(int MaPhong, string TenThietBi, int SoLuong, string TinhTrang)
-		{
-			var userId = GetCurrentUserId();
-			var role = GetCurrentRole();
+            if (userId == 0) return RedirectToAction("Index", "Login");
 
-			if (userId == 0) return RedirectToAction("Index", "Login");
+            if (IsAdmin())
+            {
+                TempData["Error"] = "Admin không có quyền thêm cơ sở vật chất!";
+                return RedirectToAction(nameof(Index));
+            }
 
-			// Admin KHÔNG được tạo
-			if (IsAdmin())
-			{
-				TempData["Error"] = "Admin không có quyền thêm cơ sở vật chất!";
-				return RedirectToAction(nameof(Index));
-			}
+            if (role == "ChuTro")
+            {
+                var maChuTro = GetCurrentMaChuTro();
+                ViewBag.PhongList = await _context.Phong
+                    .Include(p => p.ToaNha)
+                    .Where(p => p.ToaNha.MaChuTro == maChuTro)
+                    .ToListAsync();
+            }
 
-			// Kiểm tra quyền: Chủ trọ chỉ thêm cho phòng của mình
-			if (role == "ChuTro")
-			{
-				var maChuTro = GetCurrentMaChuTro();
-				var phong = await _context.Phong
-					.Include(p => p.ToaNha)
-					.FirstOrDefaultAsync(p => p.MaPhong == MaPhong);
+            return View();
+        }
 
-				if (phong == null || phong.ToaNha?.MaChuTro != maChuTro)
-				{
-					TempData["Error"] = "Bạn không có quyền thêm thiết bị cho phòng này!";
-					return RedirectToAction(nameof(Index));
-				}
-			}
+        // POST: Tạo mới (CHỈ CHỦ TRỌ)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(int MaPhong, string TenThietBi, int SoLuong, string TinhTrang)
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
 
-			var csvc = new CoSoVatChat
-			{
-				MaPhong = MaPhong,
-				TenThietBi = TenThietBi,
-				SoLuong = SoLuong,
-				TinhTrang = TinhTrang ?? "Tốt"
-			};
-			_context.CoSoVatChat.Add(csvc);
-			await _context.SaveChangesAsync();
+            if (userId == 0) return RedirectToAction("Index", "Login");
 
-			TempData["Success"] = $"Đã thêm {TenThietBi} vào phòng!";
-			return RedirectToAction(nameof(Index));
-		}
+            if (IsAdmin())
+            {
+                TempData["Error"] = "Admin không có quyền thêm cơ sở vật chất!";
+                return RedirectToAction(nameof(Index));
+            }
 
-		// GET: Chỉnh sửa (CHỈ CHỦ TRỌ)
-		public async Task<IActionResult> Edit(int? id)
-		{
-			var userId = GetCurrentUserId();
-			var role = GetCurrentRole();
+            if (role == "ChuTro")
+            {
+                var maChuTro = GetCurrentMaChuTro();
+                var phong = await _context.Phong
+                    .Include(p => p.ToaNha)
+                    .FirstOrDefaultAsync(p => p.MaPhong == MaPhong);
 
-			if (userId == 0) return RedirectToAction("Index", "Login");
-			if (id == null) return NotFound();
+                if (phong == null || phong.ToaNha?.MaChuTro != maChuTro)
+                {
+                    TempData["Error"] = "Bạn không có quyền thêm thiết bị cho phòng này!";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
 
-			// Admin KHÔNG được sửa
-			if (IsAdmin())
-			{
-				TempData["Error"] = "Admin không có quyền sửa cơ sở vật chất!";
-				return RedirectToAction(nameof(Index));
-			}
+            var csvc = new CoSoVatChat
+            {
+                MaPhong = MaPhong,
+                TenThietBi = TenThietBi,
+                SoLuong = SoLuong,
+                TinhTrang = TinhTrang ?? "Tốt"
+            };
+            _context.CoSoVatChat.Add(csvc);
+            await _context.SaveChangesAsync();
 
-			var csvc = await _context.CoSoVatChat
-				.Include(c => c.PhongNavigation)
-					.ThenInclude(p => p.ToaNha)
-				.FirstOrDefaultAsync(m => m.MaCSVC == id);
+            TempData["Success"] = $"Đã thêm {TenThietBi} vào phòng!";
+            return RedirectToAction(nameof(Index));
+        }
 
-			if (csvc == null) return NotFound();
+        // GET: Chỉnh sửa (CHỈ CHỦ TRỌ)
+        public async Task<IActionResult> Edit(int? id)
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
 
-			// Kiểm tra quyền: Chủ trọ chỉ sửa của phòng mình
-			if (role == "ChuTro")
-			{
-				var maChuTro = GetCurrentMaChuTro();
-				if (csvc.PhongNavigation?.ToaNha?.MaChuTro != maChuTro)
-				{
-					TempData["Error"] = "Bạn không có quyền sửa thiết bị này!";
-					return RedirectToAction(nameof(Index));
-				}
-			}
+            if (userId == 0) return RedirectToAction("Index", "Login");
+            if (id == null) return NotFound();
 
-			// Lấy danh sách phòng của chủ trọ
-			if (role == "ChuTro")
-			{
-				var maChuTro = GetCurrentMaChuTro();
-				ViewBag.PhongList = await _context.Phong
-					.Include(p => p.ToaNha)
-					.Where(p => p.ToaNha.MaChuTro == maChuTro)
-					.ToListAsync();
-			}
+            if (IsAdmin())
+            {
+                TempData["Error"] = "Admin không có quyền sửa cơ sở vật chất!";
+                return RedirectToAction(nameof(Index));
+            }
 
-			return View(csvc);
-		}
+            var csvc = await _context.CoSoVatChat
+                .Include(c => c.PhongNavigation)
+                    .ThenInclude(p => p.ToaNha)
+                .FirstOrDefaultAsync(m => m.MaCSVC == id);
 
-		// POST: Chỉnh sửa (CHỈ CHỦ TRỌ)
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Edit(int id, int MaPhong, string TenThietBi, int SoLuong, string TinhTrang)
-		{
-			var userId = GetCurrentUserId();
-			var role = GetCurrentRole();
+            if (csvc == null) return NotFound();
 
-			if (userId == 0) return RedirectToAction("Index", "Login");
+            if (role == "ChuTro")
+            {
+                var maChuTro = GetCurrentMaChuTro();
+                if (csvc.PhongNavigation?.ToaNha?.MaChuTro != maChuTro)
+                {
+                    TempData["Error"] = "Bạn không có quyền sửa thiết bị này!";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
 
-			// Admin KHÔNG được sửa
-			if (IsAdmin())
-			{
-				TempData["Error"] = "Admin không có quyền sửa cơ sở vật chất!";
-				return RedirectToAction(nameof(Index));
-			}
+            if (role == "ChuTro")
+            {
+                var maChuTro = GetCurrentMaChuTro();
+                ViewBag.PhongList = await _context.Phong
+                    .Include(p => p.ToaNha)
+                    .Where(p => p.ToaNha.MaChuTro == maChuTro)
+                    .ToListAsync();
+            }
 
-			var csvc = await _context.CoSoVatChat
-				.Include(c => c.PhongNavigation)
-					.ThenInclude(p => p.ToaNha)
-				.FirstOrDefaultAsync(c => c.MaCSVC == id);
+            return View(csvc);
+        }
 
-			if (csvc == null) return NotFound();
+        // POST: Chỉnh sửa (CHỈ CHỦ TRỌ)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, int MaPhong, string TenThietBi, int SoLuong, string TinhTrang)
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
 
-			// Kiểm tra quyền
-			if (role == "ChuTro")
-			{
-				var maChuTro = GetCurrentMaChuTro();
-				if (csvc.PhongNavigation?.ToaNha?.MaChuTro != maChuTro)
-				{
-					TempData["Error"] = "Bạn không có quyền sửa thiết bị này!";
-					return RedirectToAction(nameof(Index));
-				}
-			}
+            if (userId == 0) return RedirectToAction("Index", "Login");
 
-			csvc.MaPhong = MaPhong;
-			csvc.TenThietBi = TenThietBi;
-			csvc.SoLuong = SoLuong;
-			csvc.TinhTrang = TinhTrang;
+            if (IsAdmin())
+            {
+                TempData["Error"] = "Admin không có quyền sửa cơ sở vật chất!";
+                return RedirectToAction(nameof(Index));
+            }
 
-			_context.Update(csvc);
-			await _context.SaveChangesAsync();
+            var csvc = await _context.CoSoVatChat
+                .Include(c => c.PhongNavigation)
+                    .ThenInclude(p => p.ToaNha)
+                .FirstOrDefaultAsync(c => c.MaCSVC == id);
 
-			TempData["Success"] = "Cập nhật thành công!";
-			return RedirectToAction(nameof(Index));
-		}
+            if (csvc == null) return NotFound();
 
-		// GET: Xóa (CHỈ CHỦ TRỌ)
-		public async Task<IActionResult> Delete(int id)
-		{
-			var userId = GetCurrentUserId();
-			var role = GetCurrentRole();
+            if (role == "ChuTro")
+            {
+                var maChuTro = GetCurrentMaChuTro();
+                if (csvc.PhongNavigation?.ToaNha?.MaChuTro != maChuTro)
+                {
+                    TempData["Error"] = "Bạn không có quyền sửa thiết bị này!";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
 
-			if (userId == 0) return RedirectToAction("Index", "Login");
+            csvc.MaPhong = MaPhong;
+            csvc.TenThietBi = TenThietBi;
+            csvc.SoLuong = SoLuong;
+            csvc.TinhTrang = TinhTrang;
 
-			// Admin KHÔNG được xóa
-			if (IsAdmin())
-			{
-				TempData["Error"] = "Admin không có quyền xóa cơ sở vật chất!";
-				return RedirectToAction(nameof(Index));
-			}
+            _context.Update(csvc);
+            await _context.SaveChangesAsync();
 
-			var csvc = await _context.CoSoVatChat
-				.Include(c => c.PhongNavigation)
-					.ThenInclude(p => p.ToaNha)
-				.FirstOrDefaultAsync(c => c.MaCSVC == id);
+            TempData["Success"] = "Cập nhật thành công!";
+            return RedirectToAction(nameof(Index));
+        }
 
-			if (csvc != null)
-			{
-				// Kiểm tra quyền
-				if (role == "ChuTro")
-				{
-					var maChuTro = GetCurrentMaChuTro();
-					if (csvc.PhongNavigation?.ToaNha?.MaChuTro != maChuTro)
-					{
-						TempData["Error"] = "Bạn không có quyền xóa thiết bị này!";
-						return RedirectToAction(nameof(Index));
-					}
-				}
+        // GET: Xóa (CHỈ CHỦ TRỌ)
+        public async Task<IActionResult> Delete(int id)
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
 
-				_context.CoSoVatChat.Remove(csvc);
-				await _context.SaveChangesAsync();
-				TempData["Success"] = "Xóa thành công!";
-			}
-			return RedirectToAction(nameof(Index));
-		}
-	}
+            if (userId == 0) return RedirectToAction("Index", "Login");
+
+            if (IsAdmin())
+            {
+                TempData["Error"] = "Admin không có quyền xóa cơ sở vật chất!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var csvc = await _context.CoSoVatChat
+                .Include(c => c.PhongNavigation)
+                    .ThenInclude(p => p.ToaNha)
+                .FirstOrDefaultAsync(c => c.MaCSVC == id);
+
+            if (csvc != null)
+            {
+                if (role == "ChuTro")
+                {
+                    var maChuTro = GetCurrentMaChuTro();
+                    if (csvc.PhongNavigation?.ToaNha?.MaChuTro != maChuTro)
+                    {
+                        TempData["Error"] = "Bạn không có quyền xóa thiết bị này!";
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+
+                _context.CoSoVatChat.Remove(csvc);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Xóa thành công!";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+    }
 }

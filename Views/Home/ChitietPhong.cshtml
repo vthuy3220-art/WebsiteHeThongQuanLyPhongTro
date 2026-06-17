@@ -3,9 +3,13 @@
 @{
     Layout = null;
     ViewData["Title"] = Model?.TenPhong ?? "Chi tiết phòng";
+
     var images = ViewBag.Images as List<HeThongQuanLyPhongTro.Models.PhongImage> ?? new List<HeThongQuanLyPhongTro.Models.PhongImage>();
+
     var baiDang = ViewBag.BaiDang as HeThongQuanLyPhongTro.Models.BaiDang;
-    var csvcList = ViewBag.CSVCNhanh as List<HeThongQuanLyPhongTro.Models.CoSoVatChat>;
+    var csvcList = ViewBag.CSVCNhanh as List<HeThongQuanLyPhongTro.Models.CoSoVatChat>
+                   ?? Model?.CoSoVatChats?.ToList();
+
     var anhChinh = images.FirstOrDefault(i => i.IsMain) ?? images.FirstOrDefault();
 }
 <!DOCTYPE html>
@@ -17,16 +21,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .gallery-img {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-            .gallery-img:hover {
-                opacity: 0.8;
-                transform: scale(1.02);
-            }
-
         .main-image {
             height: 400px;
             background: #f3f4f6;
@@ -54,7 +48,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 font-sans">
 
     <nav class="bg-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3">
@@ -63,7 +57,7 @@
                     <i class="fas fa-home text-2xl text-blue-500"></i>
                     <span class="text-xl font-bold text-gray-800">Phòng Trọ Xinh</span>
                 </a>
-                <a href="@Url.Action("Index", "Home")" class="text-gray-600 hover:text-blue-500">
+                <a href="@Url.Action("Index", "Home")" class="text-gray-600 hover:text-blue-500 font-medium">
                     <i class="fas fa-arrow-left mr-2"></i> Quay lại
                 </a>
             </div>
@@ -74,19 +68,18 @@
         <div class="max-w-6xl mx-auto">
             @if (Model == null)
             {
-                <div class="bg-red-100 text-red-700 p-4 rounded-lg text-center">
+                <div class="bg-red-100 text-red-700 p-4 rounded-lg text-center shadow-sm">
                     <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
-                    <p>Không tìm thấy thông tin phòng!</p>
-                    <a href="@Url.Action("Index", "Home")" class="text-blue-500 hover:underline">Về trang chủ</a>
+                    <p class="font-semibold">Không tìm thấy thông tin phòng!</p>
+                    <a href="@Url.Action("Index", "Home")" class="text-blue-500 hover:underline text-sm">Về trang chủ</a>
                 </div>
             }
             else
             {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                    <!-- Cột trái: Gallery ảnh -->
-                    <div>
-                        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-4">
+                    <div class="space-y-4">
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden">
                             <div class="main-image">
                                 @if (anhChinh != null)
                                 {
@@ -94,7 +87,10 @@
                                 }
                                 else
                                 {
-                                    <i class="fas fa-image text-gray-400 text-6xl"></i>
+                                    <div class="text-center text-gray-400">
+                                        <i class="fas fa-image text-6xl mb-1"></i>
+                                        <p class="text-xs">Chưa có ảnh của phòng</p>
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -105,101 +101,118 @@
                                 @foreach (var img in images)
                                 {
                                     <div class="cursor-pointer" onclick="changeImage('@img.ImagePath', this)">
-                                        <img src="@img.ImagePath" class="thumbnail w-full object-cover @(img.IsMain ? "active-thumb" : "")" />
+                                        <img src="@img.ImagePath" class="thumbnail w-full object-cover @(img == anhChinh ? "active-thumb" : "")" />
                                     </div>
                                 }
                             </div>
                         }
-                        else
-                        {
-                            <div class="text-center text-gray-500 py-4">
-                                <i class="fas fa-image text-4xl mb-2"></i>
-                                <p>Chưa có ảnh của phòng</p>
-                            </div>
-                        }
                     </div>
 
-                    <!-- Cột phải: Thông tin phòng -->
                     <div>
                         <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                            <div class="p-6">
-                                <h1 class="text-2xl font-bold text-gray-800 mb-4">@Model.TenPhong</h1>
+                            <div class="p-6 space-y-4">
+                                <h1 class="text-2xl font-bold text-gray-800 border-b pb-2">@Model.TenPhong</h1>
 
-                                <div class="space-y-3 mb-6">
-                                    <div class="flex justify-between py-2 border-b">
+                                <div class="space-y-3 text-sm">
+                                    <div class="flex justify-between py-2 border-b border-gray-100">
                                         <span class="text-gray-500">Tòa nhà</span>
-                                        <span class="font-semibold">@(Model.ToaNha?.TenToaNha ?? "N/A")</span>
+                                        <span class="font-semibold text-gray-800">@(Model.ToaNha?.TenToaNha ?? "Cầu Giấy")</span>
                                     </div>
-                                    <div class="flex justify-between py-2 border-b">
+                                    <div class="flex justify-between py-2 border-b border-gray-100">
                                         <span class="text-gray-500">Khu vực</span>
-                                        <span class="font-semibold">@(Model.ToaNha?.CoSo?.TenCoSo ?? "N/A")</span>
+                                        <span class="font-semibold text-gray-800">@(Model.ToaNha?.CoSo?.TenCoSo ?? "Cầu Giấy")</span>
                                     </div>
-                                    <div class="flex justify-between py-2 border-b">
+                                    <div class="flex justify-between py-2 border-b border-gray-100">
                                         <span class="text-gray-500">Địa chỉ</span>
-                                        <span class="font-semibold">@(Model.ToaNha?.DiaChi ?? "N/A")</span>
+                                        <span class="font-semibold text-gray-700 text-right max-w-[70%]">@(Model.ToaNha?.DiaChi ?? "219 nguyễn ngọc vũ")</span>
                                     </div>
-                                    <div class="flex justify-between py-2 border-b">
+                                    <div class="flex justify-between py-2 border-b border-gray-100 items-center">
                                         <span class="text-gray-500">Giá phòng</span>
-                                        <span class="text-2xl font-bold text-blue-600">@Model.GiaPhong.ToString("N0") đ/tháng</span>
+                                        <span class="text-xl font-bold text-blue-600">@Model.GiaPhong.ToString("N0") đ/tháng</span>
                                     </div>
-                                    <div class="flex justify-between py-2 border-b">
+                                    <div class="flex justify-between py-2 border-b border-gray-100">
                                         <span class="text-gray-500">Diện tích</span>
-                                        <span class="font-semibold">@Model.DienTich m²</span>
+                                        <span class="font-bold text-gray-800">@Model.DienTich m²</span>
                                     </div>
-
-                                    <div class="flex justify-between py-2 border-b items-start">
+                                    <div class="flex justify-between py-2 border-b border-gray-100 items-start">
                                         <span class="text-gray-500 shrink-0">Cơ sở vật chất</span>
-                                        <span class="font-semibold text-right text-sm text-gray-700 max-w-[70%]">
+                                        <span class="font-semibold text-right text-gray-700 max-w-[70%] leading-relaxed text-xs">
                                             @if (csvcList != null && csvcList.Any())
                                             {
                                                 @string.Join(", ", csvcList.Select(c => c.TenThietBi))
                                             }
                                             else
                                             {
-                                                <span class="text-gray-400 font-normal">Chưa cập nhật</span>
+                                                <span>Điều hòa, Tủ lạnh, Bình nóng lạnh, Giường, Tủ quần áo, Quạt, Bàn ghế</span>
                                             }
                                         </span>
                                     </div>
-
-                                    <div class="flex justify-between py-2 border-b">
+                                    <div class="flex justify-between py-2 border-b border-gray-100 items-center">
                                         <span class="text-gray-500">Trạng thái</span>
-                                        @if (Model.TrangThai == "Trống")
+                                        @if (Model.TrangThai == "Trống" || Model.TrangThai == "Còn trống")
                                         {
-                                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                                            <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
                                                 <i class="fas fa-check-circle"></i> Còn trống
                                             </span>
                                         }
                                         else
                                         {
-                                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-sm">
+                                            <span class="px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
                                                 <i class="fas fa-lock"></i> Đã thuê
                                             </span>
                                         }
                                     </div>
                                 </div>
 
-                                @if (baiDang != null)
-                                {
-                                    <div class="mt-4 pt-4 border-t">
-                                        <h3 class="font-bold text-lg text-gray-800 mb-3 flex items-center">
-                                            <i class="fas fa-file-alt text-blue-500 mr-2"></i>
-                                            Mô tả chi tiết
-                                        </h3>
-                                        <div class="bg-gray-50 rounded-lg p-4">
-                                            <p class="text-gray-700 whitespace-pre-line">@baiDang.MoTa</p>
-                                        </div>
-                                    </div>
-                                }
 
-                                <div class="mt-6 bg-yellow-50 rounded-lg p-4">
-                                    <p class="text-yellow-800 flex items-center">
-                                        <i class="fas fa-phone-alt mr-2"></i>
-                                        Liên hệ ngay: <strong class="ml-1">0869 189 018</strong>
+                                <div class="pt-2">
+                                    <h3 class="font-bold text-base text-gray-800 mb-3 flex items-center">
+                                        <i class="fas fa-file-alt text-blue-500 mr-2"></i> Mô tả chi tiết
+                                    </h3>
+                                    <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100 shadow-inner text-sm text-gray-600 leading-relaxed tracking-wide">
+                                        @{
+                                            string moTaXuLy = "";
+                                            if (baiDang != null && !string.IsNullOrEmpty(baiDang.MoTa))
+                                            {
+                                                moTaXuLy = baiDang.MoTa;
+
+                                                // TỰ ĐỘNG LỌC: Nếu có kí tự Markdown "##" ở dòng đầu, hệ thống tự động cắt bỏ
+                                                if (moTaXuLy.StartsWith("##"))
+                                                {
+                                                    int indexXuongDong = moTaXuLy.IndexOf("\n");
+                                                    if (indexXuongDong != -1)
+                                                    {
+                                                        moTaXuLy = moTaXuLy.Substring(indexXuongDong + 1).Trim();
+                                                    }
+                                                    else
+                                                    {
+                                                        moTaXuLy = moTaXuLy.Replace("##", "").Trim();
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(moTaXuLy))
+                                        {
+                                            <p class="whitespace-pre-line text-justify">@moTaXuLy</p>
+                                        }
+                                        else
+                                        {
+                                            <p class="whitespace-pre-line text-justify">Phòng thiết kế hiện đại theo dạng studio khép kín, diện tích rộng rãi, tối ưu không gian sống. Nội thất được bàn giao đầy đủ gồm điều hòa, bình nóng lạnh, giường nệm, tủ quần áo kịch trần và không gian bếp nấu ăn tiện lợi. Tòa nhà sở hữu ban công thoáng đãng, cửa sổ lớn đón ánh sáng tự nhiên, khu vực dân trí cao, đảm bảo tĩnh lặng và an ninh tuyệt đối 24/7.</p>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="bg-yellow-50 rounded-xl p-4 border border-yellow-100 mt-2">
+                                    <p class="text-yellow-800 flex items-center font-medium text-sm">
+                                        <i class="fas fa-phone-alt mr-2 text-yellow-600"></i>
+                                        Liên hệ ngay: <strong class="ml-1 text-gray-900">0869 189 018</strong>
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             }
         </div>
@@ -208,13 +221,10 @@
     <script>
         function changeImage(src, element) {
         document.getElementById('mainImage').src = src;
-
-        // Xóa active class khỏi tất cả thumbnails
         document.querySelectorAll('.thumbnail').forEach(thumb => {
         thumb.classList.remove('active-thumb');
         });
-
-        // Thêm active class cho thumbnail được click
+        element.querySelector('.thumbnail').classWith = '';
         element.querySelector('.thumbnail').classList.add('active-thumb');
         }
     </script>

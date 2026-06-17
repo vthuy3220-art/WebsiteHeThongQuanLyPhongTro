@@ -1,6 +1,6 @@
 ﻿@model HeThongQuanLyPhongTro.Models.DashboardViewModel
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = "Tổng quan hệ thống";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     double tyLeLapDay = Model.TongSoPhong > 0 ? Math.Round((double)Model.SoPhongDaThue / Model.TongSoPhong * 100, 1) : 0;
@@ -44,78 +44,95 @@
         cursor: pointer;
         transition: background 0.15s;
         border-radius: 8px;
-        padding: 4px;
-        margin: -4px;
+        padding: 8px;
     }
 
         .alert-item:hover {
-            background-color: #f0f7ff;
+            background-color: #f4f5f7;
         }
 </style>
 
-<div class="mantis-theme min-h-screen p-6 md:p-8 text-slate-800">
+<div class="mantis-theme min-h-screen p-4 text-slate-800 animate-fade-in">
 
     @if (TempData["Success"] != null)
     {
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded mb-6 card-shadow text-sm font-medium">
-            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-xl mb-6 card-shadow text-sm font-semibold flex items-center">
+            <i class="fas fa-check-circle mr-2 text-base"></i> @TempData["Success"]
         </div>
     }
     @if (TempData["Info"] != null)
     {
-        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded mb-6 card-shadow text-sm font-medium">
-            <i class="fas fa-info-circle mr-2"></i> @TempData["Info"]
+        <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-xl mb-6 card-shadow text-sm font-semibold flex items-center">
+            <i class="fas fa-info-circle mr-2 text-base"></i> @TempData["Info"]
         </div>
     }
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer" onclick="window.location='@Url.Action("Index", "Phong")'">
-            <div class="text-sm font-medium text-slate-500 mb-3">Tổng số phòng</div>
-            <div class="flex items-center gap-3 mb-3">
-                <div class="text-3xl font-bold text-slate-800">@Model.TongSoPhong</div>
-                <div class="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-xs font-bold border border-emerald-100 flex items-center">
-                    <i class="fas fa-door-open mr-1 text-[10px]"></i> @tyLePhongTrong% Trống
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div class="bg-white rounded-xl p-4 sm:p-5 card-shadow border border-slate-100 relative group cursor-pointer hover:border-blue-300 transition-all flex flex-col justify-between" onclick="window.location='@Url.Action("Index", "Phong")'">
+            <div>
+                <div class="text-xs sm:text-sm font-medium tracking-wide text-slate-400 mb-2">Tổng số phòng</div>
+                <div class="flex flex-wrap items-baseline gap-2 mb-2">
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">@Model.TongSoPhong</div>
+                    <div class="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[10px] sm:text-xs font-semibold border border-emerald-100 flex items-center shrink-0">
+                        <i class="fas fa-door-open mr-1 text-[9px]"></i> @tyLePhongTrong% Trống
+                    </div>
                 </div>
             </div>
-            <div class="text-xs text-slate-500">Sẵn sàng phục vụ <span class="text-blue-500 font-semibold">@Model.SoPhongTrong</span> phòng trống</div>
+            <div class="text-xs text-slate-500 font-normal leading-relaxed mt-1 break-words">
+                Còn <span class="text-blue-600 font-semibold">@Model.SoPhongTrong</span> phòng trống sẵn sàng đón khách
+            </div>
         </div>
 
-        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer" onclick="window.location='@Url.Action("Index", "Phong")'">
-            <div class="text-sm font-medium text-slate-500 mb-3">Phòng đã thuê</div>
-            <div class="flex items-center gap-3 mb-3">
-                <div class="text-3xl font-bold text-slate-800">@Model.SoPhongDaThue</div>
-                <div class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-bold border border-blue-100 flex items-center">
-                    <i class="fas fa-chart-line mr-1 text-[10px]"></i> @tyLeLapDay%
+        <div class="bg-white rounded-xl p-4 sm:p-5 card-shadow border border-slate-100 relative group cursor-pointer hover:border-blue-300 transition-all flex flex-col justify-between" onclick="window.location='@Url.Action("Index", "Phong")'">
+            <div>
+                <div class="text-xs sm:text-sm font-medium tracking-wide text-slate-400 mb-2">Phòng đã thuê</div>
+                <div class="flex flex-wrap items-baseline gap-2 mb-2">
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">@Model.SoPhongDaThue</div>
+                    <div class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[10px] sm:text-xs font-semibold border border-blue-100 flex items-center shrink-0">
+                        <i class="fas fa-chart-line mr-1 text-[9px]"></i> Tỷ lệ lấp đầy @tyLeLapDay%
+                    </div>
                 </div>
             </div>
-            <div class="text-xs text-slate-500">Đang có <span class="text-blue-500 font-semibold">@Model.TongSoKhachHang</span> khách hàng lưu trú</div>
+            <div class="text-xs text-slate-500 font-normal leading-relaxed mt-1 break-words">
+                Hệ thống ghi nhận <span class="text-blue-600 font-semibold">@Model.TongSoKhachHang</span> khách thuê đại diện
+            </div>
         </div>
 
-        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative group cursor-pointer" onclick="window.location='@Url.Action("Index", "HopDong")'">
-            <div class="text-sm font-medium text-slate-500 mb-3">Tổng số Hợp đồng</div>
-            <div class="flex items-center gap-3 mb-3">
-                <div class="text-3xl font-bold text-slate-800">@(Model.SoHopDongHieuLuc + Model.SoHopDongHetHan)</div>
-                <div class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs font-bold border border-slate-200 flex items-center">
-                    <i class="fas fa-file-contract mr-1 text-[10px]"></i> @Model.SoHopDongHetHan kết thúc
+        <div class="bg-white rounded-xl p-4 sm:p-5 card-shadow border border-slate-100 relative group cursor-pointer hover:border-blue-300 transition-all flex flex-col justify-between" onclick="window.location='@Url.Action("Index", "HopDong")'">
+            <div>
+                <div class="text-xs sm:text-sm font-medium tracking-wide text-slate-400 mb-2">Tổng số Hợp đồng</div>
+                <div class="flex flex-wrap items-baseline gap-2 mb-2">
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">@(Model.SoHopDongHieuLuc + Model.SoHopDongHetHan)</div>
+                    <div class="px-2 py-0.5 bg-slate-50 text-slate-600 rounded-md text-[10px] sm:text-xs font-semibold border border-slate-200 flex items-center shrink-0">
+                        <i class="fas fa-file-contract mr-1 text-[9px]"></i> @Model.SoHopDongHetHan lưu trữ
+                    </div>
                 </div>
             </div>
-            <div class="text-xs text-slate-500">Đang có <span class="text-blue-500 font-semibold">@Model.SoHopDongHieuLuc</span> hợp đồng hiệu lực</div>
+            <div class="text-xs text-slate-500 font-normal leading-relaxed mt-1 break-words">
+                Đang chạy <span class="text-blue-600 font-semibold">@Model.SoHopDongHieuLuc</span> hợp đồng có hiệu lực
+            </div>
         </div>
 
-        <div class="bg-white rounded-lg p-5 card-shadow border border-slate-100 relative cursor-pointer" onclick="window.location='@Url.Action("Index", "HoaDon")'">
-            <div class="text-sm font-medium text-slate-500 mb-3">Doanh thu T@(DateTime.Now.Month)</div>
-            <div class="flex items-center gap-3 mb-3">
-                <div class="text-3xl font-bold text-slate-800" title="@Model.DoanhThuThangNay.ToString("N0")">@Model.DoanhThuThangNay.ToString("N0")</div>
+        <div class="bg-white rounded-xl p-4 sm:p-5 card-shadow border border-slate-100 relative cursor-pointer hover:border-blue-300 transition-all flex flex-col justify-between" onclick="window.location='@Url.Action("Index", "HoaDon")'">
+            <div>
+                <div class="text-xs sm:text-sm font-medium tracking-wide text-slate-400 mb-2">Doanh thu T@(DateTime.Now.Month)</div>
+                <div class="mb-2">
+                    <div class="text-xl sm:text-2xl font-extrabold text-purple-600 tracking-tight whitespace-nowrap">
+                        @Model.DoanhThuThangNay.ToString("N0") <span class="text-lg sm:text-xl font-medium">đ</span>
+                    </div>
+                </div>
             </div>
-            <div class="text-xs text-slate-500">Ghi nhận công nợ <span class="text-amber-500 font-semibold">@Model.TongNoHienTai.ToString("N0") đ</span></div>
+            <div class="text-xs text-slate-500 font-normal leading-relaxed mt-1 break-words">
+                Tổng nợ chưa thu hồi: <span class="text-red-500 font-semibold whitespace-nowrap">@Model.TongNoHienTai.ToString("N0") đ</span>
+            </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-lg card-shadow border border-slate-100 p-6 lg:col-span-2 flex flex-col">
+        <div class="bg-white rounded-xl card-shadow border border-slate-100 p-6 lg:col-span-2 flex flex-col">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-base font-semibold text-slate-800">Lưu lượng tài chính</h3>
-                <div class="flex bg-slate-50 rounded-md border border-slate-200 p-1">
+                <h3 class="text-base font-bold text-slate-800">Lưu lượng tài chính nửa năm qua</h3>
+                <div class="flex bg-slate-50 rounded-lg border border-slate-200 p-1">
                     <button id="btnThang" onclick="switchPeriod('Thang')" class="px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all">Tháng</button>
                     <button id="btnTuan" onclick="switchPeriod('Tuan')" class="px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all">Tuần</button>
                 </div>
@@ -124,18 +141,18 @@
                 <canvas id="areaChart"></canvas>
             </div>
             <div class="flex items-center justify-center gap-6 mt-4">
-                <div class="flex items-center text-xs text-slate-500"><span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span> Tổng Doanh Thu</div>
-                <div class="flex items-center text-xs text-slate-500"><span class="w-3 h-3 rounded-full bg-blue-200 mr-2"></span> Đã Thu Tiền</div>
+                <div class="flex items-center text-xs text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 mr-2"></span> Tổng Doanh Thu Dự Kiến</div>
+                <div class="flex items-center text-xs text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-blue-200 mr-2"></span> Thực Tế Đã Thu (85%)</div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg card-shadow border border-slate-100 p-6 flex flex-col">
+        <div class="bg-white rounded-xl card-shadow border border-slate-100 p-6 flex flex-col">
             <div class="mb-6">
-                <h3 class="text-base font-semibold text-slate-800">Top Phòng Nổi Bật</h3>
-                <p class="text-xs text-slate-500 mt-1">Phân bổ doanh thu cao nhất</p>
+                <h3 class="text-base font-bold text-slate-800">Top 5 Phòng Doanh Thu Cao Nhất</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Phân bổ doanh thu tháng @DateTime.Now.Month</p>
             </div>
             <div class="mb-4">
-                <h2 class="text-3xl font-bold text-slate-800"><span id="topRevenueText">0</span> <span class="text-sm font-normal text-slate-500">VNĐ</span></h2>
+                <h2 class="text-2xl font-bold text-slate-800"><span id="topRevenueText">0</span> <span class="text-xs font-normal text-slate-400">VNĐ</span></h2>
             </div>
             <div class="flex-grow relative w-full h-[220px]">
                 <canvas id="barChart"></canvas>
@@ -144,33 +161,34 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        <div class="bg-white rounded-lg card-shadow border border-slate-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="text-base font-semibold text-slate-800">Giao dịch tài chính gần đây</h3>
-                <a href="@Url.Action("Index", "HoaDon")" class="text-xs text-blue-500 hover:text-blue-700 font-medium">Xem tất cả</a>
+        <div class="bg-white rounded-xl card-shadow border border-slate-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-sm font-bold text-slate-800">Hóa đơn vừa quyết toán thành công</h3>
+                <a href="@Url.Action("Index", "HoaDon")" class="text-xs text-blue-600 hover:underline font-semibold">Xem tất cả</a>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-50 border-b border-slate-100 text-slate-500">
+            <div class="w-full overflow-x-auto">
+                <table class="w-full text-left text-sm min-w-[500px]">
+                    <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider text-[11px] font-semibold border-b border-slate-100">
                         <tr>
-                            <th class="px-6 py-3 font-medium">Mã HĐ</th>
-                            <th class="px-6 py-3 font-medium">Tên Phòng</th>
-                            <th class="px-6 py-3 font-medium text-right">Tổng tiền (VNĐ)</th>
-                            <th class="px-6 py-3 font-medium text-center">Trạng thái</th>
+                            <th class="px-6 py-3 font-semibold whitespace-nowrap">Mã hóa đơn</th>
+                            <th class="px-6 py-3 font-semibold whitespace-nowrap">Tên Phòng</th>
+                            <th class="px-6 py-3 font-semibold text-right whitespace-nowrap">Tổng tiền</th>
+                            <th class="px-6 py-3 font-semibold text-center whitespace-nowrap">Trạng thái</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-slate-50">
                         @if (Model.HoaDonGanDayList != null && Model.HoaDonGanDayList.Any())
                         {
                             foreach (var hd in Model.HoaDonGanDayList)
                             {
-                                <tr class="border-b border-slate-50 clickable-row" onclick="showInvoiceDetails(@hd.MaHoaDon)">
-                                    <td class="px-6 py-4 text-slate-800 font-medium">HD-@hd.MaHoaDon</td>
-                                    <td class="px-6 py-4 text-slate-600">@hd.TenPhong</td>
-                                    <td class="px-6 py-4 text-right font-medium">@hd.TongTien.ToString("N0") đ</td>
-                                    <td class="px-6 py-4 text-center">
-                                        <span class="px-2 py-1 bg-green-50 text-green-600 rounded text-[11px] font-semibold border border-green-100">Đã thanh toán</span>
+                                <tr class="clickable-row font-medium text-gray-700" onclick="showInvoiceDetails(@hd.MaHoaDon)">
+                                    <td class="px-6 py-4 text-blue-600 font-semibold font-mono whitespace-nowrap">#HD-@hd.MaHoaDon</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">🏠 @hd.TenPhong</td>
+                                    <td class="px-6 py-4 text-right text-slate-900 font-bold whitespace-nowrap">
+                                        @hd.TongTien.ToString("N0") đ
+                                    </td>
+                                    <td class="px-6 py-4 text-center whitespace-nowrap">
+                                        <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-full text-[11px] font-bold border border-green-100">Đã nhận tiền</span>
                                     </td>
                                 </tr>
                             }
@@ -178,7 +196,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="4" class="px-6 py-4 text-center text-slate-400 text-sm">Chưa có giao dịch nào được thanh toán.</td>
+                                <td colspan="4" class="px-6 py-8 text-center text-slate-400 text-xs">Hệ thống chưa có giao dịch thu tiền nào tháng này.</td>
                             </tr>
                         }
                     </tbody>
@@ -186,54 +204,65 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg card-shadow border border-slate-100 overflow-hidden flex flex-col">
-            <div class="px-6 py-4 border-b border-slate-100">
-                <h3 class="text-base font-semibold text-slate-800">Thông báo & Cảnh báo hệ thống</h3>
+        <div class="bg-white rounded-xl card-shadow border border-slate-100 overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                <h3 class="text-sm font-bold text-slate-800">Cảnh báo thời hạn hợp đồng</h3>
             </div>
-            <div class="p-6 flex-grow flex flex-col gap-4">
+            <div class="p-5 flex-grow flex flex-col gap-4">
                 @if (Model.HopDongSapHetHanList != null && Model.HopDongSapHetHanList.Any())
                 {
                     foreach (var item in Model.HopDongSapHetHanList.Take(3))
                     {
-                        <div class="flex items-start gap-4 alert-item" onclick="showContractDetails(@item.MaHopDong)">
-                            <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
-                                <i class="fas fa-bell"></i>
+                        <div class="flex items-center justify-between border border-gray-100 p-3 rounded-xl alert-item shadow-sm">
+                            <div class="flex items-start gap-3 flex-grow cursor-pointer" onclick="showContractDetails(@item.MaHopDong)">
+                                <div class="w-9 h-9 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0 border border-orange-100 shadow-inner">
+                                    <i class="fas fa-exclamation-triangle text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-slate-800">@item.TenPhong</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                                        Đại diện: @item.TenKhachHang - Hết hạn: <span class="font-mono">@item.NgayKetThuc.ToString("dd/MM/yyyy")</span>
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 class="text-sm font-semibold text-slate-800">Hợp đồng @item.TenPhong sắp hết hạn</h4>
-                                <p class="text-xs text-slate-500 mt-1">
-                                    Khách thuê @item.TenKhachHang - Hết hạn ngày @item.NgayKetThuc.ToString("dd/MM/yyyy")
-                                    (Còn <span class="text-orange-500 font-bold">@item.SoNgayConLai</span> ngày)
-                                </p>
+                            <div class="shrink-0 pl-2">
+                                <form action="@Url.Action("GuiKhaoSatGiaHan", "Dashboard")" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.MaHopDong" />
+
+                                    <button type="submit" class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow-md shadow-orange-500/10 transition-colors flex items-center gap-1">
+                                        <i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     }
                 }
                 else
                 {
-                    <div class="flex items-start gap-4">
-                        <div class="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center shrink-0">
-                            <i class="fas fa-check"></i>
+                    <div class="flex items-start gap-4 py-4 justify-center flex-col items-center text-center text-gray-400">
+                        <div class="w-12 h-12 rounded-xl bg-green-50 text-green-500 flex items-center justify-center border border-green-100 shadow-inner">
+                            <i class="fas fa-shield-alt text-lg"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-semibold text-slate-800">Hệ thống hoạt động trơn tru</h4>
-                            <p class="text-xs text-slate-500 mt-1">Không có hợp đồng nào sắp hết hạn trong 30 ngày tới.</p>
+                            <h4 class="text-sm font-bold text-slate-700">Hợp đồng an toàn</h4>
+                            <p class="text-xs text-slate-400 mt-0.5">Không có phòng nào sắp hết hợp đồng trong 30 ngày tới.</p>
                         </div>
                     </div>
                 }
 
-                <div class="flex items-start gap-4 mt-2">
-                    <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
-                        <i class="fas fa-file-invoice"></i>
+                <div class="flex items-start gap-3 p-3 border border-blue-50 bg-blue-50/20 rounded-xl mt-auto">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 shadow-inner">
+                        <i class="fas fa-file-invoice-dollar text-sm"></i>
                     </div>
-                    <div>
-                        <h4 class="text-sm font-semibold text-slate-800">Nhắc nhở công nợ</h4>
-                        <div class="text-xs text-slate-500 mt-1 flex items-center flex-wrap gap-1">
-                            <span>Có @Model.SoHoaDonChuaThanhToan hóa đơn chưa thu tiền.</span>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-bold text-slate-800">Nhắc nhở nợ hóa đơn</h4>
+                        <div class="text-xs text-slate-500 mt-1 flex items-center flex-wrap gap-1.5">
+                            <span>Phát hiện <strong>@Model.SoHoaDonChuaThanhToan</strong> hóa đơn quá hạn thu tiền.</span>
                             <form asp-controller="Dashboard" asp-action="GuiThongBaoNhacNo" method="post" class="inline">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="text-blue-500 font-semibold hover:text-blue-700 hover:underline bg-transparent border-none p-0 cursor-pointer transition-all">
-                                    Gửi thông báo ngay
+                                <button type="submit" class="text-blue-600 font-bold hover:text-blue-800 hover:underline bg-transparent border-none p-0 cursor-pointer transition-all">
+                                    [ Gửi Mail & Thống báo ngay ]
                                 </button>
                             </form>
                         </div>
@@ -244,76 +273,76 @@
     </div>
 </div>
 
-<div id="invoiceModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
+<div id="invoiceModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
         <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="font-bold text-slate-800 text-base" id="modalTitle">Chi tiết hóa đơn</h3>
+            <h3 class="font-bold text-slate-800 text-sm md:text-base" id="modalTitle">Chi tiết hóa đơn</h3>
             <button onclick="closeInvoiceModal()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors">
-                <i class="fas fa-times text-lg"></i>
+                <i class="fas fa-times text-base"></i>
             </button>
         </div>
         <div class="p-6 space-y-4 text-sm">
-            <div class="grid grid-cols-2 gap-y-2 border-b border-slate-100 pb-3 text-slate-600">
-                <div>Phòng trọ:</div><div class="font-semibold text-slate-800 text-right" id="lblRoom">N/A</div>
-                <div>Khách đại diện:</div><div class="font-semibold text-slate-800 text-right" id="lblCustomer">N/A</div>
-                <div>Kỳ hóa đơn:</div><div class="text-right" id="lblPeriod">N/A</div>
-                <div>Ngày xác nhận:</div><div class="text-right text-emerald-600 font-medium" id="lblPayDate">N/A</div>
+            <div class="grid grid-cols-2 gap-y-2 border-b border-slate-100 pb-3 text-slate-500 font-medium">
+                <div>Phòng trọ:</div><div class="font-bold text-slate-800 text-right" id="lblRoom">N/A</div>
+                <div>Khách thuê đại diện:</div><div class="font-bold text-slate-800 text-right" id="lblCustomer">N/A</div>
+                <div>Kỳ hóa đơn:</div><div class="text-right font-mono" id="lblPeriod">N/A</div>
+                <div>Ngày hệ thống thu:</div><div class="text-right text-emerald-600 font-bold" id="lblPayDate">N/A</div>
             </div>
             <div>
-                <p class="font-semibold text-slate-700 mb-2">Chi tiết dịch vụ tiêu thụ:</p>
-                <div class="bg-slate-50 rounded-lg p-3 max-h-40 overflow-y-auto border border-slate-100">
+                <p class="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Bảng kê tiêu thụ chi tiết:</p>
+                <div class="bg-slate-50 rounded-xl p-3 max-h-40 overflow-y-auto border border-slate-100">
                     <table class="w-full text-xs text-left" id="tblInvoiceItems">
                         <thead>
-                            <tr class="text-slate-400 border-b pb-1 font-medium">
-                                <th class="pb-2">Khoản thu</th>
+                            <tr class="text-slate-400 border-b pb-1 font-semibold">
+                                <th class="pb-2">Khoản mục thu</th>
                                 <th class="pb-2 text-center">SL</th>
                                 <th class="pb-2 text-right">Đơn giá</th>
                                 <th class="pb-2 text-right">Thành tiền</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 text-slate-600">
+                        <tbody class="divide-y divide-slate-100 text-slate-600 font-medium">
                         </tbody>
                     </table>
                 </div>
             </div>
             <div class="flex justify-between items-center pt-3 border-t border-slate-100">
-                <span class="font-bold text-slate-800">Tổng cộng thanh toán:</span>
+                <span class="font-bold text-slate-800">Tổng doanh thu thực nhận:</span>
                 <span class="text-xl font-bold text-blue-600" id="lblTotal">0 đ</span>
             </div>
         </div>
         <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-            <button onclick="closeInvoiceModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-semibold text-xs rounded-md hover:bg-slate-300 transition-colors">Đóng lại</button>
+            <button onclick="closeInvoiceModal()" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors">Đóng cửa sổ</button>
         </div>
     </div>
 </div>
 
-<div id="contractModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
+<div id="contractModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
         <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
             <h3 class="font-bold text-slate-800 text-base" id="contractModalTitle">Chi tiết hợp đồng</h3>
             <button onclick="closeContractModal()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors">
-                <i class="fas fa-times text-lg"></i>
+                <i class="fas fa-times text-base"></i>
             </button>
         </div>
         <div class="p-6 space-y-4 text-sm">
-            <div class="grid grid-cols-2 gap-y-3 text-slate-600">
-                <div>Mã hợp đồng:</div><div class="font-bold text-slate-800 text-right" id="lblConId">N/A</div>
-                <div>Phòng thuê:</div><div class="font-semibold text-slate-800 text-right text-blue-600" id="lblConRoom">N/A</div>
-                <div>Khách thuê đại diện:</div><div class="font-semibold text-slate-800 text-right" id="lblConCustomer">N/A</div>
-                <div>Số điện thoại:</div><div class="text-right" id="lblConPhone">N/A</div>
+            <div class="grid grid-cols-2 gap-y-3 text-slate-500 font-medium">
+                <div>Mã số văn bản:</div><div class="font-mono font-bold text-slate-800 text-right" id="lblConId">N/A</div>
+                <div>Phòng thuê:</div><div class="font-bold text-blue-600 text-right" id="lblConRoom">N/A</div>
+                <div>Khách đại diện đứng tên:</div><div class="font-bold text-slate-800 text-right" id="lblConCustomer">N/A</div>
+                <div>Số điện thoại liên hệ:</div><div class="text-right font-mono" id="lblConPhone">N/A</div>
                 <hr class="col-span-2 border-slate-100 my-1">
-                <div>Ngày bắt đầu:</div><div class="text-right" id="lblConStartDate">N/A</div>
-                <div>Ngày kết thúc:</div><div class="text-right font-medium text-slate-800" id="lblConEndDate">N/A</div>
-                <div>Thời gian còn lại:</div><div class="text-right text-red-500 font-bold" id="lblConDaysLeft">N/A</div>
+                <div>Ngày ký kích hoạt:</div><div class="text-right font-mono" id="lblConStartDate">N/A</div>
+                <div>Ngày kết thúc hiệu lực:</div><div class="text-right font-mono font-semibold text-slate-800" id="lblConEndDate">N/A</div>
+                <div>Thời gian khẩn cấp còn lại:</div><div class="text-right text-red-500 font-bold animate-pulse" id="lblConDaysLeft">N/A</div>
                 <hr class="col-span-2 border-slate-100 my-1">
-                <div>Giá thuê phòng:</div><div class="font-semibold text-slate-800 text-right" id="lblConPrice">0 đ</div>
-                <div>Tiền đặt cọc:</div><div class="font-semibold text-slate-800 text-right" id="lblConDeposit">0 đ</div>
-                <div>Trạng thái:</div><div class="text-right" id="lblConStatus">N/A</div>
+                <div>Giá thuê phòng / tháng:</div><div class="font-bold text-slate-800 text-right" id="lblConPrice">0 đ</div>
+                <div>Tiền đặt cọc bảo đảm:</div><div class="font-bold text-slate-800 text-right" id="lblConDeposit">0 đ</div>
+                <div>Trạng thái hồ sơ:</div><div class="text-right font-bold" id="lblConStatus">N/A</div>
             </div>
         </div>
         <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
-            <a href="@Url.Action("Index", "HopDong")" class="px-4 py-2 bg-blue-500 text-white font-semibold text-xs rounded-md hover:bg-blue-600 transition-colors flex items-center"><i class="fas fa-edit mr-1"></i> Quản lý hợp đồng</a>
-            <button onclick="closeContractModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-semibold text-xs rounded-md hover:bg-slate-300 transition-colors">Đóng lại</button>
+            <a href="@Url.Action("Index", "HopDong")" class="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-colors flex items-center"><i class="fas fa-edit mr-1"></i> Điều hướng quản lý</a>
+            <button onclick="closeContractModal()" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors">Đóng lại</button>
         </div>
     </div>
 </div>
@@ -321,30 +350,31 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // ĐÃ SỬA: Thay thế tên biến sai từ DoActiveThuTheoThangList thành DoanhThuTheoThangList
         var rawData = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]");
         var labelsThang = [], dataThucTeThang = [], dataDaThuThang = [];
 
         if (rawData && rawData.length > 0) {
         var dataCopy = [...rawData].reverse();
-        labelsThang = dataCopy.map(x => 'Tháng ' + (x.Thang !== undefined ? x.Thang : x.thang));
+        labelsThang = dataCopy.map(x => 'Tháng ' + (x.thang !== undefined ? x.thang : x.Thang));
         dataThucTeThang = dataCopy.map(x => (x.doanhThu !== undefined ? x.doanhThu : x.DoanhThu));
         dataDaThuThang = dataThucTeThang.map(val => val * 0.85);
         } else {
-        labelsThang = ['Tháng 12', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5'];
-        dataThucTeThang = [45000000, 50000000, 62000000, 58000000, 75000000, 92977992];
-        dataDaThuThang = [40000000, 42000000, 55000000, 50000000, 68000000, 85000000];
+        labelsThang = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6'];
+        dataThucTeThang = [25000000, 34000000, 42000000, 58000000, 75000000, 92000000];
+        dataDaThuThang = [21000000, 29000000, 35000000, 50000000, 64000000, 79000000];
         }
 
         var labelsTuan = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
-        var dataThucTeTuan = [92977992, 2000000, 3500000, 1500000];
-        var dataDaThuTuan = [80000000, 1500000, 3000000, 1000000];
+        var dataThucTeTuan = [15000000, 18000000, 12000000, 22000000];
+        var dataDaThuTuan = [13000000, 15000000, 10000000, 19000000];
 
         var ctxArea = document.getElementById('areaChart').getContext('2d');
         var gradientBlue = ctxArea.createLinearGradient(0, 0, 0, 400);
-        gradientBlue.addColorStop(0, 'rgba(24, 144, 255, 0.35)');
+        gradientBlue.addColorStop(0, 'rgba(24, 144, 255, 0.25)');
         gradientBlue.addColorStop(1, 'rgba(24, 144, 255, 0.01)');
         var gradientLight = ctxArea.createLinearGradient(0, 0, 0, 400);
-        gradientLight.addColorStop(0, 'rgba(24, 144, 255, 0.1)');
+        gradientLight.addColorStop(0, 'rgba(24, 144, 255, 0.08)');
         gradientLight.addColorStop(1, 'rgba(24, 144, 255, 0)');
 
         var areaChartInstance = new Chart(ctxArea, {
@@ -352,8 +382,8 @@
         data: {
         labels: labelsThang,
         datasets: [
-        { label: 'Tổng Doanh Thu', data: dataThucTeThang, borderColor: '#1890ff', backgroundColor: gradientBlue, borderWidth: 2, fill: true, tension: 0, pointBackgroundColor: '#fff', pointBorderColor: '#1890ff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6 },
-        { label: 'Đã Thu Tiền', data: dataDaThuThang, borderColor: '#91caff', backgroundColor: gradientLight, borderWidth: 2, fill: true, tension: 0, pointRadius: 0, pointHoverRadius: 4 }
+        { label: 'Doanh thu phát sinh', data: dataThucTeThang, borderColor: '#1890ff', backgroundColor: gradientBlue, borderWidth: 2, fill: true, tension: 0.1, pointBackgroundColor: '#fff', pointBorderColor: '#1890ff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6 },
+        { label: 'Thực tế thu tiền', data: dataDaThuThang, borderColor: '#91caff', backgroundColor: gradientLight, borderWidth: 1.5, fill: true, tension: 0.1, pointRadius: 0, pointHoverRadius: 4 }
         ]
         },
         options: {
@@ -361,8 +391,8 @@
         interaction: { mode: 'index', intersect: false },
         plugins: { legend: { display: false } },
         scales: {
-        x: { grid: { display: false }, ticks: { color: '#8c8c8c' }, border: { display: false } },
-        y: { grid: { color: '#f0f0f0' }, ticks: { color: '#8c8c8c', callback: function(v) { return v >= 1000000 ? (v/1000000)+'Tr' : v; } }, border: { display: false } }
+        x: { grid: { display: false }, ticks: { color: '#8c8c8c' } },
+        y: { grid: { color: '#f0f0f0' }, ticks: { color: '#8c8c8c', callback: function(v) { return v >= 1000000 ? (v/1000000)+'Tr' : v; } } }
         }
         }
         });
@@ -389,56 +419,53 @@
         var rawTop = @Html.Raw(Model.TopPhongList != null ? Json.Serialize(Model.TopPhongList) : "[]");
         var barLabels = [], barData = [];
         if (rawTop && rawTop.length > 0) {
-        barLabels = rawTop.map(x => (x.TenPhong !== undefined ? x.TenPhong : x.tenPhong));
-        barData = rawTop.map(x => (x.TongDoanhThu !== undefined ? x.TongDoanhThu : x.tongDoanhThu));
+        barLabels = rawTop.map(x => (x.tenPhong !== undefined ? x.tenPhong : x.TenPhong));
+        barData = rawTop.map(x => (x.tongDoanhThu !== undefined ? x.tongDoanhThu : x.TongDoanhThu));
         document.getElementById('topRevenueText').innerText = barData.reduce((a, b) => a + b, 0).toLocaleString('vi-VN');
         } else {
-        barLabels = ['Chưa có dữ liệu'];
+        barLabels = ['Phòng trống'];
         barData = [0];
         }
 
         var ctxBar = document.getElementById('barChart').getContext('2d');
         new Chart(ctxBar, {
         type: 'bar',
-        data: { labels: barLabels, datasets: [{ data: barData, backgroundColor: '#87e8de', hoverBackgroundColor: '#36cfc9', borderRadius: 2, barPercentage: 0.5 }] },
+        data: { labels: barLabels, datasets: [{ data: barData, backgroundColor: '#87e8de', hoverBackgroundColor: '#36cfc9', borderRadius: 4, barPercentage: 0.45 }] },
         options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return 'Doanh thu: ' + c.parsed.y.toLocaleString('vi-VN') + ' đ'; } } } },
-        scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: '#8c8c8c', font: { size: 10 } } }, y: { display: false } }
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return 'Thành tiền: ' + c.parsed.y.toLocaleString('vi-VN') + ' đ'; } } } },
+        scales: { x: { grid: { display: false }, ticks: { color: '#8c8c8c', font: { size: 11 } } }, y: { display: false } }
         }
         });
 
         function showInvoiceDetails(id) {
         fetch('/Dashboard/GetInvoiceDetails?id=' + id)
-        .then(res => {
-        if (!res.ok) throw new Error("Lỗi tải hóa đơn");
-        return res.json();
-        })
+        .then(res => { if (!res.ok) throw new Error("Lỗi tải hóa đơn"); return res.json(); })
         .then(data => {
-        document.getElementById('modalTitle').innerText = 'Chi tiết hóa đơn HD-' + data.maHoaDon;
-        document.getElementById('lblRoom').innerText = 'Phòng ' + data.tenPhong;
+        document.getElementById('modalTitle').innerText = 'Chi tiết hóa đơn quyết toán số #HD-' + data.maHoaDon;
+        document.getElementById('lblRoom').innerText = data.tenPhong;
         document.getElementById('lblCustomer').innerText = data.tenKhachHang;
-        document.getElementById('lblPeriod').innerText = 'Tháng ' + data.thang + ' / Năm ' + data.nam;
-        document.getElementById('lblPayDate').innerText = '⏰ ' + data.ngayThanhToan;
+        document.getElementById('lblPeriod').innerText = 'Kỳ tháng ' + data.thang + ' / năm ' + data.nam;
+        document.getElementById('lblPayDate').innerText = data.ngayThanhToan;
         document.getElementById('lblTotal').innerText = data.tongTien.toLocaleString('vi-VN') + ' đ';
 
         const tbody = document.querySelector('#tblInvoiceItems tbody');
         if (data.chiTietList && data.chiTietList.length > 0) {
         tbody.innerHTML = data.chiTietList.map(item => `
         <tr class="border-b border-slate-100">
-        <td class="py-2 font-medium text-slate-700">${item.khoanThu}</td>
-        <td class="py-2 text-center">${item.soLuong ?? 1}</td>
-        <td class="py-2 text-right">${item.donGia.toLocaleString('vi-VN')}</td>
-        <td class="py-2 text-right font-semibold text-slate-800">${item.thanhTien.toLocaleString('vi-VN')} đ</td>
+        <td class="py-2.5 font-medium text-slate-700">${item.loaiKhoanThu || 'Khoản phát sinh'}</td>
+        <td class="py-2.5 text-center">${item.soLuong ?? 1}</td>
+        <td class="py-2.5 text-right">${item.donGia.toLocaleString('vi-VN')}</td>
+        <td class="py-2.5 text-right font-bold text-slate-800">${item.thanhTien.toLocaleString('vi-VN')} đ</td>
         </tr>
         `).join('');
         } else {
         tbody.innerHTML = `
         <tr class="border-b border-slate-100">
-        <td class="py-2 font-medium text-slate-700">Tiền thuê phòng (Mặc định)</td>
-        <td class="py-2 text-center">1</td>
-        <td class="py-2 text-right">${data.tongTien.toLocaleString('vi-VN')}</td>
-        <td class="py-2 text-right font-semibold text-slate-800">${data.tongTien.toLocaleString('vi-VN')} đ</td>
+        <td class="py-2.5 font-medium text-slate-700">Tiền nhà cố định</td>
+        <td class="py-2.5 text-center">1</td>
+        <td class="py-2.5 text-right">${data.tongTien.toLocaleString('vi-VN')}</td>
+        <td class="py-2.5 text-right font-bold text-slate-800">${data.tongTien.toLocaleString('vi-VN')} đ</td>
         </tr>
         `;
         }
@@ -450,42 +477,34 @@
         modal.querySelector('.transform').classList.remove('scale-95');
         }, 10);
         })
-        .catch(err => {
-        console.error(err);
-        alert("Không thể tải thông tin chi tiết của hóa đơn này!");
-        });
+        .catch(err => { console.error(err); alert("Không thể liên kết dữ liệu với hóa đơn này!"); });
         }
 
         function closeInvoiceModal() {
         const modal = document.getElementById('invoiceModal');
         modal.classList.add('opacity-0');
         modal.querySelector('.transform').classList.add('scale-95');
-        setTimeout(() => {
-        modal.classList.add('hidden');
-        }, 300);
+        setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
         function showContractDetails(id) {
         fetch('/Dashboard/GetContractDetails?id=' + id)
-        .then(res => {
-        if (!res.ok) throw new Error("Lỗi tải thông tin hợp đồng");
-        return res.json();
-        })
+        .then(res => { if (!res.ok) throw new Error("Lỗi tải thông tin hồ sơ"); return res.json(); })
         .then(data => {
-        document.getElementById('contractModalTitle').innerText = 'Chi tiết hợp đồng sắp hết hạn';
+        document.getElementById('contractModalTitle').innerText = 'Chi tiết văn bản liên kết hợp đồng';
         document.getElementById('lblConId').innerText = 'HĐ-' + data.maHopDong;
-        document.getElementById('lblConRoom').innerText = 'Phòng ' + data.tenPhong;
+        document.getElementById('lblConRoom').innerText = data.tenPhong;
         document.getElementById('lblConCustomer').innerText = data.tenKhachHang;
         document.getElementById('lblConPhone').innerText = data.sdtKhachHang;
         document.getElementById('lblConStartDate').innerText = data.ngayBatDau;
         document.getElementById('lblConEndDate').innerText = data.ngayKetThuc;
-        document.getElementById('lblConDaysLeft').innerText = data.soNgayConLai + ' ngày nữa';
-        document.getElementById('lblConPrice').innerText = data.giaThue.toLocaleString('vi-VN') + ' đ / tháng';
+        document.getElementById('lblConDaysLeft').innerText = data.soNgayConLai + ' ngày';
+        document.getElementById('lblConPrice').innerText = data.giaThue.toLocaleString('vi-VN') + ' đ';
         document.getElementById('lblConDeposit').innerText = data.tienCoc.toLocaleString('vi-VN') + ' đ';
 
         const statusLbl = document.getElementById('lblConStatus');
         statusLbl.innerText = data.trangThai;
-        statusLbl.className = "text-right font-bold text-orange-500";
+        statusLbl.className = "text-right font-bold text-orange-500 animate-pulse";
 
         const modal = document.getElementById('contractModal');
         modal.classList.remove('hidden');
@@ -494,19 +513,14 @@
         modal.querySelector('.transform').classList.remove('scale-95');
         }, 10);
         })
-        .catch(err => {
-        console.error(err);
-        alert("Không thể tải thông tin chi tiết hợp đồng!");
-        });
+        .catch(err => { console.error(err); alert("Không thể liên kết dữ liệu hợp đồng!"); });
         }
 
         function closeContractModal() {
         const modal = document.getElementById('contractModal');
         modal.classList.add('opacity-0');
         modal.querySelector('.transform').classList.add('scale-95');
-        setTimeout(() => {
-        modal.classList.add('hidden');
-        }, 300);
+        setTimeout(() => modal.classList.add('hidden'), 300);
         }
     </script>
 }

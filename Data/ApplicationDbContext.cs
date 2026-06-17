@@ -125,12 +125,12 @@ namespace HeThongQuanLyPhongTro.Data
                 .HasForeignKey(y => y.MaKhachHang)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // 14. YeuCauSuaChua - TaiKhoan (Chủ trọ)
+            /*14. YeuCauSuaChua - TaiKhoan (Chủ trọ)
             modelBuilder.Entity<YeuCauSuaChua>()
                 .HasOne(y => y.ChuTroNavigation)
                 .WithMany()
                 .HasForeignKey(y => y.MaChuTro)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict); */
 
             // 15. Cấu hình decimal để tránh lỗi precision
             modelBuilder.Entity<Phong>()

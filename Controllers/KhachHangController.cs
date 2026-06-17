@@ -106,8 +106,30 @@ namespace HeThongQuanLyPhongTro.Controllers
                     .ThenInclude(p => p.ToaNha)
                 .FirstOrDefaultAsync(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai == "Hiệu lực");
 
+            // TRUY VẤN HÓA ĐƠN GẦN ĐÂY: Lấy tất cả hóa đơn thuộc các hợp đồng của khách này
+            var hopDongIds = await _context.HopDong
+                .Where(h => h.MaKhachHang == khachHang.MaKhachHang)
+                .Select(h => h.MaHopDong)
+                .ToListAsync();
+
+            // Lấy danh sách hóa đơn, dùng Include bảng ThanhToan để bốc được Ngày Giờ thanh toán thực tế
+            var hoaDonsGanDay = await _context.HoaDon
+                .Where(h => hopDongIds.Contains(h.MaHopDong))
+                .OrderByDescending(h => h.Nam)
+                .ThenByDescending(h => h.Thang)
+                .Take(5) // Chỉ lấy tối đa 5 hóa đơn mới nhất cho đỡ chật màn hình Dashboard
+                .ToListAsync();
+
+            // Lấy toàn bộ lịch sử thanh toán liên quan để map ngày giờ ra View nhanh gọn không bị chậm luồng
+            var maHoaDonIds = hoaDonsGanDay.Select(h => h.MaHoaDon).ToList();
+            var thanhToans = await _context.ThanhToan
+                .Where(t => maHoaDonIds.Contains(t.MaHoaDon))
+                .ToListAsync();
+
             ViewBag.KhachHang = khachHang;
             ViewBag.HopDong = hopDong;
+            ViewBag.HoaDonsGanDay = hoaDonsGanDay;
+            ViewBag.ThanhToansMap = thanhToans;
 
             return View("Index");
         }

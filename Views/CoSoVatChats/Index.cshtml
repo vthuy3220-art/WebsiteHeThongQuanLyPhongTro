@@ -1,15 +1,17 @@
 ﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.CoSoVatChat>
 
 @{
-    ViewData["Title"] = "Quản lý cơ sở";
+    ViewData["Title"] = "Quản lý cơ sở vật chất";
+    var phongListForFilter = ViewBag.PhongListForFilter as List<HeThongQuanLyPhongTro.Models.Phong>;
+    int? maPhongHienTai = ViewBag.MaPhong;
 }
 
 <div class="space-y-6">
     <div class="flex justify-between items-center">
-       
+
         <div class="flex space-x-3">
             <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all flex items-center">
-                <i class="fas fa-plus mr-2"></i> Thêm cơ sở mới
+                <i class="fas fa-plus mr-2"></i> Thêm thiết bị mới
             </a>
         </div>
     </div>
@@ -28,18 +30,46 @@
         </div>
     }
 
+    <!-- BỘ LỌC -->
     <div class="bg-white rounded-xl shadow-md p-4">
-        <form asp-action="Index" method="get" class="flex gap-4">
-            <div class="flex-1">
+        <form asp-action="Index" method="get" class="flex flex-wrap gap-4">
+            <div class="flex-1 min-w-[200px]">
                 <input type="text" name="searchString" value="@ViewBag.SearchString"
-                       placeholder="Tìm kiếm theo tên cơ sở..."
+                       placeholder="Tìm kiếm theo tên thiết bị..."
                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="min-w-[200px]">
+                <select name="maPhong" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Tất cả phòng --</option>
+                    @if (phongListForFilter != null)
+                    {
+                        foreach (var phong in phongListForFilter)
+                        {
+                            if (maPhongHienTai == phong.MaPhong)
+                            {
+                                <option value="@phong.MaPhong" selected="selected">@phong.TenPhong (@phong.ToaNha?.TenToaNha)</option>
+                            }
+                            else
+                            {
+                                <option value="@phong.MaPhong">@phong.TenPhong (@phong.ToaNha?.TenToaNha)</option>
+                            }
+                        }
+                    }
+                </select>
             </div>
             <div>
                 <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-all">
                     <i class="fas fa-search mr-2"></i> Tìm kiếm
                 </button>
             </div>
+            @if (maPhongHienTai.HasValue || !string.IsNullOrEmpty(ViewBag.SearchString))
+            {
+                <div>
+                    <a asp-action="Index" class="inline-block px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-all">
+                        <i class="fas fa-times mr-1"></i> Xóa lọc
+                    </a>
+                </div>
+            }
         </form>
     </div>
 
@@ -48,11 +78,11 @@
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <!-- Đã sửa tiêu đề cột cho khớp với Cơ sở vật chất -->
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã vật chất</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên vật chất</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên thiết bị</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phòng</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Số lượng</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tình trạng</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                     </tr>
                 </thead>
@@ -60,11 +90,30 @@
                     @foreach (var item in Model)
                     {
                         <tr class="hover:bg-gray-50 transition-all">
-                            <!-- Đã thay đổi các biến item cho khớp với Model CoSoVatChat -->
                             <td class="px-6 py-4">@item.MaCSVC</td>
                             <td class="px-6 py-4 font-medium">@item.TenThietBi</td>
-                            <td class="px-6 py-4">@item.TinhTrang</td>
-                            <td class="px-6 py-4">@item.SoLuong</td>
+                            <td class="px-6 py-4 text-gray-600">
+                                @item.PhongNavigation?.TenPhong
+                                @if (item.PhongNavigation?.ToaNha != null)
+                                {
+                                    <span class="text-gray-400 text-xs"> · @item.PhongNavigation.ToaNha.TenToaNha</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-center">@item.SoLuong</td>
+                            <td class="px-6 py-4">
+                                @if (item.TinhTrang == "Tốt")
+                                {
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">@item.TinhTrang</span>
+                                }
+                                else if (item.TinhTrang == "Hư")
+                                {
+                                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">@item.TinhTrang</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">@item.TinhTrang</span>
+                                }
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="flex justify-center space-x-3">
                                     <a asp-action="Details" asp-route-id="@item.MaCSVC"
@@ -76,7 +125,8 @@
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <a asp-action="Delete" asp-route-id="@item.MaCSVC"
-                                       class="text-red-500 hover:text-red-700" title="Xóa">
+                                       class="text-red-500 hover:text-red-700" title="Xóa"
+                                       onclick="return confirm('Bạn có chắc muốn xóa @item.TenThietBi?')">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
@@ -90,9 +140,9 @@
         @if (!Model.Any())
         {
             <div class="text-center py-12">
-                <i class="fas fa-building text-gray-300 text-5xl mb-3"></i>
-                <p class="text-gray-500">Chưa có dữ liệu cơ sở</p>
-                <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline">Thêm cơ sở đầu tiên</a>
+                <i class="fas fa-couch text-gray-300 text-5xl mb-3"></i>
+                <p class="text-gray-500">Chưa có dữ liệu cơ sở vật chất</p>
+                <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline">Thêm thiết bị đầu tiên</a>
             </div>
         }
     </div>

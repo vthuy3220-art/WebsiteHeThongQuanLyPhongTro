@@ -6,34 +6,60 @@
 
 <div class="bg-slate-50 min-h-screen p-6">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800"></h1>
+        <h1 class="text-2xl font-bold text-gray-800">Báo Cáo & Thống Kê</h1>
         <p class="text-gray-500">Tổng quan tình hình kinh doanh tháng @DateTime.Now.Month/@DateTime.Now.Year</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
 
-        <a href="@Url.Action("ChiTietDoanhThu", "ThongKe")" class="block bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer" style="text-decoration:none;">
-            <h3 class="text-gray-500 text-sm font-medium mb-2">Doanh thu tháng này</h3>
-            <div class="text-3xl font-bold text-teal-600 mb-2">@Model.DoanhThuThangNay.ToString("N0") đ</div>
-            <div class="text-sm text-teal-600 font-medium">Click xem chi tiết ➔</div>
+        <a href="@Url.Action("ChiTietDoanhThu", "ThongKe")" class="block bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100 hover:border-teal-300 hover:shadow-md transition-all flex flex-col justify-between" style="text-decoration:none;">
+            <div>
+                <h3 class="text-gray-400 text-xs sm:text-sm font-medium tracking-wide mb-2">Doanh thu tháng này</h3>
+                <div class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-teal-600 tracking-tight whitespace-nowrap mb-2">
+                    @Model.DoanhThuThangNay.ToString("N0") <span class="text-lg sm:text-xl font-medium">đ</span>
+                </div>
+            </div>
+            <div class="text-xs sm:text-sm text-teal-600 font-semibold mt-1">
+                Click xem chi tiết ➔
+            </div>
         </a>
 
-        <a href="@Url.Action("ChiTietPhong", "ThongKe")" class="block bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer" style="text-decoration:none;">
-            <h3 class="text-gray-500 text-sm font-medium mb-2">Tình trạng lấp đầy</h3>
-            <div class="text-3xl font-bold text-indigo-600 mb-2">@Model.TongSoPhong <span class="text-lg text-gray-400 font-normal">phòng</span></div>
-            <div class="text-sm text-indigo-600 font-medium">Đã thuê: @Model.SoPhongDaThue | Trống: @Model.SoPhongTrong</div>
+        <a href="@Url.Action("ChiTietPhong", "ThongKe")" class="block bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100 hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between" style="text-decoration:none;">
+            <div>
+                <h3 class="text-gray-400 text-xs sm:text-sm font-medium tracking-wide mb-2">Tình trạng lấp đầy</h3>
+                <div class="flex flex-wrap items-baseline gap-1 mb-2">
+                    <div class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-indigo-600 tracking-tight">@Model.TongSoPhong</div>
+                    <div class="text-xs sm:text-sm font-medium text-gray-400">phòng</div>
+                </div>
+            </div>
+            <div class="text-xs text-indigo-600 font-semibold leading-relaxed mt-1 break-words">
+                Đã thuê: @Model.SoPhongDaThue | Trống: @Model.SoPhongTrong
+            </div>
         </a>
 
-        <a href="@Url.Action("ChiTietHopDong", "ThongKe")" class="block bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer" style="text-decoration:none;">
-            <h3 class="text-gray-500 text-sm font-medium mb-2">Quản lý Hợp đồng</h3>
-            <div class="text-3xl font-bold text-blue-600 mb-2">@(Model.SoHopDongHieuLuc + Model.SoHopDongHetHan) <span class="text-lg text-gray-400 font-normal">bản</span></div>
-            <div class="text-sm text-blue-600 font-medium">Hiệu lực: @Model.SoHopDongHieuLuc | Hết/Hủy: @Model.SoHopDongHetHan</div>
+        <a href="@Url.Action("ChiTietHopDong", "ThongKe")" class="block bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between" style="text-decoration:none;">
+            <div>
+                <h3 class="text-gray-400 text-xs sm:text-sm font-medium tracking-wide mb-2">Quản lý Hợp đồng</h3>
+                <div class="flex flex-wrap items-baseline gap-1 mb-2">
+                    <div class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-blue-600 tracking-tight">@(Model.SoHopDongHieuLuc + Model.SoHopDongHetHan)</div>
+                    <div class="text-xs sm:text-sm font-medium text-gray-400">bản</div>
+                </div>
+            </div>
+            <div class="text-xs text-blue-600 font-semibold leading-relaxed mt-1 break-words">
+                Hiệu lực: @Model.SoHopDongHieuLuc | Hết/Hủy: @Model.SoHopDongHetHan
+            </div>
         </a>
 
-        <a href="@Url.Action("ThongKeHoaDon", "ThongKe")" class="block bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer" style="text-decoration:none;">
-            <h3 class="text-gray-500 text-sm font-medium mb-2">Quản lý Hóa đơn & Công nợ</h3>
-            <div class="text-3xl font-bold text-rose-500 mb-2">@Model.TongNoHienTai.ToString("N0") đ</div>
-            <div class="text-sm text-rose-500 font-medium">Từ @Model.SoHoaDonChuaThanhToan hóa đơn chưa đóng ➔</div>
+        <a href="@Url.Action("ThongKeHoaDon", "ThongKe")" class="block bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100 hover:border-rose-300 hover:shadow-md transition-all flex flex-col justify-between" style="text-decoration:none;">
+            <div>
+                <h3 class="text-gray-400 text-xs sm:text-sm font-medium tracking-wide mb-2">Quản lý Hóa đơn & Công nợ</h3>
+                <div class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-rose-500 tracking-tight whitespace-nowrap mb-2">
+                    @Model.TongNoHienTai.ToString("N0") <span class="text-lg sm:text-xl font-medium">đ</span>
+                </div>
+            </div>
+            <div class="text-xs text-rose-500 font-semibold leading-relaxed mt-1 break-words">
+                Từ @Model.SoHoaDonChuaThanhToan hóa đơn chưa đóng ➔
+            </div>
         </a>
 
     </div>
@@ -51,13 +77,13 @@
             <div class="p-4 bg-slate-50 border-b">
                 <h3 class="font-bold text-gray-700">Top 5 phòng mang lại doanh thu</h3>
             </div>
-            <div class="p-0">
-                <table class="w-full text-left text-sm">
+            <div class="p-0 w-full overflow-x-auto">
+                <table class="w-full text-left text-sm min-w-[320px]">
                     <thead class="bg-gray-50 text-gray-500">
                         <tr>
-                            <th class="p-3 border-b">Phòng</th>
-                            <th class="p-3 border-b text-center">Số HĐ</th>
-                            <th class="p-3 border-b text-right">Tổng tiền</th>
+                            <th class="p-3 border-b whitespace-nowrap">Phòng</th>
+                            <th class="p-3 border-b text-center whitespace-nowrap">Số HĐ</th>
+                            <th class="p-3 border-b text-right whitespace-nowrap">Tổng tiền</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -66,9 +92,9 @@
                             foreach (var item in Model.TopPhongList)
                             {
                                 <tr class="hover:bg-gray-50 border-b">
-                                    <td class="p-3 font-bold text-gray-700">@item.TenPhong</td>
-                                    <td class="p-3 text-center">@item.SoHoaDon</td>
-                                    <td class="p-3 text-right text-teal-600 font-medium">@item.TongDoanhThu.ToString("N0") đ</td>
+                                    <td class="p-3 font-bold text-gray-700 whitespace-nowrap">@item.TenPhong</td>
+                                    <td class="p-3 text-center whitespace-nowrap">@item.SoHoaDon</td>
+                                    <td class="p-3 text-right text-teal-600 font-medium whitespace-nowrap">@item.TongDoanhThu.ToString("N0") đ</td>
                                 </tr>
                             }
                         }
@@ -90,8 +116,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script>
-        // ==================== KHỞI TẠO NGUỒN DỮ LIỆU ĐỒNG BỘ TỪ DB ====================
-        var rawData = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : (Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]"));
+        // FIX LỖI CÚ PHÁP: Chuẩn hóa lại gán biến JSON từ DB sang JS ngắn gọn và không bị lỗi lặp điều kiện
+        var rawData = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]");
 
         var labelsThang = [];
         var dataThucTeThang = [];
@@ -104,19 +130,16 @@
         });
 
         dataThucTeThang = rawData.map(x => {
-        return (x.DoanhThu !== undefined) ? x.DoanhThu : x.doanhThu;
+        return (x.DoActiveThu !== undefined) ? x.DoActiveThu : ((x.DoanhThu !== undefined) ? x.DoanhThu : x.doanhThu);
         });
 
-        // Tiền đã thu thực tế tính toán tương ứng dựa theo luồng dữ liệu
         dataDaThuThang = dataThucTeThang.map(val => val * 0.9);
         } else {
-        // Dữ liệu dự phòng trường hợp database trống hoàn toàn
         labelsThang = ['Tháng 12', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5'];
         dataThucTeThang = [45000000, 50000000, 62000000, 58000000, 75000000, 14400000];
         dataDaThuThang = [40000000, 42000000, 55000000, 50000000, 68000000, 12000000];
         }
 
-        // ==================== VẼ BIỂU ĐỒ ĐƯỜNG GẤP KHÚC CHUẨN XÁC ====================
         var ctxArea = document.getElementById('doanhThu6ThangChart');
 
         if (ctxArea) {
@@ -142,7 +165,7 @@
         backgroundColor: gradientBlue,
         borderWidth: 2,
         fill: true,
-        tension: 0, // ĐÃ SỬA CHUẨN: Bằng 0 để đường đi miền bị gấp khúc thẳng tắp tuyệt đối
+        tension: 0,
         pointBackgroundColor: '#fff',
         pointBorderColor: '#1890ff',
         pointBorderWidth: 2,
@@ -156,7 +179,7 @@
         backgroundColor: gradientLight,
         borderWidth: 2,
         fill: true,
-        tension: 0, // ĐÃ SỬA CHUẨN: Bằng 0 để đường đi miền bị gấp khúc thẳng tắp tuyệt đối
+        tension: 0,
         pointRadius: 0,
         pointHoverRadius: 4
         }

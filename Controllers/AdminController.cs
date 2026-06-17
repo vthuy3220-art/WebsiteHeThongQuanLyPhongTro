@@ -133,38 +133,71 @@ namespace HeThongQuanLyPhongTro.Controllers
             return RedirectToAction(nameof(Index), new { tab = "CoSo" });
         }
 
-        // ==================== XÓA CƠ SỞ (CÓ KIỂM TRA RÀNG BUỘC) ====================
-        // Thêm action này vào AdminController
+        // ==================== HÀM POST CHÍNH: XÁC NHẬN XÓA CƠ SỞ (ĐÃ KHỚP FORM RIÊNG) ====================
         [HttpPost]
-        [HttpPost]
-        public async Task<IActionResult> XoaCoSo(int id)
+        public async Task<IActionResult> XacNhanXoaCoSo(int id)  // ← Sửa tham số thành 'id' để khớp chuẩn 'name="id"' ngoài Form
         {
+            // 1. Tìm cơ sở kèm theo danh sách tòa nhà dựa trên 'id' nhận được từ form
             var coSo = await _context.CoSo
                 .Include(c => c.ToaNhas)
                 .FirstOrDefaultAsync(c => c.MaCoSo == id);
 
             if (coSo == null)
             {
-                TempData["Error"] = "Không tìm thấy cơ sở này!";
+                TempData["Error"] = "❌ Không tìm thấy thông tin cơ sở này trên hệ thống!";
                 return RedirectToAction(nameof(Index), new { tab = "CoSo" });
             }
 
-            // KIỂM TRA NẾU CÓ TÒA NHÀ -> BÁO LỖI RÕ RÀNG
-            if (coSo.ToaNhas != null && coSo.ToaNhas.Any())
+            // 2. TÍCH HỢP Ý CỦA THUẬN: Quét xem có phòng nào thuộc cơ sở này còn người ở ("Đã thuê") hay không
+            bool dangCoNguoiO = await _context.Phong
+                .Include(p => p.ToaNha)
+                .AnyAsync(p => p.ToaNha.MaCoSo == id && p.TrangThai == "Đã thuê");
+
+            if (dangCoNguoiO)
             {
-                int soLuongToa = coSo.ToaNhas.Count;
-                TempData["Error"] = $"❌ Không thể xóa cơ sở '{coSo.TenCoSo}' vì đang có {soLuongToa} tòa nhà thuộc cơ sở này! Vui lòng xóa hoặc chuyển các tòa nhà trước khi xóa cơ sở.";
+                // Nếu vướng phòng đang thuê -> Chặn cứng, bắn lỗi ra màn hình chính Dashboard
+                TempData["Error"] = $"❌ Không thể xóa! Cơ sở '{coSo.TenCoSo}' hiện vẫn còn các phòng đang có người ở (Đã thuê). Vui lòng thanh lý hợp đồng trước.";
                 return RedirectToAction(nameof(Index), new { tab = "CoSo" });
             }
 
-            // Nếu không có tòa nhà thì mới xóa
-            _context.CoSo.Remove(coSo);
-            await _context.SaveChangesAsync();
+            // 3. Nếu kiểm tra đạt điều kiện TRỐNG HẾT -> Tiến hành xóa dọn dẹp bắc cầu (Cascade delete bằng code)
+            try
+            {
+                if (coSo.ToaNhas != null && coSo.ToaNhas.Any())
+                {
+                    foreach (var toaNha in coSo.ToaNhas)
+                    {
+                        // Tìm và xóa sạch các phòng trống của từng tòa nhà trước để tránh lỗi Foreign Key
+                        var danhSachPhongTrong = await _context.Phong
+                            .Where(p => p.MaToaNha == toaNha.MaToaNha)
+                            .ToListAsync();
 
-            TempData["Success"] = $"✅ Đã xóa cơ sở '{coSo.TenCoSo}' thành công!";
+                        _context.Phong.RemoveRange(danhSachPhongTrong);
+                    }
+
+                    // Sau khi dọn sạch phòng trống, thực hiện xóa danh sách tòa nhà
+                    _context.ToaNha.RemoveRange(coSo.ToaNhas);
+                }
+
+                // Cuối cùng là xóa gốc thực thể Cơ sở
+                _context.CoSo.Remove(coSo);
+
+                // Thực thi lưu xuống Database SQL Server
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = $"✅ Đã dọn dẹp hạ tầng trống và xóa cơ sở '{coSo.TenCoSo}' thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "❌ Có lỗi hệ thống phát sinh trong quá trình xóa dữ liệu: " + ex.Message;
+            }
+
+            // Đẩy Admin quay trở lại đúng tab Cơ sở trên giao diện Dashboard chính
             return RedirectToAction(nameof(Index), new { tab = "CoSo" });
         }
-        // GET: Hiển thị form xác nhận xóa
+
+
+        /* GET: Hiển thị form xác nhận xóa
         [HttpGet]
         public async Task<IActionResult> FormXoaCoSo(int id)
         {
@@ -182,35 +215,72 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
 
             return View("XoaCoSo", coSo);
-        }
+        }*/
 
         // POST: Xác nhận xóa cơ sở
-        [HttpPost]
-        public async Task<IActionResult> XacNhanXoaCoSo(int maCoSo)  // ← đổi tên parameter thành maCoSo
+
+        /*[HttpPost]
+        [ValidateAntiForgeryToken] 
+        public async Task<IActionResult> XacNhanXoaCoSo(int id)
         {
+            // 1. Tìm cơ sở và nạp kèm danh sách tòa nhà dựa trên id từ Form gửi lên
             var coSo = await _context.CoSo
                 .Include(c => c.ToaNhas)
-                .FirstOrDefaultAsync(c => c.MaCoSo == maCoSo);  // ← dùng maCoSo để tìm
+                .FirstOrDefaultAsync(c => c.MaCoSo == id);
 
             if (coSo == null)
             {
-                TempData["Error"] = "Không tìm thấy cơ sở!";
+                TempData["Error"] = "❌ Không tìm thấy thông tin cơ sở này trên hệ thống!";
                 return RedirectToAction(nameof(Index), new { tab = "CoSo" });
             }
 
-            // Kiểm tra lại lần nữa trước khi xóa
-            if (coSo.ToaNhas != null && coSo.ToaNhas.Any())
+            // 2. LOGIC CỦA THUẬN: Quét xem có phòng nào thuộc cơ sở này còn người ở ("Đã thuê") hay không
+            bool dangCoNguoiO = await _context.Phong
+                .Include(p => p.ToaNha)
+                .AnyAsync(p => p.ToaNha.MaCoSo == id && p.TrangThai == "Đã thuê");
+
+            if (dangCoNguoiO)
             {
-                TempData["Error"] = $"Không thể xóa cơ sở '{coSo.TenCoSo}' vì vẫn còn {coSo.ToaNhas.Count} tòa nhà liên quan!";
+                // Nếu vướng phòng đang thuê -> Chặn cứng, trả lỗi về trang Dashboard chính
+                TempData["Error"] = $"❌ Không thể xóa! Cơ sở '{coSo.TenCoSo}' hiện vẫn còn các phòng đang có người ở (Đã thuê). Vui lòng thanh lý hợp đồng trước.";
                 return RedirectToAction(nameof(Index), new { tab = "CoSo" });
             }
 
-            _context.CoSo.Remove(coSo);
-            await _context.SaveChangesAsync();
+            // 3. Đạt điều kiện TRỐNG HẾT -> Tiến hành xóa dọn dẹp hạ tầng
+            try
+            {
+                if (coSo.ToaNhas != null && coSo.ToaNhas.Any())
+                {
+                    foreach (var toaNha in coSo.ToaNhas)
+                    {
+                        // Tìm và xóa sạch dữ liệu phòng trống thuộc tòa nhà đó trước để không bị lỗi Khóa ngoại
+                        var danhSachPhongTrong = await _context.Phong
+                            .Where(p => p.MaToaNha == toaNha.MaToaNha)
+                            .ToListAsync();
 
-            TempData["Success"] = $"Đã xóa cơ sở '{coSo.TenCoSo}' thành công!";
+                        _context.Phong.RemoveRange(danhSachPhongTrong);
+                    }
+
+                    // Xóa danh sách tòa nhà trống trực thuộc cơ sở
+                    _context.ToaNha.RemoveRange(coSo.ToaNhas);
+                }
+
+                // Cuối cùng xóa thực thể Cơ sở gốc
+                _context.CoSo.Remove(coSo);
+
+                // Lưu mọi thay đổi xuống SQL Server
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = $"✅ Đã giải phóng toàn bộ hạ tầng trống và xóa cơ sở '{coSo.TenCoSo}' thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "❌ Có lỗi hệ thống phát sinh khi xóa dữ liệu: " + ex.Message;
+            }
+
+            // Điều hướng Admin về lại tab Cơ sở trên Dashboard chính
             return RedirectToAction(nameof(Index), new { tab = "CoSo" });
-        }
+        }*/
 
         // ==================== QUẢN LÝ THÀNH VIÊN (CHỦ TRỌ) ====================
         [HttpPost]

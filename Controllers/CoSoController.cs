@@ -2,6 +2,7 @@
 using HeThongQuanLyPhongTro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -154,36 +155,12 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(coSo);
         }
 
-        // ==================== XÓA CƠ SỞ (CHỈ SUPERADMIN) ====================
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (!IsSuperAdmin())
-            {
-                TempData["Error"] = "Bạn không có quyền xóa cơ sở!";
-                return RedirectToAction(nameof(Index));
-            }
+        // ==================== CẤU TRÚC XÓA CƠ SỞ CHUẨN KHỚP FORM LUỒNG CŨ ====================
 
-            if (id == null) return NotFound();
-
-            var coSo = await _context.CoSo
-                .FirstOrDefaultAsync(m => m.MaCoSo == id);
-
-            if (coSo == null) return NotFound();
-
-            // Kiểm tra xem có tòa nhà nào thuộc cơ sở này không
-            var coToaNha = await _context.ToaNha.AnyAsync(t => t.MaCoSo == id);
-            if (coToaNha)
-            {
-                TempData["Error"] = "Không thể xóa vì cơ sở này đang có tòa nhà!";
-                return RedirectToAction(nameof(Index));
-            }
-
-            return View(coSo);
-        }
-
+        // 1. Hàm GET: Bấm thùng rác ở Index sẽ nhảy vào đây để hiển thị trang Delete.cshtml
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int MaCoSo) // <-- SỬA Ở ĐÂY THÀNH MaCoSo
         {
             if (!IsSuperAdmin())
             {
@@ -191,12 +168,41 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var coSo = await _context.CoSo.FindAsync(id);
-            if (coSo != null)
+            // Đổi toàn bộ chữ 'id' bên trong hàm này thành 'MaCoSo'
+            var coSo = await _context.CoSo.FindAsync(MaCoSo);
+            if (coSo == null) return NotFound();
+
+            // KIỂM TRA PHÒNG ĐANG THUÊ TRÚ
+            bool dangCoNguoiO = await _context.Phong
+                .Include(p => p.ToaNha)
+                .AnyAsync(p => p.ToaNha.MaCoSo == MaCoSo && p.TrangThai == "Đã thuê");
+
+            if (dangCoNguoiO)
             {
+                TempData["Error"] = $"Không thể xóa! Cơ sở '{coSo.TenCoSo}' hiện vẫn còn các phòng đang có người ở (Đã thuê). Vui lòng thanh lý hợp đồng trước.";
+                return View("Delete", coSo);
+            }
+
+            try
+            {
+                var danhSachToaNha = await _context.ToaNha.Where(t => t.MaCoSo == MaCoSo).ToListAsync();
+
+                foreach (var toaNha in danhSachToaNha)
+                {
+                    var danhSachPhong = await _context.Phong.Where(p => p.MaToaNha == toaNha.MaToaNha).ToListAsync();
+                    _context.Phong.RemoveRange(danhSachPhong);
+                }
+
+                _context.ToaNha.RemoveRange(danhSachToaNha);
                 _context.CoSo.Remove(coSo);
+
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Xóa cơ sở thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Có lỗi hệ thống phát sinh: " + ex.Message;
+                return View("Delete", coSo);
             }
 
             return RedirectToAction(nameof(Index));

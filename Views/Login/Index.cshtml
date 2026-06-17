@@ -1,7 +1,7 @@
-﻿@{
+﻿@model HeThongQuanLyPhongTro.Models.DashboardViewModel
+@{
     Layout = null; // Bỏ Layout chung để không bị trùng lặp thanh điều hướng nếu dự án có sẵn _Layout
 }
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -10,37 +10,49 @@
     <title>Đăng Nhập - Phòng Trọ Xinh</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        /* CSS ẩn mũi tên dropdown mặc định của trình duyệt để dùng giao diện tùy biến */
+        input::-webkit-calendar-picker-indicator {
+            display: none !important;
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-gray-100">
 
     <div class="min-h-screen flex flex-col">
 
-        <!-- Thanh điều hướng -->
-        <nav class="bg-white border-b border-gray-200 font-semibold text-slate-700 text-sm w-full z-50 shadow-sm">
-            <div class="w-full px-6 md:px-16">
-                <div class="flex justify-between h-16 items-center">
-                    <a asp-controller="Home" asp-action="Index" class="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors">
-                        <i class="fas fa-home text-2xl"></i>
-                        <span class="text-xl font-bold text-gray-800">Trang Chủ</span>
+        <nav class="bg-white border-b border-gray-200 font-medium text-slate-600 text-xs w-full z-50 shadow-sm">
+            <div class="w-full px-6 md:px-12">
+                <div class="flex justify-between h-14 items-center">
+                    <a asp-controller="Home" asp-action="Index" class="flex items-center space-x-1.5 text-blue-600 hover:text-blue-800 transition-colors">
+                        <i class="fas fa-home text-lg"></i> <span class="text-base font-bold text-gray-800 tracking-tight">Trang Chủ</span>
                     </a>
-                    <div class="flex space-x-6">
-                        <a asp-controller="Home" asp-action="Index" class="hover:text-blue-600 transition-colors">Trang Chủ</a>
-                        <a asp-controller="Login" asp-action="Index" class="text-blue-600 border-b-2 border-blue-600 pb-1">Đăng Nhập</a>
+
+                    <div class="flex items-center space-x-5">
+                        <a asp-controller="Home" asp-action="Index" class="hover:text-blue-600 transition-colors hidden sm:block font-semibold">Trang Chủ</a>
+
+                        <a asp-controller="Login" asp-action="Index" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-1.5 rounded-full transition-all flex items-center gap-1 shadow-sm shadow-blue-500/10 transform active:scale-95">
+                            <i class="fas fa-sign-in-alt text-[10px]"></i> Đăng Nhập
+                        </a>
                     </div>
+
                 </div>
             </div>
         </nav>
 
-        <!-- Form đăng nhập -->
         <div class="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-gray-100 transition-all">
+            <div class="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-gray-100 transition-all relative">
 
                 <div class="text-center mb-8">
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4 shadow-sm">
                         <i class="fas fa-home text-3xl"></i>
                     </div>
-                    <h2 class="text-3xl font-extrabold text-gray-900">Phòng Trọ Xinh</h2>
-                    <p class="mt-2 text-sm text-gray-500">Chào mừng bạn quay lại hệ thống</p>
+                    <h2 class="text-3xl font-extrabold text-gray-900">
+                        Phòng Trọ Xinh
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Chào mừng bạn quay lại hệ thống
+                    </p>
                 </div>
 
                 @if (ViewBag.Error != null)
@@ -51,8 +63,9 @@
                     </div>
                 }
 
-                <form method="post" class="space-y-6">
-                    <div>
+                <form method="post" class="space-y-6" autocomplete="off">
+
+                    <div class="relative" id="usernameWrapper">
                         <label class="block text-sm font-bold text-gray-700 mb-2">Tên đăng nhập</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -62,8 +75,14 @@
                                    id="usernameInput"
                                    name="tenDangNhap"
                                    required
-                                   class="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-800"
+                                   class="w-full pl-11 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-800"
                                    placeholder="Nhập tài khoản..." />
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 cursor-pointer" id="arrowDropdownBtn">
+                                <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="dropdownArrowIcon"></i>
+                            </div>
+                        </div>
+
+                        <div id="customDropdown" class="absolute left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-2xl hidden z-50 max-h-52 overflow-y-auto divide-y divide-gray-50">
                         </div>
                     </div>
 
@@ -90,10 +109,15 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer">
-                            <label for="remember-me" class="ml-2 block text-sm text-gray-600 cursor-pointer">Ghi nhớ tôi</label>
+                            <label for="remember-me" class="ml-2 block text-sm text-gray-600 cursor-pointer">
+                                Ghi nhớ tôi
+                            </label>
                         </div>
+
                         <div class="text-sm">
-                            <a asp-controller="Login" asp-action="ForgotPassword" class="font-bold text-blue-600 hover:text-blue-500 transition-colors">Quên mật khẩu?</a>
+                            <a asp-controller="Login" asp-action="ForgotPassword" class="font-bold text-blue-600 hover:text-blue-500 transition-colors">
+                                Quên mật khẩu?
+                            </a>
                         </div>
                     </div>
 
@@ -104,13 +128,12 @@
                             <i class="fas fa-sign-in-alt ml-2"></i>
                         </button>
                     </div>
+
                 </form>
             </div>
         </div>
     </div>
-
-    <!-- Footer liên hệ -->
-    <div class="text-center mt-4 text-sm text-gray-600">
+    <div class="text-center pb-6 text-sm text-gray-600">
         Bạn muốn trở thành chủ trọ trên hệ thống?
         <a href="mailto:admin@phongtroxinh.com" class="text-blue-600 font-bold hover:underline">Liên hệ Admin ngay</a>
     </div>
@@ -118,75 +141,145 @@
     <script>
         // 1. LOGIC ẨN/HIỆN MẬT KHẨU (CON MẮT)
         document.getElementById('togglePassword').addEventListener('click', function () {
-            const passwordInput = document.getElementById('passwordInput');
-            const eyeIcon = document.getElementById('eyeIcon');
+        const passwordInput = document.getElementById('passwordInput');
+        const eyeIcon = document.getElementById('eyeIcon');
 
-            const isPassword = passwordInput.getAttribute('type') === 'password';
-            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+        const isPassword = passwordInput.getAttribute('type') === 'password';
+        passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
 
-            if (isPassword) {
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
-                eyeIcon.classList.add('text-blue-500');
-            } else {
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.add('fa-eye');
-                eyeIcon.classList.remove('text-blue-500');
-            }
+        if (isPassword) {
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');
+        eyeIcon.classList.add('text-blue-500');
+        } else {
+        eyeIcon.classList.remove('fa-eye-slash');
+        eyeIcon.classList.add('fa-eye');
+        eyeIcon.classList.remove('text-blue-500');
+        }
         });
 
-        // 2. LOGIC GHI NHỚ NHIỀU TÀI KHOẢN (NÂNG CẤP)
+        // 2. YÊU CẦU 2: LOGIC DROPDOWN QUẢN LÝ TÀI KHOẢN CÓ NÚT XÓA X TRỰC QUAN
         document.addEventListener('DOMContentLoaded', function () {
-            const userInput = document.getElementById('usernameInput');
-            const passInput = document.getElementById('passwordInput');
-            const rememberChk = document.getElementById('remember-me');
-            const form = document.querySelector('form');
+        const userInput = document.getElementById('usernameInput');
+        const passInput = document.getElementById('passwordInput');
+        const rememberChk = document.getElementById('remember-me');
+        const arrowBtn = document.getElementById('arrowDropdownBtn');
+        const arrowIcon = document.getElementById('dropdownArrowIcon');
+        const dropdown = document.getElementById('customDropdown');
+        const wrapper = document.getElementById('usernameWrapper');
+        const form = document.querySelector('form');
 
-            // Tạo datalist cho gợi ý tài khoản đã lưu
-            let dataList = document.createElement('datalist');
-            dataList.id = 'savedUsersList';
-            document.body.appendChild(dataList);
-            userInput.setAttribute('list', 'savedUsersList');
+        // Lấy danh sách tài khoản lưu trong LocalStorage
+        let savedAccounts = JSON.parse(localStorage.getItem('ptx_accounts_list')) || {};
 
-            // Lấy danh sách tài khoản đã lưu từ localStorage
-            let savedAccounts = JSON.parse(localStorage.getItem('ptx_accounts_list')) || {};
+        // Hàm vẽ lại danh sách tài khoản custom kèm nút xóa dấu X
+        function renderCustomDropdown() {
+        const users = Object.keys(savedAccounts);
+        if (users.length === 0) {
+        dropdown.innerHTML = '<div class="p-3 text-xs text-center text-gray-400 font-medium">Chưa có tài khoản ghi nhớ</div>';
+        return;
+        }
 
-            function updateDropdown() {
-                dataList.innerHTML = '';
-                for (let user in savedAccounts) {
-                    let option = document.createElement('option');
-                    option.value = user;
-                    dataList.appendChild(option);
-                }
-            }
+        dropdown.innerHTML = users.map(user => `
+        <div class="flex items-center justify-between px-4 py-2.5 hover:bg-blue-50/50 cursor-pointer group transition-colors dropdown-item-row" data-user="${user}">
+        <div class="flex items-center space-x-2.5 text-sm font-medium text-gray-700 flex-1 click-target">
+        <i class="fas fa-user-circle text-gray-400 group-hover:text-blue-500 text-base transition-colors"></i>
+        <span class="truncate">${user}</span>
+        </div>
+        <button type="button" class="delete-account-btn p-1 text-gray-300 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-all focus:outline-none" data-user="${user}" title="Xóa tài khoản này">
+        <i class="fas fa-times text-xs"></i>
+        </button>
+        </div>
+        `).join('');
 
-            updateDropdown();
+        // Gắn sự kiện click chọn tài khoản cho từng hàng
+        dropdown.querySelectorAll('.click-target').forEach(target => {
+        target.onclick = function (e) {
+        const row = this.closest('.dropdown-item-row');
+        const selectedUser = row.getAttribute('data-user');
+        userInput.value = selectedUser;
+        passInput.value = savedAccounts[selectedUser] || '';
+        rememberChk.checked = true;
+        hideDropdown();
+        };
+        });
 
-            // Khi người dùng nhập/chọn tài khoản
-            userInput.addEventListener('input', function () {
-                const typedUser = this.value.trim();
-                if (savedAccounts[typedUser]) {
-                    passInput.value = savedAccounts[typedUser];
-                    rememberChk.checked = true;
-                } else {
-                    passInput.value = '';
-                    rememberChk.checked = false;
-                }
-            });
+        // Gắn sự kiện click dấu X để xóa tài khoản ra khỏi bộ nhớ
+        dropdown.querySelectorAll('.delete-account-btn').forEach(btn => {
+        btn.onclick = function (e) {
+        e.stopPropagation(); // Ngăn chặn sự kiện click chọn hàng
+        const targetUser = this.getAttribute('data-user');
 
-            // Khi submit form, lưu lại thông tin
-            form.addEventListener('submit', function () {
-                const currentUser = userInput.value.trim();
-                if (!currentUser) return;
+        // Xóa trong bộ nhớ tạm và LocalStorage
+        delete savedAccounts[targetUser];
+        localStorage.setItem('ptx_accounts_list', JSON.stringify(savedAccounts));
 
-                if (rememberChk.checked) {
-                    savedAccounts[currentUser] = passInput.value;
-                } else {
-                    delete savedAccounts[currentUser];
-                }
+        // Nếu tài khoản đang hiển thị trên input trùng với tài khoản vừa xóa thì clear luôn input
+        if (userInput.value === targetUser) {
+        userInput.value = '';
+        passInput.value = '';
+        rememberChk.checked = false;
+        }
 
-                localStorage.setItem('ptx_accounts_list', JSON.stringify(savedAccounts));
-            });
+        // Vẽ lại dropdown ngay lập tức
+        renderCustomDropdown();
+        };
+        });
+        }
+
+        function showDropdown() {
+        renderCustomDropdown();
+        dropdown.classList.remove('hidden');
+        arrowIcon.classList.add('rotate-180');
+        }
+
+        function hideDropdown() {
+        dropdown.classList.add('hidden');
+        arrowIcon.classList.remove('rotate-180');
+        }
+
+        // Click vào ô nhập hoặc nút mũi tên sẽ mở dropdown gợi ý
+        userInput.addEventListener('focus', showDropdown);
+        arrowBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (dropdown.classList.contains('hidden')) {
+        showDropdown();
+        } else {
+        hideDropdown();
+        }
+        });
+
+        // Gõ text vào ô nhập sẽ tự động nhận diện pass nếu khớp user đã lưu
+        userInput.addEventListener('input', function () {
+        const typedUser = this.value.trim();
+        if (savedAccounts[typedUser]) {
+        passInput.value = savedAccounts[typedUser];
+        rememberChk.checked = true;
+        } else {
+        passInput.value = '';
+        rememberChk.checked = false;
+        }
+        });
+
+        // Click ra ngoài vùng input dropdown sẽ tự ẩn đi
+        document.addEventListener('click', function (e) {
+        if (!wrapper.contains(e.target)) {
+        hideDropdown();
+        }
+        });
+
+        // Lưu tài khoản mới khi submit form nếu tích chọn ghi nhớ
+        form.addEventListener('submit', function () {
+        const currentUser = userInput.value.trim();
+        if (!currentUser) return;
+
+        if (rememberChk.checked) {
+        savedAccounts[currentUser] = passInput.value;
+        } else {
+        delete savedAccounts[currentUser];
+        }
+        localStorage.setItem('ptx_accounts_list', JSON.stringify(savedAccounts));
+        });
         });
     </script>
 </body>

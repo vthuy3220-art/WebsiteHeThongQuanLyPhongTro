@@ -30,7 +30,7 @@
             transition: all 0.3s ease;
         }
 
-        /* Thêm CSS cho dropdown */
+        /* CSS Dropdown chung */
         .dropdown-menu {
             opacity: 0;
             visibility: hidden;
@@ -56,20 +56,6 @@
             background: #cbd5e1;
             border-radius: 4px;
         }
-
-        .line-clamp-1 {
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -85,7 +71,6 @@
     @if (isAdmin || isChuTro)
     {
         <div class="flex h-screen">
-            <!-- Sidebar -->
             <div class="w-72 bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col shadow-2xl sidebar overflow-y-auto">
                 <div class="p-6 border-b border-gray-700">
                     <div class="flex items-center space-x-3">
@@ -99,29 +84,7 @@
                     </div>
                 </div>
 
-                <div class="p-4 mx-3 mt-4 bg-gray-800 rounded-xl">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user text-white"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-semibold">@username</p>
-                            <p class="text-xs text-gray-400">
-                                @if (isAdmin)
-                                {
-                                    <text>Quản trị viên</text>
-                                }
-                                else if (isChuTro)
-                                {
-                                    <text>Chủ trọ</text>
-                                }
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 <nav class="flex-1 px-3 py-6 space-y-1">
-                    <!-- Dashboard chung -->
                     <p class="text-xs text-gray-500 uppercase tracking-wider px-3 pb-2">Trang chính</p>
                     <a asp-controller="Dashboard" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
                         <i class="fas fa-chart-pie w-5 h-5 mr-3 text-gray-400"></i><span>Dashboard</span>
@@ -129,7 +92,6 @@
 
                     @if (isAdmin)
                     {
-                        <!-- ========== ADMIN MENU ========== -->
                         <p class="text-xs text-gray-500 uppercase tracking-wider px-3 pt-4 pb-2">Quản lý hệ thống</p>
                         <a asp-controller="CoSo" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
                             <i class="fas fa-map-marked-alt w-5 h-5 mr-3 text-gray-400"></i><span>Quản lý Cơ sở</span>
@@ -144,34 +106,6 @@
 
                     @if (isChuTro)
                     {
-                        <!-- ========== CHỦ TRỌ MENU ========== -->
-                        <div class="relative group mb-4">
-                            <a href="#" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 transition-all">
-                                <i class="fas fa-user-circle w-5 h-5 mr-3 text-blue-400"></i>
-                                <span class="flex-1">Tài khoản của tôi</span>
-                                <i class="fas fa-chevron-down text-xs text-gray-500 group-hover:rotate-180 transition-transform"></i>
-                            </a>
-                            <div class="dropdown-menu absolute left-0 w-64 mt-1 bg-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-700">
-                                <div class="px-4 py-3 bg-gray-900 border-b border-gray-700">
-                                    <p class="text-sm font-bold text-white">@username</p>
-                                    <p class="text-xs text-gray-400">Chủ trọ</p>
-                                </div>
-                                <a asp-controller="Profile" asp-action="Index1" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-all">
-                                    <i class="fas fa-id-card w-5 mr-3 text-blue-400"></i> Thông tin cá nhân
-                                </a>
-                                <a asp-controller="Profile" asp-action="ChangePassword1" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-all">
-                                    <i class="fas fa-key w-5 mr-3 text-yellow-400"></i> Đổi mật khẩu
-                                </a>
-                                <a asp-controller="TaiKhoan" asp-action="CapNhatNganHang" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 transition-all">
-                                    <i class="fas fa-university w-5 mr-3 text-green-400"></i> Tài khoản ngân hàng
-                                </a>
-                                <div class="border-t border-gray-700 my-1"></div>
-                                <a asp-controller="Login" asp-action="Logout" class="flex items-center px-4 py-3 text-sm text-red-400 hover:bg-gray-700 transition-all">
-                                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Đăng xuất
-                                </a>
-                            </div>
-                        </div>
-
                         <p class="text-xs text-gray-500 uppercase tracking-wider px-3 pt-2 pb-2">Quản lý tòa nhà</p>
                         <a asp-controller="ToaNha" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
                             <i class="fas fa-building w-5 h-5 mr-3 text-gray-400"></i><span>Tòa nhà</span>
@@ -207,36 +141,22 @@
                         <a asp-controller="ThanhToans" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
                             <i class="fas fa-money-bill-wave w-5 h-5 mr-3 text-gray-400"></i><span>Thanh toán</span>
                         </a>
-                        <a asp-controller="TaiKhoan" asp-action="CapNhatNganHang" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-                            <i class="fas fa-university w-5 h-5 mr-3 text-gray-400"></i><span>Cài đặt ngân hàng</span>
-                        </a>
-
-                        <p class="text-xs text-gray-500 uppercase tracking-wider px-3 pt-4 pb-2">Vận hành</p>
-                        <a asp-controller="BaiDang" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-                            <i class="fas fa-newspaper w-5 h-5 mr-3 text-gray-400"></i><span>Bài đăng</span>
-                        </a>
-                        <a asp-controller="YeuCauSuaChua" asp-action="Index" class="flex items-center px-3 py-3 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
-                            <i class="fas fa-tools w-5 h-5 mr-3 text-gray-400"></i><span>Yêu cầu sửa chữa</span>
+                        <a asp-controller="ThongKe" asp-action="Index" class="flex items-center px-3 py-2.5 rounded-xl text-gray-300 hover:bg-gray-700 hover:text-white transition-all">
+                            <i class="fas fa-chart-pie w-5 h-5 mr-3 text-gray-400"></i><span>Thống kê doanh thu</span>
                         </a>
                     }
                 </nav>
-
-                <div class="p-4 border-t border-gray-700">
-                    <a asp-controller="Login" asp-action="Logout" class="flex items-center px-3 py-3 rounded-xl text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-all">
-                        <i class="fas fa-sign-out-alt w-5 h-5 mr-3"></i><span>Đăng xuất</span>
-                    </a>
-                </div>
             </div>
 
-            <!-- Main Content -->
             <div class="flex-1 overflow-y-auto relative">
                 <header class="bg-white shadow-sm sticky top-0 z-40">
                     <div class="flex justify-between items-center px-6 py-4">
                         <div>
                             <h1 class="text-2xl font-bold text-gray-800">@ViewData["Title"]</h1>
-                            <p class="text-sm text-gray-500 mt-1">Chào mừng bạn trở lại, @username</p>
+                            <p class="text-sm text-gray-500 mt-1">Hệ thống quản lý vận hành tòa nhà</p>
                         </div>
-                        <div class="flex items-center space-x-4">
+
+                        <div class="flex items-center space-x-6">
                             <div class="relative" id="notificationWrapper">
                                 <button id="bellButton" class="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors focus:outline-none relative">
                                     <i class="fas fa-bell text-xl"></i>
@@ -255,6 +175,46 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="h-6 w-px bg-gray-200"></div>
+
+                            <div class="relative group">
+                                <button class="flex items-center space-x-3 p-1.5 rounded-xl hover:bg-gray-50 transition-colors focus:outline-none">
+                                    <div class="w-9 h-9 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold shadow-md shadow-blue-500/10">
+                                        <i class="fas fa-user-tie text-sm"></i>
+                                    </div>
+                                    <div class="text-left hidden md:block">
+                                        <p class="text-sm font-bold text-gray-800 leading-tight">@username</p>
+                                        <p class="text-[11px] font-semibold text-blue-600 tracking-wide uppercase mt-0.5">
+                                            @(isAdmin ? "Quản trị viên" : "Chủ trọ")
+                                        </p>
+                                    </div>
+                                    <i class="fas fa-chevron-down text-xs text-gray-400 group-hover:rotate-180 transition-transform hidden md:block pl-1"></i>
+                                </button>
+
+                                <div class="dropdown-menu absolute right-0 w-56 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                                    <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-100 md:hidden">
+                                        <p class="text-xs text-gray-400">Tài khoản</p>
+                                        <p class="text-sm font-bold text-gray-800">@username</p>
+                                    </div>
+                                    @if (isChuTro)
+                                    {
+                                        <a asp-controller="Profile" asp-action="Index1" class="flex items-center px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-all">
+                                            <i class="fas fa-id-card w-4 mr-2.5 text-blue-500"></i> Thông tin cá nhân
+                                        </a>
+                                        <a asp-controller="Profile" asp-action="ChangePassword1" class="flex items-center px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-yellow-600 transition-all">
+                                            <i class="fas fa-key w-4 mr-2.5 text-yellow-500"></i> Đổi mật khẩu
+                                        </a>
+                                        <a asp-controller="TaiKhoan" asp-action="CapNhatNganHang" class="flex items-center px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-green-600 transition-all">
+                                            <i class="fas fa-university w-4 mr-2.5 text-green-500"></i> Số tài khoản ngân hàng
+                                        </a>
+                                        <div class="border-t border-gray-100 my-1"></div>
+                                    }
+                                    <a asp-controller="Login" asp-action="Logout" class="flex items-center px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 font-medium transition-all">
+                                        <i class="fas fa-sign-out-alt w-4 mr-2.5"></i> Đăng xuất
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -266,7 +226,6 @@
     }
     else if (isKhach)
     {
-        <!-- Giao diện cho Khách hàng (không có sidebar) -->
         <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
             <nav class="bg-white shadow-lg sticky top-0 z-50">
                 <div class="container mx-auto px-4 py-3">
@@ -287,6 +246,26 @@
                             <a asp-controller="YeuCauSuaChua" asp-action="TaoYeuCau" class="text-sm text-orange-600 hover:text-orange-700">Yêu cầu sửa chữa</a>
                             <a asp-controller="YeuCauSuaChua" asp-action="YeuCauCuaToi" class="text-sm text-gray-600 hover:text-blue-600">Yêu cầu của tôi</a>
                             <a asp-controller="KhachHang" asp-action="DoiMatKhau" class="text-sm text-gray-600 hover:text-blue-600">Đổi mật khẩu</a>
+
+                            <div class="relative" id="notificationWrapper">
+                                <button id="bellButton" class="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors focus:outline-none relative">
+                                    <i class="fas fa-bell text-xl"></i>
+                                    <span id="badgeCount" class="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center hidden px-1 border-2 border-white shadow-sm">0</span>
+                                </button>
+                                <div id="bellDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl hidden z-50 border border-gray-100 overflow-hidden">
+                                    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                                        <h3 class="font-bold text-gray-700">Thông báo <span id="header-unread-count" class="text-blue-500">(0)</span></h3>
+                                        <button id="markAllRead" class="text-xs text-blue-500 hover:underline">Đánh dấu đã đọc</button>
+                                    </div>
+                                    <div id="listThongBao" class="max-h-[60vh] overflow-y-auto bg-white">
+                                        <div class="p-8 text-center text-gray-400">Đang tải...</div>
+                                    </div>
+                                    <div class="p-3 text-center border-t bg-gray-50">
+                                        <a href="@Url.Action("Index", "ThongBao")" class="text-sm text-gray-600 hover:text-blue-600">Xem tất cả</a>
+                                    </div>
+                                </div>
+                            </div>
+
                             <a asp-controller="Login" asp-action="Logout" class="text-sm text-red-500 hover:text-red-700"><i class="fas fa-sign-out-alt"></i></a>
                         </div>
                     </div>
@@ -304,6 +283,19 @@
         </div>
     }
 
+    <div id="notificationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-slate-50 w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform scale-95 transition-all duration-300 max-h-[90vh] flex flex-col relative">
+
+            <button onclick="closeNotificationModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full border border-slate-100 shadow-sm z-50 focus:outline-none transition-all">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+
+            <div id="modalContainer" class="overflow-y-auto p-1 flex-1">
+                <div class="p-12 text-center text-slate-400"><i class="fas fa-circle-notch fa-spin mr-2"></i>Đang tải dữ liệu chi tiết...</div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
@@ -311,64 +303,112 @@
 
     <script>
         function loadThongBao() {
-            fetch('/ThongBao/GetList')
-                .then(res => res.json())
-                .then(data => {
-                    const badge = document.getElementById('badgeCount');
-                    const headerCount = document.getElementById('header-unread-count');
-                    const list = document.getElementById('listThongBao');
-                    if (data && data.length > 0) {
-                        const unreadCount = data.filter(x => !x.daXem).length;
-                        if (unreadCount > 0) {
-                            badge.classList.remove('hidden');
-                            badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
-                            headerCount.innerText = `(${unreadCount} mới)`;
-                        } else {
-                            badge.classList.add('hidden');
-                            headerCount.innerText = `(0 mới)`;
-                        }
-                        list.innerHTML = data.map(tb => {
-                            let iconClass = 'fa-bell text-blue-500';
-                            if (tb.loai === 'success') iconClass = 'fa-check-circle text-green-500';
-                            const bgClass = tb.daXem ? 'bg-white' : 'bg-blue-50';
-                            const blueDot = !tb.daXem ? `<div class="w-2 h-2 bg-blue-500 rounded-full"></div>` : '';
-                            return `
-                                <div class="p-3 border-b hover:bg-gray-50 cursor-pointer ${bgClass}" onclick="viewNotification('${tb.id}', '${tb.duongDan}')">
-                                    <div class="flex items-start gap-3">
-                                        <i class="fas ${iconClass} mt-1"></i>
-                                        <div class="flex-1">
-                                            <p class="text-sm font-medium">${tb.tieuDe}</p>
-                                            <p class="text-xs text-gray-500">${tb.noiDung}</p>
-                                            <p class="text-xs text-gray-400 mt-1">${tb.ngayTao}</p>
-                                        </div>
-                                        ${blueDot}
-                                    </div>
-                                </div>
-                            `;
-                        }).join('');
-                    } else {
-                        badge.classList.add('hidden');
-                        headerCount.innerText = `(0 mới)`;
-                        list.innerHTML = '<div class="p-4 text-center text-gray-400">Chưa có thông báo</div>';
-                    }
-                });
+        fetch('/ThongBao/GetList')
+        .then(res => res.json())
+        .then(data => {
+        const badge = document.getElementById('badgeCount');
+        const headerCount = document.getElementById('header-unread-count');
+        const list = document.getElementById('listThongBao');
+        if (data && data.length > 0) {
+        const unreadCount = data.filter(x => !x.daXem).length;
+        if (unreadCount > 0) {
+        badge.classList.remove('hidden');
+        badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+        headerCount.innerText = `(${unreadCount} mới)`;
+        } else {
+        badge.classList.add('hidden');
+        headerCount.innerText = `(0 mới)`;
+        }
+        list.innerHTML = data.map(tb => {
+        let iconClass = 'fa-bell text-blue-500';
+        if (tb.loai === 'success') iconClass = 'fa-check-circle text-green-500';
+        const bgClass = tb.daXem ? 'bg-white' : 'bg-blue-50';
+        const blueDot = !tb.daXem ? `<div class="w-2 h-2 bg-blue-500 rounded-full"></div>` : '';
+        return `
+        <div class="p-3 border-b hover:bg-gray-50 cursor-pointer ${bgClass}" onclick="viewNotification('${tb.id}', '${tb.duongDan}')">
+        <div class="flex items-start gap-3">
+        <i class="fas ${iconClass} mt-1"></i>
+        <div class="flex-1">
+        <p class="text-sm font-medium">${tb.tieuDe}</p>
+        <p class="text-xs text-gray-500">${tb.noiDung}</p>
+        <p class="text-xs text-gray-400 mt-1">${tb.ngayTao}</p>
+        </div>
+        ${blueDot}
+        </div>
+        </div>
+        `;
+        }).join('');
+        } else {
+        badge.classList.add('hidden');
+        headerCount.innerText = `(0 mới)`;
+        list.innerHTML = '<div class="p-4 text-center text-gray-400">Chưa có thông báo</div>';
+        }
+        });
         }
 
+        // CHỈNH SỬA: Thay đổi hàm click thông báo để bật Modal thay vì đổi trang
         window.viewNotification = function(id, link) {
-            if (id) fetch(`/ThongBao/MarkAsRead?id=${id}`, { method: 'POST' }).then(() => { if (link) window.location.href = link; });
-            else if (link) window.location.href = link;
+        if (id) {
+        fetch(`/ThongBao/MarkAsRead?id=${id}`, { method: 'POST' }).then(() => { loadThongBao(); });
+        }
+
+        if (link) {
+        openNotificationModal(link);
+        }
         };
 
+        function openNotificationModal(url) {
+        const modal = document.getElementById('notificationModal');
+        const container = document.getElementById('modalContainer');
+
+        // Hiển thị trạng thái đang tải
+        container.innerHTML = '<div class="p-12 text-center text-slate-400"><i class="fas fa-circle-notch fa-spin mr-2"></i>Đang tải dữ liệu chi tiết...</div>';
+
+        // Kích hoạt hiệu ứng làm mờ xung quanh và mở modal ra
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.firstElementChild.classList.remove('scale-95');
+
+        // Thực hiện gọi AJAX lấy Partial View từ file Details
+        fetch(url, {
+        headers: {
+        'X-Requested-With': 'XMLHttpRequest' // Khai báo Client gọi AJAX
+        }
+        })
+        .then(res => {
+        if(!res.ok) throw new Error("Không thể tải trang");
+        return res.text();
+        })
+        .then(html => {
+        container.innerHTML = html;
+        })
+        .catch(err => {
+        container.innerHTML = '<div class="p-8 text-center text-red-500"><i class="fas fa-exclamation-circle mr-2"></i>Không thể tải thông tin chi tiết yêu cầu này.</div>';
+        });
+        }
+
+        function closeNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.firstElementChild.classList.add('scale-95');
+        }
+
+        // Đóng modal khi nhấn ra ngoài vùng nội dung
+        document.getElementById('notificationModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+        closeNotificationModal();
+        }
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
-            const bellBtn = document.getElementById('bellButton');
-            const dropdown = document.getElementById('bellDropdown');
-            const wrapper = document.getElementById('notificationWrapper');
-            if (bellBtn && wrapper) {
-                bellBtn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('hidden'); if (!dropdown.classList.contains('hidden')) loadThongBao(); };
-                document.onclick = (e) => { if (!wrapper.contains(e.target)) dropdown.classList.add('hidden'); };
-                loadThongBao();
-                setInterval(loadThongBao, 30000);
-            }
+        const bellBtn = document.getElementById('bellButton');
+        const dropdown = document.getElementById('bellDropdown');
+        const wrapper = document.getElementById('notificationWrapper');
+        if (bellBtn && wrapper) {
+        bellBtn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('hidden'); if (!dropdown.classList.contains('hidden')) loadThongBao(); };
+        document.onclick = (e) => { if (!wrapper.contains(e.target)) dropdown.classList.add('hidden'); };
+        loadThongBao();
+        setInterval(loadThongBao, 30000);
+        }
         });
     </script>
 </body>

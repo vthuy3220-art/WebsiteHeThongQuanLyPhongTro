@@ -464,7 +464,211 @@ namespace HeThongQuanLyPhongTro.Controllers
             TempData["Success"] = $"Đã xử lý {soGuiThanhCong} email thành công, {soGuiThatBai} thất bại.";
             return RedirectToAction("Index");
         }
+
+        // ==================== TRANG THỐNG KÊ CHUYÊN SÂU (MỚI) ====================
+        [HttpGet]
+        public async Task<IActionResult> ThongKe(int? maToaNha)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (role != "ChuTro" || userId == null) return RedirectToAction("Index", "Login");
+
+            // 1. Lấy danh sách toàn bộ Tòa nhà của chủ trọ này để làm bộ lọc Dropdown
+            var danhSachToaNha = await _context.ToaNha
+                .Where(t => t.MaChuTro == userId.Value)
+                .ToListAsync();
+            ViewBag.DanhSachToaNha = danhSachToaNha;
+            ViewBag.SelectedToaNha = maToaNha;
+
+            // 2. Lấy danh sách ID các tòa nhà cần tính toán (nếu chọn 1 tòa thì lấy 1, nếu không chọn thì lấy tất cả)
+            var targetToaNhaIds = maToaNha.HasValue
+                ? new List<int> { maToaNha.Value }
+                : danhSachToaNha.Select(t => t.MaToaNha).ToList();
+
+            // 3. Truy vấn Phòng, Hợp đồng, Hóa đơn theo các tòa nhà mục tiêu
+            var phongs = await _context.Phong
+                .Where(p => targetToaNhaIds.Contains(p.MaToaNha))
+                .ToListAsync();
+            var phongIds = phongs.Select(p => p.MaPhong).ToList();
+
+            var hopDongs = await _context.HopDong
+                .Where(h => phongIds.Contains(h.MaPhong))
+                .ToListAsync();
+            var hopDongIds = hopDongs.Select(h => h.MaHopDong).ToList();
+
+            var hoaDons = await _context.HoaDon
+                .Where(hd => hopDongIds.Contains(hd.MaHopDong) && hd.TrangThai == "Đã thanh toán")
+                .ToListAsync();
+
+            // 4. TÍNH TOÁN % DOANH THU THEO TỪNG TÒA NHÀ
+            decimal tongDoanhThuTatCa = hoaDons.Sum(h => h.TongTien ?? 0);
+
+            var thongKeToaNha = danhSachToaNha.Select(t => {
+                var pIds = _context.Phong.Where(p => p.MaToaNha == t.MaToaNha).Select(p => p.MaPhong).ToList();
+                var hIds = _context.HopDong.Where(h => pIds.Contains(h.MaPhong)).Select(h => h.MaHopDong).ToList();
+                decimal doanhThuToa = hoaDons.Where(hd => hIds.Contains(hd.MaHopDong)).Sum(hd => hd.TongTien ?? 0);
+
+                return new
+                {
+                    TenToaNha = t.TenToaNha,
+                    DoanhThu = doanhThuToa,
+                    PhanTrach = tongDoanhThuTatCa > 0 ? Math.Round((double)doanhThuToa / (double)tongDoanhThuTatCa * 100, 1) : 0
+                };
+            }).OrderByDescending(x => x.DoanhThu).ToList();
+            ViewBag.ThongKeToaNha = thongKeToaNha;
+
+            // 5. TÍNH TOÁN % DOANH THU THEO TỪNG PHÒNG TRONG TIÊU CHÍ LỌC
+            var thongKePhong = phongs.Select(p => {
+                var hIds = hopDongs.Where(h => h.MaPhong == p.MaPhong).Select(h => h.MaHopDong).ToList();
+                decimal doanhThuPhong = hoaDons.Where(hd => hIds.Contains(hd.MaHopDong)).Sum(hd => hd.TongTien ?? 0);
+
+                return new
+                {
+                    TenPhong = p.TenPhong,
+                    DoanhThu = doanhThuPhong,
+                    PhanTram = tongDoanhThuTatCa > 0 ? Math.Round((double)doanhThuPhong / (double)tongDoanhThuTatCa * 100, 1) : 0
+                };
+            }).Where(x => x.DoanhThu > 0).OrderByDescending(x => x.DoanhThu).Take(10).ToList(); // Lấy top 10 phòng đóng góp cao nhất
+            ViewBag.ThongKePhong = thongKePhong;
+
+            ViewBag.TongDoanhThuMụcTieu = tongDoanhThuTatCa;
+            ViewBag.TongSoPhongMụcTieu = phongs.Count;
+
+            return View();
+        }
+
+        // ==================== HÀM XỬ LÝ GỬI KHẢO SÁT GIA HẠN (THÊM MỚI VÀO ĐÂY) ====================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuiKhaoSatGiaHan(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "ChuTro") return Forbid();
+
+            // 1. Tìm thông tin hợp đồng sắp hết hạn từ Database
+            var hopDong = await _context.HopDong
+                .Include(h => h.KhachHangNavigation)
+                .Include(h => h.PhongNavigation)
+                .FirstOrDefaultAsync(h => h.MaHopDong == id);
+
+            if (hopDong == null || hopDong.KhachHangNavigation == null)
+            {
+                TempData["Error"] = "Không tìm thấy thông tin hợp đồng hoặc khách thuê!";
+                return RedirectToAction("Index");
+            }
+
+            var khachHang = hopDong.KhachHangNavigation;
+            var tenPhong = hopDong.PhongNavigation?.TenPhong ?? "N/A";
+
+            // 2. Tạo thông tin thông báo (Notification) đẩy trực tiếp vào tài khoản khách thuê trên Sàn
+            var thongBao = new ThongBao
+            {
+                TieuDe = "Khảo sát nhu cầu gia hạn hợp đồng",
+                NoiDung = $"Hợp đồng phòng {tenPhong} của bạn sắp hết hạn vào ngày {hopDong.NgayKetThuc?.ToString("dd/MM/yyyy")}. Vui lòng phản hồi lại với chủ trọ về nhu cầu tiếp tục thuê.",
+                Loai = "info",
+                DuongDan = $"/HopDong/Details/{hopDong.MaHopDong}", // Link trỏ về trang chi tiết hợp đồng của khách
+                NgayTao = DateTime.Now,
+                NguoiNhan = khachHang.MaKhachHang
+            };
+            _context.ThongBao.Add(thongBao);
+            await _context.SaveChangesAsync();
+
+            // 3. Tự động gửi Email nhắc nhở song song (Sử dụng cấu hình Email có sẵn của nhóm bạn)
+            if (!string.IsNullOrWhiteSpace(khachHang.Email))
+            {
+                try
+                {
+                    var smtpServer = _configuration["EmailSettings:SmtpServer"];
+                    var smtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"]);
+                    var senderEmail = _configuration["EmailSettings:SenderEmail"];
+                    var senderPassword = _configuration["EmailSettings:SenderPassword"];
+
+                    using var smtpClient = new SmtpClient(smtpServer)
+                    {
+                        Port = smtpPort,
+                        Credentials = new NetworkCredential(senderEmail, senderPassword),
+                        EnableSsl = true
+                    };
+
+                    var mailMessage = new MailMessage
+                    {
+                        From = new MailAddress(senderEmail, "Phòng Trọ Xinh"),
+                        Subject = $"[Khảo Sát] Nhu cầu gia hạn hợp đồng thuê phòng {tenPhong}",
+                        IsBodyHtml = true,
+                        Body = $@"
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;'>
+                                <div style='background: #f57c00; padding: 24px; text-align: center;'>
+                                    <h2 style='color: white; margin: 0;'>🏠 Hệ thống Phòng Trọ Xinh</h2>
+                                    <p style='color: #fff3e0; margin: 4px 0 0 0; font-size: 14px;'>Khảo sát gia hạn hợp đồng</p>
+                                </div>
+                                <div style='padding: 24px;'>
+                                    <p style='color: #333;'>Xin chào <strong>{khachHang.HoTen}</strong>,</p>
+                                    <p style='color: #555;'>Hợp đồng thuê <strong>Phòng {tenPhong}</strong> của bạn sắp hết hạn hiệu lực vào ngày <strong>{hopDong.NgayKetThuc?.ToString("dd/MM/yyyy")}</strong>.</p>
+                                    <p style='color: #555;'>Để ban quản lý chuẩn bị sắp xếp lịch vận hành, vui lòng đăng nhập vào ứng dụng hoặc liên hệ trực tiếp với chủ trọ để phản hồi về việc <strong>Có tiếp tục gia hạn hợp đồng hay không</strong>.</p>
+                                    <p style='color: #888; font-size: 13px; margin-top: 24px;'>Trân trọng,<br/><strong>Ban quản lý Hệ thống Phòng Trọ Xinh</strong></p>
+                                </div>
+                            </div>"
+                    };
+                    mailMessage.To.Add(khachHang.Email);
+                    await smtpClient.SendMailAsync(mailMessage);
+                }
+                catch
+                {
+                    // Nếu lỗi Email thì hệ thống vẫn lưu thông báo trên Sàn thành công
+                }
+            }
+
+            TempData["Success"] = $"Đã gửi khảo sát gia hạn đến phòng {tenPhong} và tài khoản của khách thuê thành công!";
+            return RedirectToAction("Index");
+        }
+
+        // ==================== HÀM KHÁCH PHẢN HỒI GIA HẠN -> ĐÃ FIX LỖI GHICHU ====================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> KhachPhanHoiGiaHan(int maHopDong, string luaChon)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Khach") return Forbid();
+
+            // 1. Tìm thông tin hợp đồng thực tế từ database
+            var hopDong = await _context.HopDong
+                .Include(h => h.PhongNavigation)
+                .Include(h => h.KhachHangNavigation)
+                .FirstOrDefaultAsync(h => h.MaHopDong == maHopDong);
+
+            if (hopDong == null)
+            {
+                TempData["Error"] = "Không tìm thấy thông tin hợp đồng!";
+                return RedirectToAction("Index");
+            }
+
+            string tenPhong = hopDong.PhongNavigation?.TenPhong ?? "N/A";
+            string tenKhach = hopDong.KhachHangNavigation?.HoTen ?? "Khách thuê";
+            string textPhanHoi = luaChon == "GiaHan" ? "SẼ GIA HẠN TIẾP" : "SẼ TRẢ PHÒNG";
+
+            // 🔥 ĐÃ FIX: Xóa bỏ dòng hopDong.GhiChu cũ. 
+            // Nếu muốn lưu vết, bạn có thể tận dụng ghi đè thẳng vào nội dung thông báo bắn lên chuông dưới đây:
+
+            // 2. BẮN THÔNG BÁO LÊN CHUÔNG CỦA CHỦ TRỌ
+            var thongBaoChuTro = new ThongBao
+            {
+                TieuDe = $"Phản hồi khảo sát phòng {tenPhong}",
+                NoiDung = $"Khách hàng {tenKhach} ở phòng {tenPhong} đã phản hồi khảo sát: {textPhanHoi}.",
+                Loai = luaChon == "GiaHan" ? "success" : "danger",
+                DuongDan = $"/Dashboard/Index?tab=Dashboard", // Trỏ chủ trọ về thẳng màn hình Dashboard Admin để xem báo cáo
+                NgayTao = DateTime.Now,
+                NguoiNhan = hopDong.MaChuTro // Gửi đích danh đến tài khoản Chủ trọ sở hữu tòa nhà này
+            };
+            _context.ThongBao.Add(thongBaoChuTro);
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Gửi phản hồi đến chủ trọ thành công!";
+            return RedirectToAction("Index");
+        }
     }
+
 
     // Class giả lập tránh lỗi build nếu file Model chưa tạo
     public class DoanhThuTheoThang { public int Thang { get; set; } public int Nam { get; set; } public decimal DoanhThu { get; set; } }

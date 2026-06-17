@@ -1,80 +1,192 @@
 ﻿@model HeThongQuanLyPhongTro.Models.Phong
 
 @{
-    ViewData["Title"] = "Chi tiết phòng";
+    ViewData["Title"] = "Chi tiết phòng - " + Model.TenPhong;
+
+    // Nạp danh sách ảnh và cơ sở vật chất từ ViewBag mà Backend gửi sang
+    var images = ViewBag.Images as List<HeThongQuanLyPhongTro.Models.PhongImage> ?? new List<HeThongQuanLyPhongTro.Models.PhongImage>();
+    var csvcList = ViewBag.CSVCNhanh as List<HeThongQuanLyPhongTro.Models.CoSoVatChat> ?? new List<HeThongQuanLyPhongTro.Models.CoSoVatChat>();
+
+    // Tìm tấm ảnh được đánh dấu là ảnh chính, nếu không có thì lấy tấm đầu tiên
+    var anhChinh = images.FirstOrDefault(i => i.IsMain) ?? images.FirstOrDefault();
 }
 
-<div class="max-w-2xl mx-auto">
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-            <h1 class="text-xl font-bold text-white">Chi tiết phòng</h1>
-            <p class="text-blue-100 text-sm">Thông tin chi tiết về phòng trọ</p>
-        </div>
+<div class="max-w-6xl mx-auto px-4 py-6">
+    <div class="mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">Chi tiết phòng</h1>
+        <p class="text-gray-500 text-sm">Hệ thống quản lý vận hành tòa nhà</p>
+    </div>
 
-        <div class="p-6 space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="flex py-2 border-b">
-                    <dt class="w-32 font-medium text-gray-600">Mã phòng:</dt>
-                    <dd class="flex-1">@Model.MaPhong</dd>
-                </div>
-                <div class="flex py-2 border-b">
-                    <dt class="w-32 font-medium text-gray-600">Tên phòng:</dt>
-                    <dd class="flex-1 font-semibold">@Model.TenPhong</dd>
-                </div>
-                <div class="flex py-2 border-b">
-                    <dt class="w-32 font-medium text-gray-600">Tòa nhà:</dt>
-                    <dd class="flex-1">@Model.ToaNha?.TenToaNha</dd>
-                </div>
-                <div class="flex py-2 border-b">
-                    <dt class="w-32 font-medium text-gray-600">Cơ sở:</dt>
-                    <dd class="flex-1">@Model.ToaNha?.CoSo?.TenCoSo</dd>
-                </div>
-                <div class="flex py-2 border-b">
-                    <dt class="w-32 font-medium text-gray-600">Địa chỉ:</dt>
-                    <dd class="flex-1">@Model.ToaNha?.DiaChi</dd>
-                </div>
-                <div class="flex py-2 border-b">
-                    <dt class="w-32 font-medium text-gray-600">Giá phòng:</dt>
-                    <dd class="flex-1 font-bold text-blue-600">@Model.GiaPhong.ToString("N0") đ/tháng</dd>
-                </div>
-                <div class="flex py-2 border-b">
-                    <dt class="w-32 font-medium text-gray-600">Diện tích:</dt>
-                    <dd class="flex-1">@Model.DienTich m²</dd>
-                </div>
-                <div class="flex py-2 border-b">
-                    <dt class="w-32 font-medium text-gray-600">Số người ở:</dt>
-                    <dd class="flex-1">@(Model.SoLuongNguoiO ?? 1) người</dd>
-                </div>
-                <div class="flex py-2 border-b">
-                    <dt class="w-32 font-medium text-gray-600">Trạng thái:</dt>
-                    <dd class="flex-1">
-                        @if (Model.TrangThai == "Trống")
-                        {
-                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                                <i class="fas fa-check-circle"></i> Còn trống
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-sm">
-                                <i class="fas fa-lock"></i> Đã thuê
-                            </span>
-                        }
-                    </dd>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <div class="lg:col-span-7 space-y-4">
+            <div class="bg-white rounded-2xl shadow-sm border overflow-hidden relative">
+                <div class="h-[400px] flex items-center justify-center bg-gray-50 relative">
+                    @if (anhChinh != null)
+                    {
+                        <img id="mainImage" src="@anhChinh.ImagePath" class="w-full h-full object-cover" />
+
+                        <form asp-action="DeleteImage" method="post" class="absolute top-3 right-3" onsubmit="return confirm('Bạn có chắc muốn xóa ảnh này?');">
+                            <input type="hidden" name="maImage" value="@anhChinh.MaImage" />
+                            <input type="hidden" name="maPhong" value="@Model.MaPhong" />
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow transition-all">
+                                <i class="fas fa-trash text-sm"></i>
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="text-center text-gray-400">
+                            <i class="fas fa-image text-6xl mb-2"></i>
+                            <p class="text-sm">Phòng này chưa được cập nhật hình ảnh</p>
+                        </div>
+                    }
                 </div>
             </div>
 
-            <div class="flex justify-end space-x-3 pt-4 border-t">
-                <a asp-action="Edit" asp-route-id="@Model.MaPhong" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
-                    <i class="fas fa-edit mr-2"></i> Sửa
-                </a>
-                <a asp-action="Delete" asp-route-id="@Model.MaPhong" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-                    <i class="fas fa-trash mr-2"></i> Xóa
-                </a>
-                <a asp-action="Index" class="px-4 py-2 border rounded-lg hover:bg-gray-50 transition-all">
-                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
-                </a>
+            @if (images.Count > 0)
+            {
+                <div class="grid grid-cols-4 gap-3">
+                    @foreach (var img in images)
+                    {
+                        <div class="group relative border-2 rounded-xl overflow-hidden cursor-pointer transition-all hover:border-blue-500 @(img.IsMain ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200")"
+                             onclick="changeMainImage('@img.ImagePath', this)">
+                            <img src="@img.ImagePath" class="w-full h-20 object-cover thumbnail-item" />
+
+                            <form asp-action="DeleteImage" method="post" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity" onsubmit="return confirm('Xóa ảnh này?');">
+                                <input type="hidden" name="maImage" value="@img.MaImage" />
+                                <input type="hidden" name="maPhong" value="@Model.MaPhong" />
+                                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center shadow">
+                                    <i class="fas fa-times text-[10px]"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="bg-white p-5 rounded-2xl border shadow-sm space-y-3">
+                <h3 class="text-sm font-bold text-gray-700 flex items-center">
+                    <i class="fas fa-camera mr-2 text-gray-500"></i> Thêm ảnh mới
+                </h3>
+                <form asp-action="UploadImage" method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <input type="hidden" name="maPhong" value="@Model.MaPhong" />
+
+                    <input type="file" name="file" required class="flex-1 text-sm text-gray-500 border p-2 rounded-lg w-full bg-gray-50 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+
+                    <div class="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-start">
+                        <label class="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer select-none">
+                            <input type="checkbox" name="isMain" value="true" class="w-4 h-4 rounded text-blue-600 border-gray-300 focus:ring-blue-500" />
+                            <span>Ảnh chính</span>
+                        </label>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow transition-all">
+                            Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5">
+            <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                <div class="bg-blue-600 p-5 text-white">
+                    <h2 class="text-lg font-bold tracking-wide">Chi tiết phòng</h2>
+                    <p class="text-xs text-blue-100 mt-1">Thông tin chi tiết về phòng trọ và cơ sở hạ tầng</p>
+                </div>
+
+                <div class="p-6 space-y-3.5 text-sm">
+                    <div class="flex justify-between py-2 border-b border-gray-100">
+                        <span class="text-gray-500 font-medium">Mã phòng:</span>
+                        <span class="font-mono text-gray-700 font-semibold">#@Model.MaPhong</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100">
+                        <span class="text-gray-500 font-medium">Tên phòng:</span>
+                        <span class="font-bold text-gray-900 text-base">@Model.TenPhong</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100">
+                        <span class="text-gray-500 font-medium">Tòa nhà:</span>
+                        <span class="font-semibold text-gray-800">@(Model.ToaNha?.TenToaNha ?? "Chưa rõ")</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100">
+                        <span class="text-gray-500 font-medium">Cơ sở:</span>
+                        <span class="font-semibold text-gray-800">@(Model.ToaNha?.CoSo?.TenCoSo ?? "Chưa rõ")</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100">
+                        <span class="text-gray-500 font-medium">Địa chỉ:</span>
+                        <span class="font-medium text-gray-600 text-right max-w-[65%]">@(Model.ToaNha?.DiaChi ?? "Chưa cập nhật")</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100 items-center">
+                        <span class="text-gray-500 font-medium">Giá phòng:</span>
+                        <span class="text-xl font-black text-blue-600">@Model.GiaPhong.ToString("N0") đ/tháng</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100">
+                        <span class="text-gray-500 font-medium">Diện tích:</span>
+                        <span class="font-bold text-gray-800">@Model.DienTich m²</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-100">
+                        <span class="text-gray-500 font-medium">Số người ở:</span>
+                        <span class="font-semibold text-gray-700">@(Model.SoLuongNguoiO ?? 2) người</span>
+                    </div>
+
+                    <div class="flex justify-between py-2 border-b border-gray-100 items-start">
+                        <span class="text-gray-500 font-medium shrink-0">Cơ sở vật chất:</span>
+                        <span class="font-medium text-right text-xs text-gray-700 max-w-[65%] leading-relaxed">
+                            @if (csvcList.Any())
+                            {
+                                @string.Join(", ", csvcList.Select(c => c.TenThietBi))
+                            }
+                            else
+                            {
+                                <span class="text-gray-400 italic font-normal">Chưa thiết lập thiết bị</span>
+                            }
+                        </span>
+                    </div>
+
+                    <div class="flex justify-between py-2 border-b border-gray-100 items-center">
+                        <span class="text-gray-500 font-medium">Trạng thái:</span>
+                        <div>
+                            @if (Model.TrangThai == "Trống")
+                            {
+                                <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold flex items-center">
+                                    <i class="fas fa-check-circle mr-1"></i> Còn trống
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold flex items-center">
+                                    <i class="fas fa-lock mr-1"></i> Đã thuê
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 pt-4">
+                        <a asp-action="Edit" asp-route-id="@Model.MaPhong" class="bg-yellow-500 hover:bg-yellow-600 text-white text-center py-2 rounded-xl font-bold text-xs transition flex items-center justify-center">
+                            <i class="fas fa-edit mr-1"></i> Sửa
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.MaPhong" class="bg-red-500 hover:bg-red-600 text-white text-center py-2 rounded-xl font-bold text-xs transition flex items-center justify-center">
+                            <i class="fas fa-trash mr-1"></i> Xóa
+                        </a>
+                        <a asp-action="Index" class="border border-gray-300 hover:bg-gray-50 text-gray-700 text-center py-2 rounded-xl font-bold text-xs transition flex items-center justify-center">
+                            <i class="fas fa-arrow-left mr-1"></i> Quay lại
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    function changeMainImage(src, element) {
+        document.getElementById('mainImage').src = src;
+
+        document.querySelectorAll('.thumbnail-item').forEach(item => {
+            item.parentElement.classList.remove('border-blue-500', 'ring-2', 'ring-blue-100');
+            item.parentElement.classList.add('border-gray-200');
+        });
+
+        element.classList.remove('border-gray-200');
+        element.classList.add('border-blue-500', 'ring-2', 'ring-blue-100');
+    }
+</script>

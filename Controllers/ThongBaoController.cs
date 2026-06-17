@@ -2,6 +2,10 @@
 using HeThongQuanLyPhongTro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -24,9 +28,17 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (role == "Admin")
             {
-                // Đã bỏ && tb.DaXem == false để lấy cả thông báo cũ hiển thị kiểu nhạt màu
                 list = await _context.ThongBao
                     .Where(tb => tb.NguoiNhan == null)
+                    .OrderByDescending(tb => tb.NgayTao)
+                    .Take(20)
+                    .ToListAsync();
+            }
+            else if (role == "ChuTro")
+            {
+                // FIX: Lấy thông báo gửi riêng cho Chủ trọ này hoặc thông báo chung hệ thống (NguoiNhan == null)
+                list = await _context.ThongBao
+                    .Where(tb => tb.NguoiNhan == userId || tb.NguoiNhan == null)
                     .OrderByDescending(tb => tb.NgayTao)
                     .Take(20)
                     .ToListAsync();
@@ -37,7 +49,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                     .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
                 if (khachHang != null)
                 {
-                    // Đã bỏ && tb.DaXem == false để lấy cả thông báo cũ hiển thị kiểu nhạt màu
                     list = await _context.ThongBao
                         .Where(tb => tb.NguoiNhan == khachHang.MaKhachHang)
                         .OrderByDescending(tb => tb.NgayTao)
@@ -46,15 +57,14 @@ namespace HeThongQuanLyPhongTro.Controllers
                 }
             }
 
-            // Chuyển đổi tên thuộc tính cho đúng với frontend
             var result = list.Select(tb => new
             {
-                id = tb.MaThongBao, // Đổi sang 'id' để khớp tuyệt đối với tham số của Javascript
+                id = tb.MaThongBao,
                 tieuDe = tb.TieuDe,
                 noiDung = tb.NoiDung,
                 loai = tb.Loai,
                 duongDan = tb.DuongDan,
-                ngayTao = tb.NgayTao.ToString("dd/MM/yyyy HH:mm"), // Đã fix lỗi bỏ dấu ?
+                ngayTao = tb.NgayTao.ToString("dd/MM/yyyy HH:mm"),
                 daXem = tb.DaXem
             });
 
@@ -71,9 +81,16 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (role == "Admin")
             {
-                // Lấy tất cả thông báo của Admin
                 list = await _context.ThongBao
                     .Where(tb => tb.NguoiNhan == null)
+                    .OrderByDescending(tb => tb.NgayTao)
+                    .ToListAsync();
+            }
+            else if (role == "ChuTro")
+            {
+                // FIX: Lấy tất cả thông báo thuộc quyền của Chủ trọ này
+                list = await _context.ThongBao
+                    .Where(tb => tb.NguoiNhan == userId || tb.NguoiNhan == null)
                     .OrderByDescending(tb => tb.NgayTao)
                     .ToListAsync();
             }
@@ -83,7 +100,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                     .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
                 if (khachHang != null)
                 {
-                    // Lấy tất cả thông báo của Khách hàng này
                     list = await _context.ThongBao
                         .Where(tb => tb.NguoiNhan == khachHang.MaKhachHang)
                         .OrderByDescending(tb => tb.NgayTao)
@@ -94,7 +110,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(list);
         }
 
-        // HÀM MỚI ĐƯỢC THÊM: Đánh dấu 1 thông báo cụ thể là đã đọc khi click vào
         [HttpPost]
         public async Task<IActionResult> MarkAsRead(int id)
         {
@@ -107,7 +122,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             return Ok();
         }
 
-        // ĐÃ SỬA TÊN: Đổi từ DanhDauTatCa -> MarkAllAsRead để khớp code Frontend
         [HttpPost]
         public async Task<IActionResult> MarkAllAsRead()
         {
@@ -119,10 +133,16 @@ namespace HeThongQuanLyPhongTro.Controllers
                 var list = await _context.ThongBao
                     .Where(tb => tb.NguoiNhan == null && tb.DaXem == false)
                     .ToListAsync();
-                foreach (var tb in list)
-                {
-                    tb.DaXem = true;
-                }
+                foreach (var tb in list) tb.DaXem = true;
+                await _context.SaveChangesAsync();
+            }
+            else if (role == "ChuTro")
+            {
+                // FIX: Đánh dấu tất cả thông báo của Chủ trọ là đã đọc
+                var list = await _context.ThongBao
+                    .Where(tb => (tb.NguoiNhan == userId || tb.NguoiNhan == null) && tb.DaXem == false)
+                    .ToListAsync();
+                foreach (var tb in list) tb.DaXem = true;
                 await _context.SaveChangesAsync();
             }
             else if (role == "Khach")
@@ -134,10 +154,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                     var list = await _context.ThongBao
                         .Where(tb => tb.NguoiNhan == khachHang.MaKhachHang && tb.DaXem == false)
                         .ToListAsync();
-                    foreach (var tb in list)
-                    {
-                        tb.DaXem = true;
-                    }
+                    foreach (var tb in list) tb.DaXem = true;
                     await _context.SaveChangesAsync();
                 }
             }
