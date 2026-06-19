@@ -2,10 +2,6 @@
 using HeThongQuanLyPhongTro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -23,24 +19,42 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
+            var maChuTro = HttpContext.Session.GetInt32("MaChuTro");
 
             List<ThongBao> list = new List<ThongBao>();
 
-            if (role == "Admin")
+            if (role == "Admin" || role == "SuperAdmin")
             {
                 list = await _context.ThongBao
                     .Where(tb => tb.NguoiNhan == null)
                     .OrderByDescending(tb => tb.NgayTao)
-                    .Take(20)
+                    .Take(30)
                     .ToListAsync();
             }
             else if (role == "ChuTro")
             {
-                // FIX: Lấy thông báo gửi riêng cho Chủ trọ này hoặc thông báo chung hệ thống (NguoiNhan == null)
+                // Danh sách phòng thuộc chủ trọ này
+                var phongIds = await _context.Phong
+                    .Where(p => p.MaChuTro == (maChuTro ?? userId))
+                    .Select(p => p.MaPhong)
+                    .ToListAsync();
+
+                // Danh sách khách hàng thuộc chủ trọ này
+                var khachHangIds = await _context.HopDong
+                    .Where(h => phongIds.Contains(h.MaPhong))
+                    .Select(h => h.MaKhachHang)
+                    .Distinct()
+                    .ToListAsync();
+
+                // 🎯 LỌC CHUẨN: Chỉ lấy thông báo gửi đích danh cho Chủ trọ (userId) 
+                // HOẶC thông báo từ Khách gửi lên (Có nội dung chứa chữ "yêu cầu", "sửa chữa"...) 
+                // Chặn hoàn toàn các thông báo về "Hóa đơn", "Thanh toán" do Chủ trọ tự tạo gửi đi.
                 list = await _context.ThongBao
-                    .Where(tb => tb.NguoiNhan == userId || tb.NguoiNhan == null)
+                    .Where(tb => tb.NguoiNhan == userId ||
+                                (tb.NguoiNhan != null && khachHangIds.Contains(tb.NguoiNhan.Value) &&
+                                (tb.TieuDe.Contains("Yêu cầu") || tb.NoiDung.Contains("gửi yêu cầu") || tb.NoiDung.Contains("sửa chữa"))))
                     .OrderByDescending(tb => tb.NgayTao)
-                    .Take(20)
+                    .Take(30)
                     .ToListAsync();
             }
             else if (role == "Khach")
@@ -52,7 +66,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                     list = await _context.ThongBao
                         .Where(tb => tb.NguoiNhan == khachHang.MaKhachHang)
                         .OrderByDescending(tb => tb.NgayTao)
-                        .Take(20)
+                        .Take(30)
                         .ToListAsync();
                 }
             }
@@ -76,10 +90,11 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
+            var maChuTro = HttpContext.Session.GetInt32("MaChuTro");
 
             List<ThongBao> list = new List<ThongBao>();
 
-            if (role == "Admin")
+            if (role == "Admin" || role == "SuperAdmin")
             {
                 list = await _context.ThongBao
                     .Where(tb => tb.NguoiNhan == null)
@@ -88,9 +103,22 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
             else if (role == "ChuTro")
             {
-                // FIX: Lấy tất cả thông báo thuộc quyền của Chủ trọ này
+                var phongIds = await _context.Phong
+                    .Where(p => p.MaChuTro == (maChuTro ?? userId))
+                    .Select(p => p.MaPhong)
+                    .ToListAsync();
+
+                var khachHangIds = await _context.HopDong
+                    .Where(h => phongIds.Contains(h.MaPhong))
+                    .Select(h => h.MaKhachHang)
+                    .Distinct()
+                    .ToListAsync();
+
+                // 🎯 ĐỒNG BỘ LỌC CHO TRANG INDEX
                 list = await _context.ThongBao
-                    .Where(tb => tb.NguoiNhan == userId || tb.NguoiNhan == null)
+                    .Where(tb => tb.NguoiNhan == userId ||
+                                (tb.NguoiNhan != null && khachHangIds.Contains(tb.NguoiNhan.Value) &&
+                                (tb.TieuDe.Contains("Yêu cầu") || tb.NoiDung.Contains("gửi yêu cầu") || tb.NoiDung.Contains("sửa chữa"))))
                     .OrderByDescending(tb => tb.NgayTao)
                     .ToListAsync();
             }
@@ -113,22 +141,64 @@ namespace HeThongQuanLyPhongTro.Controllers
         [HttpPost]
         public async Task<IActionResult> MarkAsRead(int id)
         {
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var maChuTro = HttpContext.Session.GetInt32("MaChuTro");
+
             var thongBao = await _context.ThongBao.FindAsync(id);
-            if (thongBao != null)
+            if (thongBao == null)
             {
-                thongBao.DaXem = true;
-                await _context.SaveChangesAsync();
+                return Json(new { success = false, message = "Không tìm thấy thông báo!" });
             }
-            return Ok();
+
+            bool coQuyen = false;
+            if (role == "Admin" || role == "SuperAdmin")
+            {
+                coQuyen = thongBao.NguoiNhan == null;
+            }
+            else if (role == "ChuTro")
+            {
+                var phongIds = await _context.Phong
+                    .Where(p => p.MaChuTro == (maChuTro ?? userId))
+                    .Select(p => p.MaPhong)
+                    .ToListAsync();
+
+                var khachHangIds = await _context.HopDong
+                    .Where(h => phongIds.Contains(h.MaPhong))
+                    .Select(h => h.MaKhachHang)
+                    .Distinct()
+                    .ToListAsync();
+
+                // Kiểm tra quyền sở hữu thông báo trước khi cho phép click đọc
+                coQuyen = thongBao.NguoiNhan == userId || (thongBao.NguoiNhan != null && khachHangIds.Contains(thongBao.NguoiNhan.Value));
+            }
+            else if (role == "Khach")
+            {
+                var khachHang = await _context.KhachHang
+                    .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
+                coQuyen = khachHang != null && thongBao.NguoiNhan == khachHang.MaKhachHang;
+            }
+
+            if (!coQuyen)
+            {
+                return Json(new { success = false, message = "Bạn không có quyền với thông báo này!" });
+            }
+
+            thongBao.DaXem = true;
+            _context.ThongBao.Update(thongBao);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, url = thongBao.DuongDan });
         }
 
         [HttpPost]
-        public async Task<IActionResult> MarkAllAsRead()
+        public async Task<IActionResult> DanhDauTatCa()
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
+            var maChuTro = HttpContext.Session.GetInt32("MaChuTro");
 
-            if (role == "Admin")
+            if (role == "Admin" || role == "SuperAdmin")
             {
                 var list = await _context.ThongBao
                     .Where(tb => tb.NguoiNhan == null && tb.DaXem == false)
@@ -138,9 +208,19 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
             else if (role == "ChuTro")
             {
-                // FIX: Đánh dấu tất cả thông báo của Chủ trọ là đã đọc
+                var phongIds = await _context.Phong
+                    .Where(p => p.MaChuTro == (maChuTro ?? userId))
+                    .Select(p => p.MaPhong)
+                    .ToListAsync();
+
+                var khachHangIds = await _context.HopDong
+                    .Where(h => phongIds.Contains(h.MaPhong))
+                    .Select(h => h.MaKhachHang)
+                    .Distinct()
+                    .ToListAsync();
+
                 var list = await _context.ThongBao
-                    .Where(tb => (tb.NguoiNhan == userId || tb.NguoiNhan == null) && tb.DaXem == false)
+                    .Where(tb => (tb.NguoiNhan == userId || (tb.NguoiNhan != null && khachHangIds.Contains(tb.NguoiNhan.Value))) && tb.DaXem == false)
                     .ToListAsync();
                 foreach (var tb in list) tb.DaXem = true;
                 await _context.SaveChangesAsync();

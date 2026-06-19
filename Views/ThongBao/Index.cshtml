@@ -65,4 +65,27 @@
             <p class="text-xs text-gray-400 mt-1">Hệ thống chưa ghi nhận thông báo mới nào dành cho bạn.</p>
         </div>
     }
+
+    <script>
+        function viewNotification(id, duongDan) {
+            // Gọi Ajax để đánh dấu đã đọc và lấy URL chuyển hướng
+            $.ajax({
+                url: '/ThongBao/MarkAsRead',
+                type: 'POST',
+                data: { id: id },
+                success: function (response) {
+                    if (response.success && response.url) {
+                        window.location.href = response.url;
+                    } else {
+                        // Fallback: dùng đường dẫn gốc
+                        window.location.href = duongDan;
+                    }
+                },
+                error: function () {
+                    // Fallback khi lỗi
+                    window.location.href = duongDan;
+                }
+            });
+        }
+    </script>
 </div>

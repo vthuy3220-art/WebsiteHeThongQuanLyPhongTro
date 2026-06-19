@@ -275,12 +275,12 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             return View(phong);
         }
+
         // POST: Phong/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            // 1. Tìm căn phòng cần xóa dựa vào id (MaPhong)
             var phong = await _context.Phong.FindAsync(id);
 
             if (phong == null)
@@ -288,19 +288,16 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return NotFound(); // Nếu không tìm thấy phòng thì trả về trang lỗi 404
             }
 
-            // 2. Tìm tất cả các Cơ sở vật chất có liên kết với căn phòng này (MaPhong == id)
             var danhSachCSVC = _context.CoSoVatChat.Where(csvc => csvc.MaPhong == id);
 
-            // 3. Thực hiện xóa hàng loạt các Cơ sở vật chất vừa tìm được ra khỏi DbContext
+
             _context.CoSoVatChat.RemoveRange(danhSachCSVC);
 
-            // 4. Tiến hành xóa chính căn phòng đó
+
             _context.Phong.Remove(phong);
 
-            // 5. Lưu tất cả thay đổi (Xóa cả CSVC và Phong) xuống SQL Server trong cùng 1 phiên giao dịch
             await _context.SaveChangesAsync();
 
-            // 6. Quay trở lại trang danh sách phòng sau khi xóa thành công
             return RedirectToAction(nameof(Index));
         }
 

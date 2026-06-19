@@ -30,23 +30,68 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // ======================= INDEX THỐNG KÊ CHÍNH =======================
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? maToaNha, int? maPhong)
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
 
-            // FIX PHÂN QUYỀN: Cho phép cả Admin và ChuTro truy cập vào trang
             if (role != "Admin" && role != "ChuTro") return RedirectToAction("Index", "Login");
 
             bool isAdmin = (role == "Admin");
             var model = new DashboardViewModel();
 
-            // Lọc danh sách phòng theo phân quyền chủ trọ
-            var queryPhong = _context.Phong.AsQueryable();
+            // 1. LẤY DANH SÁCH TÒA NHÀ (ĐỂ HIỂN THỊ ĐỊA CHỈ TRÊN DROPDOWN BỘ LỌC)
+            var queryToaNha = _context.ToaNha.AsQueryable();
             if (!isAdmin)
             {
-                var toaNhaIds = await _context.ToaNha.Where(t => t.MaChuTro == userId).Select(t => t.MaToaNha).ToListAsync();
-                queryPhong = queryPhong.Where(p => toaNhaIds.Contains(p.MaToaNha));
+                queryToaNha = queryToaNha.Where(t => t.MaChuTro == userId);
+            }
+            var danhSachToaNha = await queryToaNha.ToListAsync();
+            ViewBag.DanhSachToaNha = danhSachToaNha;
+
+            if (maToaNha.HasValue && !isAdmin && !danhSachToaNha.Any(t => t.MaToaNha == maToaNha.Value))
+            {
+                maToaNha = null;
+            }
+
+            // 2. LẤY DANH SÁCH PHÒNG - CHỈ LẤY PHÒNG "ĐÃ THUÊ" ĐỂ ĐỠ RỐI
+            var queryDropdownPhong = _context.Phong.Where(p => p.TrangThai == "Đã thuê");
+            if (maToaNha.HasValue)
+            {
+                queryDropdownPhong = queryDropdownPhong.Where(p => p.MaToaNha == maToaNha.Value);
+            }
+            else
+            {
+                if (!isAdmin)
+                {
+                    var loggedInToaNhaIds = danhSachToaNha.Select(t => t.MaToaNha).ToList();
+                    queryDropdownPhong = queryDropdownPhong.Where(p => loggedInToaNhaIds.Contains(p.MaToaNha));
+                }
+            }
+            ViewBag.DanhSachPhong = await queryDropdownPhong.ToListAsync();
+
+            // 3. LỌC DANH SÁCH PHÒNG ĐỂ TÍNH TOÁN CÁC TIÊU CHÍ THỐNG KÊ TRÊN DASHBOARD
+            var queryPhong = _context.Phong.AsQueryable();
+            if (maPhong.HasValue)
+            {
+                if (!isAdmin)
+                {
+                    var loggedInToaNhaIds = danhSachToaNha.Select(t => t.MaToaNha).ToList();
+                    queryPhong = queryPhong.Where(p => p.MaPhong == maPhong.Value && loggedInToaNhaIds.Contains(p.MaToaNha));
+                }
+                else
+                {
+                    queryPhong = queryPhong.Where(p => p.MaPhong == maPhong.Value);
+                }
+            }
+            else if (maToaNha.HasValue)
+            {
+                queryPhong = queryPhong.Where(p => p.MaToaNha == maToaNha.Value);
+            }
+            else if (!isAdmin)
+            {
+                var loggedInToaNhaIds = danhSachToaNha.Select(t => t.MaToaNha).ToList();
+                queryPhong = queryPhong.Where(p => loggedInToaNhaIds.Contains(p.MaToaNha));
             }
 
             var danhSachPhong = await queryPhong.ToListAsync();
@@ -56,7 +101,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             model.SoPhongDaThue = danhSachPhong.Count(p => p.TrangThai == "Đã thuê");
             model.SoPhongTrong = model.TongSoPhong - model.SoPhongDaThue;
 
-            // Lọc hợp đồng và khách hàng
+            // Lọc hợp đồng và khách hàng theo tập phòng đã lọc ở trên
             var queryHopDong = _context.HopDong.Where(h => phongIds.Contains(h.MaPhong));
             model.SoHopDongHieuLuc = await queryHopDong.CountAsync(h => h.TrangThai == "Hiệu lực");
             model.SoHopDongHetHan = await queryHopDong.CountAsync(h => h.TrangThai == "Đã hủy" || h.TrangThai == "Hết hạn");
@@ -130,6 +175,9 @@ namespace HeThongQuanLyPhongTro.Controllers
                 });
             }
             model.LapDayTheoThangList = lapDayTheoThang;
+
+            ViewBag.SelectedMaToaNha = maToaNha;
+            ViewBag.SelectedMaPhong = maPhong;
 
             return View(model);
         }

@@ -77,18 +77,8 @@ namespace HeThongQuanLyPhongTro.Controllers
         // ==================== CHI TIẾT PHÒNG (Cho khách vãng lai) ====================
         public async Task<IActionResult> ChiTietPhong(int id)
         {
+            // THẢ CỬA 100%: Khách vãng lai vào xem thoải mái không đòi đăng nhập!
 
-            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
-            Response.Headers["Pragma"] = "no-cache";
-            Response.Headers["Expires"] = "0";
-
-
-            if (HttpContext.Session.GetInt32("UserId") == null || HttpContext.Session.GetInt32("UserId") == 0)
-            {
-                return RedirectToAction("Index", "Login");
-            }
-
-            // 1. Lấy thông tin phòng (Dùng AsNoTracking để chống kẹt luồng)
             var phong = await _context.Phong
                 .Include(p => p.ToaNha)
                     .ThenInclude(t => t.CoSo)
@@ -97,21 +87,18 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (phong == null) return NotFound();
 
-            // 2. Truy vấn album ảnh đổ vào ViewBag
             var images = await _context.PhongImage
                 .Where(i => i.MaPhong == id)
                 .AsNoTracking()
                 .ToListAsync();
             ViewBag.Images = images;
 
-            // 3. Truy vấn thông tin bài đăng lấy Mô tả chi tiết
             var baiDang = await _context.BaiDang
                 .Where(b => b.MaPhong == id)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
             ViewBag.BaiDang = baiDang;
 
-            // 4. Truy vấn tiện ích cơ sở vật chất
             var csvcList = await _context.CoSoVatChat
                 .Where(c => c.MaPhong == id)
                 .AsNoTracking()

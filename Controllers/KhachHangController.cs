@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using QRCoder;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 
 namespace HeThongQuanLyPhongTro.Controllers
@@ -18,6 +19,7 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             _context = context;
         }
+
         public IActionResult GenerateQR(string data)
         {
             using (QRCodeGenerator generator = new QRCodeGenerator())
@@ -36,6 +38,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                 }
             }
         }
+
         // Helper lấy thông tin user
         private int GetCurrentUserId()
         {
@@ -63,7 +66,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
-            // Phân luồng tùy theo vai trò
             if (role == "Admin" || role == "SuperAdmin")
             {
                 return RedirectToAction("QuanLy");
@@ -91,7 +93,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
-            // Tìm khách hàng
             var khachHang = await _context.KhachHang
                 .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
 
@@ -100,27 +101,23 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
-            // Lấy hợp đồng hiện tại
             var hopDong = await _context.HopDong
                 .Include(h => h.PhongNavigation)
                     .ThenInclude(p => p.ToaNha)
                 .FirstOrDefaultAsync(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai == "Hiệu lực");
 
-            // TRUY VẤN HÓA ĐƠN GẦN ĐÂY: Lấy tất cả hóa đơn thuộc các hợp đồng của khách này
             var hopDongIds = await _context.HopDong
                 .Where(h => h.MaKhachHang == khachHang.MaKhachHang)
                 .Select(h => h.MaHopDong)
                 .ToListAsync();
 
-            // Lấy danh sách hóa đơn, dùng Include bảng ThanhToan để bốc được Ngày Giờ thanh toán thực tế
             var hoaDonsGanDay = await _context.HoaDon
                 .Where(h => hopDongIds.Contains(h.MaHopDong))
                 .OrderByDescending(h => h.Nam)
                 .ThenByDescending(h => h.Thang)
-                .Take(5) // Chỉ lấy tối đa 5 hóa đơn mới nhất cho đỡ chật màn hình Dashboard
+                .Take(5)
                 .ToListAsync();
 
-            // Lấy toàn bộ lịch sử thanh toán liên quan để map ngày giờ ra View nhanh gọn không bị chậm luồng
             var maHoaDonIds = hoaDonsGanDay.Select(h => h.MaHoaDon).ToList();
             var thanhToans = await _context.ThanhToan
                 .Where(t => maHoaDonIds.Contains(t.MaHoaDon))
@@ -134,7 +131,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View("Index");
         }
 
-        // ==================== QUẢN LÝ KHÁCH HÀNG (CHO ADMIN & CHỦ TRỌ) ====================
+        // ==================== QUẢN LÝ KHÁCH HÀNG ====================
         public async Task<IActionResult> QuanLy(string searchString)
         {
             var userId = GetCurrentUserId();
@@ -149,19 +146,17 @@ namespace HeThongQuanLyPhongTro.Controllers
             {
                 return RedirectToAction("Index", "Login");
             }
-            var khachHangs = _context.KhachHang.AsQueryable();  // Bỏ .Include
-                                                                // 👇 PHÂN QUYỀN: Chủ trọ chỉ thấy khách hàng đã thuê phòng của mình
+
+            var khachHangs = _context.KhachHang.AsQueryable();
+
             if (role == "ChuTro")
             {
                 var maChuTro = GetCurrentMaChuTro();
-
-                // Lấy danh sách phòng của chủ trọ này
                 var phongIds = await _context.Phong
                     .Where(p => p.MaChuTro == maChuTro)
                     .Select(p => p.MaPhong)
                     .ToListAsync();
 
-                // Lấy danh sách khách hàng có hợp đồng với các phòng đó
                 var khachHangIds = await _context.HopDong
                     .Where(h => phongIds.Contains(h.MaPhong))
                     .Select(h => h.MaKhachHang)
@@ -171,7 +166,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 khachHangs = khachHangs.Where(k => khachHangIds.Contains(k.MaKhachHang));
             }
 
-            // Tìm kiếm
             if (!string.IsNullOrEmpty(searchString))
             {
                 khachHangs = khachHangs.Where(k =>
@@ -185,18 +179,14 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(await khachHangs.ToListAsync());
         }
 
-        // ==================== HỢP ĐỒNG CỦA TÔI (CHO KHÁCH) ====================
+        // ==================== HỢP ĐỒNG CỦA TÔI ====================
         public async Task<IActionResult> HopDongCuaToi()
         {
             var userId = GetCurrentUserId();
             var role = GetCurrentRole();
 
             if (userId == 0) return RedirectToAction("Index", "Login");
-
-            if (role != "Khach")
-            {
-                return RedirectToAction("Index", "Login");
-            }
+            if (role != "Khach") return RedirectToAction("Index", "Login");
 
             var khachHang = await _context.KhachHang
                 .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
@@ -213,7 +203,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(hopDongs);
         }
 
-        // ==================== CHI TIẾT HỢP ĐỒNG (CHO KHÁCH) ====================
+        // ==================== CHI TIẾT HỢP ĐỒNG ====================
         public async Task<IActionResult> HopDongChiTiet(int id)
         {
             var userId = GetCurrentUserId();
@@ -259,7 +249,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(hopDong);
         }
 
-        // ==================== HÓA ĐƠN CỦA TÔI (CHO KHÁCH) ====================
+        // ==================== HÓA ĐƠN CỦA TÔI ====================
         public async Task<IActionResult> HoaDonCuaToi()
         {
             var userId = GetCurrentUserId();
@@ -292,15 +282,9 @@ namespace HeThongQuanLyPhongTro.Controllers
         // ==================== CHI TIẾT HÓA ĐƠN (CHO KHÁCH) ====================
         public async Task<IActionResult> HoaDonChiTiet(int id)
         {
-            var userId = GetCurrentUserId();
-            var role = GetCurrentRole();
-
-            if (userId == 0) return RedirectToAction("Index", "Login");
-
-            var khachHang = await _context.KhachHang
-                .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
-
-            if (khachHang == null) return RedirectToAction("Index", "Login");
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null)
+                return RedirectToAction("Index", "Login");
 
             var hoaDon = await _context.HoaDon
                 .Include(h => h.HopDongNavigation)
@@ -312,36 +296,43 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (hoaDon == null) return NotFound();
 
-            // Kiểm tra quyền sở hữu
-            if (role == "Khach" && hoaDon.HopDongNavigation?.MaKhachHang != khachHang.MaKhachHang)
+            // Kiểm tra quyền
+            var khachHang = await _context.KhachHang
+                .FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
+
+            if (khachHang == null ||
+                hoaDon.HopDongNavigation?.MaKhachHang != khachHang.MaKhachHang)
             {
                 TempData["Error"] = "Bạn không có quyền xem hóa đơn này!";
-                return RedirectToAction("HoaDonCuaToi");
+                return RedirectToAction("Index");
             }
 
+            // ✅ Lấy chi tiết hóa đơn
             var chiTietHoaDons = await _context.ChiTietHoaDon
-                .Where(ct => ct.MaHoaDon == id)
+                .Where(c => c.MaHoaDon == id)
                 .ToListAsync();
+
+            // ✅ Lấy chỉ số từ chi tiết hóa đơn
+            var chiSoDienCu = chiTietHoaDons
+                .FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện cũ")?.SoLuong ?? 0;
+            var chiSoDienMoi = chiTietHoaDons
+                .FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện mới")?.SoLuong ?? 0;
+            var chiSoNuocCu = chiTietHoaDons
+                .FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số nước cũ")?.SoLuong ?? 0;
+            var chiSoNuocMoi = chiTietHoaDons
+                .FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số nước mới")?.SoLuong ?? 0;
+            var giaDien = chiTietHoaDons
+                .FirstOrDefault(c => c.LoaiKhoanThu == "Đơn giá điện")?.DonGia ?? 3500;
+            var giaNuoc = chiTietHoaDons
+                .FirstOrDefault(c => c.LoaiKhoanThu == "Đơn giá nước")?.DonGia ?? 30000;
+            var tienPhatSinh = chiTietHoaDons
+                .FirstOrDefault(c => c.LoaiKhoanThu == "Phí phát sinh")?.ThanhTien ?? 0;
 
             int soNguoiO = await _context.NguoiOHopDong
                 .CountAsync(n => n.MaHopDong == hoaDon.MaHopDong);
             int soNguoi = soNguoiO + 1;
 
-            var chiSoDienCu = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện cũ")?.SoLuong ?? 0;
-            var chiSoDienMoi = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số điện mới")?.SoLuong ?? 0;
-            var chiSoNuocCu = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số nước cũ")?.SoLuong ?? 0;
-            var chiSoNuocMoi = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Chỉ số nước mới")?.SoLuong ?? 0;
-            var giaDien = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Đơn giá điện")?.DonGia ?? 3500;
-            var giaNuoc = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Đơn giá nước")?.DonGia ?? 30000;
-            var tienPhatSinh = chiTietHoaDons.FirstOrDefault(c => c.LoaiKhoanThu == "Phí phát sinh")?.ThanhTien ?? 0;
-
-            var soDien = Math.Max(0, (chiSoDienMoi - chiSoDienCu));
-            var soNuoc = Math.Max(0, (chiSoNuocMoi - chiSoNuocCu));
-            var tienDien = soDien * giaDien;
-            var tienNuoc = soNuoc * giaNuoc;
-            var tienDichVu = soNguoi * 200000;
-            var tongTien = (hoaDon.HopDongNavigation?.PhongNavigation?.GiaPhong ?? 0) + tienDien + tienNuoc + tienDichVu + tienPhatSinh;
-
+            // ✅ TRUYỀN TẤT CẢ VÀO ViewBag
             ViewBag.HopDong = hoaDon.HopDongNavigation;
             ViewBag.ChiTietHoaDons = chiTietHoaDons;
             ViewBag.SoNguoi = soNguoi;
@@ -352,12 +343,69 @@ namespace HeThongQuanLyPhongTro.Controllers
             ViewBag.GiaDien = giaDien;
             ViewBag.GiaNuoc = giaNuoc;
             ViewBag.TienPhatSinh = tienPhatSinh;
-            ViewBag.TongTien = tongTien;
+            ViewBag.TongTien = hoaDon.TongTien;
+
+            // ✅ Lấy thông tin ngân hàng
+            string tenNganHang = "Techcombank";
+            string soTaiKhoan = "19072789933016";
+            string chuTaiKhoan = "Vu Thi Thanh Thuy";
+
+            if (hoaDon.MaChuTro != null && hoaDon.MaChuTro > 0)
+            {
+                var chuTro = await _context.TaiKhoan
+                    .FirstOrDefaultAsync(t => t.MaTaiKhoan == hoaDon.MaChuTro && t.VaiTro == "ChuTro");
+
+                if (chuTro != null && !string.IsNullOrEmpty(chuTro.SoTaiKhoan))
+                {
+                    tenNganHang = chuTro.TenNganHang ?? "Techcombank";
+                    soTaiKhoan = chuTro.SoTaiKhoan;
+                    chuTaiKhoan = chuTro.ChuTaiKhoan ?? "Unknown";
+                }
+            }
+
+            // Chuẩn hóa tên ngân hàng
+            string bankId = tenNganHang.ToUpper();
+            var bankMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "MBBANK", "MB" },
+                { "MB BANK", "MB" },
+                { "MB", "MB" },
+                { "TECHCOMBANK", "TCB" },
+                { "TCB", "TCB" },
+                { "VIETCOMBANK", "VCB" },
+                { "VCB", "VCB" },
+                { "VIETINBANK", "VTB" },
+                { "VTB", "VTB" },
+                { "BIDV", "BIDV" },
+                { "ACB", "ACB" },
+                { "SACOMBANK", "STB" },
+                { "STB", "STB" },
+                { "VPBANK", "VPB" },
+                { "VPB", "VPB" },
+                { "TPBANK", "TPB" },
+                { "TPB", "TPB" }
+            };
+
+            if (bankMap.ContainsKey(bankId))
+            {
+                bankId = bankMap[bankId];
+            }
+
+            // Tạo QR
+            string amount = hoaDon.TongTien?.ToString("0") ?? "0";
+            string content = $"TT_HD_{hoaDon.MaHoaDon}_{hoaDon.Thang}{hoaDon.Nam}";
+            string accountNameEncoded = System.Web.HttpUtility.UrlEncode(chuTaiKhoan);
+            string qrUrl = $"https://img.vietqr.io/image/{bankId}-{soTaiKhoan}-compact.png?amount={amount}&addInfo={content}&accountName={accountNameEncoded}";
+
+            ViewBag.QRUrl = qrUrl;
+            ViewBag.TenNganHang = tenNganHang;
+            ViewBag.SoTaiKhoan = soTaiKhoan;
+            ViewBag.ChuTaiKhoan = chuTaiKhoan;
 
             return View(hoaDon);
         }
 
-        // ==================== LỊCH SỬ THANH TOÁN (CHO KHÁCH) ====================
+        // ==================== LỊCH SỬ THANH TOÁN ====================
         public async Task<IActionResult> LichSuThanhToan()
         {
             var userId = GetCurrentUserId();
@@ -451,11 +499,10 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (id == null) return NotFound();
 
             var khachHang = await _context.KhachHang
-        // .Include(k => k.TaiKhoan)  // COMMENT DÒNG NÀY
-        .FirstOrDefaultAsync(m => m.MaKhachHang == id);
+                .FirstOrDefaultAsync(m => m.MaKhachHang == id);
+
             if (khachHang == null) return NotFound();
 
-            // 👇 PHÂN QUYỀN: Chủ trọ chỉ xem được khách hàng của mình
             if (role == "ChuTro")
             {
                 var maChuTro = GetCurrentMaChuTro();
@@ -481,7 +528,7 @@ namespace HeThongQuanLyPhongTro.Controllers
         public IActionResult Create()
         {
             var role = GetCurrentRole();
-            if (role != "Admin" && role != "SuperAdmin")
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro")
             {
                 return RedirectToAction("Index", "Login");
             }
@@ -493,7 +540,7 @@ namespace HeThongQuanLyPhongTro.Controllers
         public async Task<IActionResult> Create(KhachHang khachHang, string tenDangNhap, string matKhau)
         {
             var role = GetCurrentRole();
-            if (role != "Admin" && role != "SuperAdmin")
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro")
             {
                 return RedirectToAction("Index", "Login");
             }
@@ -521,6 +568,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                 await _context.SaveChangesAsync();
 
                 khachHang.MaTaiKhoan = taiKhoan.MaTaiKhoan;
+
                 _context.KhachHang.Add(khachHang);
                 await _context.SaveChangesAsync();
 

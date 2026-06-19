@@ -27,7 +27,6 @@ namespace HeThongQuanLyPhongTro.Data
         public DbSet<YeuCauSuaChua> YeuCauSuaChua { get; set; }
         public DbSet<PhongImage> PhongImage { get; set; }
         public DbSet<LichSuChiSoDienNuoc> LichSuChiSoDienNuoc { get; set; }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

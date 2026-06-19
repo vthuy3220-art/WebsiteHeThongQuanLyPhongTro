@@ -5,13 +5,50 @@
 }
 
 <div class="bg-slate-50 min-h-screen p-6">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Báo Cáo & Thống Kê</h1>
-        <p class="text-gray-500">Tổng quan tình hình kinh doanh tháng @DateTime.Now.Month/@DateTime.Now.Year</p>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+
+            <h1 class="text-xl font-bold text-gray-600">Tổng quan tình hình kinh doanh tháng @DateTime.Now.Month/@DateTime.Now.Year</h1>
+        </div>
+
+
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <!-- Chọn tòa nhà (Hiển thị tên kèm địa chỉ cụ thể) -->
+            <div class="w-full sm:w-64">
+                <!-- Tăng độ rộng lên class sm:w-64 để hiển thị địa chỉ rõ hơn -->
+                <select id="filterBuilding" class="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 p-2 shadow-sm font-medium">
+                    <option value="">-- Tất cả tòa nhà --</option>
+                    @if (ViewBag.DanhSachToaNha != null)
+                    {
+                        foreach (var t in (List<HeThongQuanLyPhongTro.Models.ToaNha>)ViewBag.DanhSachToaNha)
+                        {
+                            <!option value="@t.MaToaNha" @(ViewBag.SelectedMaToaNha != null && (int)ViewBag.SelectedMaToaNha == t.MaToaNha ? "selected" : "")>
+                            @t.TenToaNha @(!string.IsNullOrEmpty(t.DiaChi) ? $" - {t.DiaChi}" : "")
+                            </!option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <!-- Chọn phòng (Chỉ hiển thị các phòng đã có người ở) -->
+            <div class="w-full sm:w-40">
+                <select id="filterRoom" class="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 p-2 shadow-sm font-medium">
+                    <option value="">-- Tất cả phòng --</option>
+                    @if (ViewBag.DanhSachPhong != null)
+                    {
+                        foreach (var p in (List<HeThongQuanLyPhongTro.Models.Phong>)ViewBag.DanhSachPhong)
+                        {
+                            <!option value="@p.MaPhong" @(ViewBag.SelectedMaPhong != null && (int)ViewBag.SelectedMaPhong == p.MaPhong ? "selected" : "")>
+                            @p.TenPhong
+                            </!option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-
         <a href="@Url.Action("ChiTietDoanhThu", "ThongKe")" class="block bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100 hover:border-teal-300 hover:shadow-md transition-all flex flex-col justify-between" style="text-decoration:none;">
             <div>
                 <h3 class="text-gray-400 text-xs sm:text-sm font-medium tracking-wide mb-2">Doanh thu tháng này</h3>
@@ -61,11 +98,9 @@
                 Từ @Model.SoHoaDonChuaThanhToan hóa đơn chưa đóng ➔
             </div>
         </a>
-
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 lg:col-span-2">
             <h3 class="font-bold text-gray-700 mb-4">Biểu đồ doanh thu 6 tháng gần nhất</h3>
             <div style="height: 300px;">
@@ -116,9 +151,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script>
-        // FIX LỖI CÚ PHÁP: Chuẩn hóa lại gán biến JSON từ DB sang JS ngắn gọn và không bị lỗi lặp điều kiện
-        var rawData = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]");
+        // JS XỬ LÝ SỰ KIỆN KHI THAY ĐỔI DROPDOWN BỘ LỌC
+        document.getElementById('filterBuilding').addEventListener('change', function () {
+        var buildingId = this.value;
+        // Khi chọn tòa nhà mới, reset phòng về rỗng để hiển thị lại dữ liệu toàn tòa nhà
+        window.location.href = '@Url.Action("Index", "ThongKe")' + '?maToaNha=' + buildingId;
+        });
 
+        document.getElementById('filterRoom').addEventListener('change', function () {
+        var buildingId = document.getElementById('filterBuilding').value;
+        var roomId = this.value;
+        window.location.href = '@Url.Action("Index", "ThongKe")' + '?maToaNha=' + buildingId + '&maPhong=' + roomId;
+        });
+
+        // Giữ nguyên đoạn code vẽ Chart JS bên dưới
+        var rawData = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]");
         var labelsThang = [];
         var dataThucTeThang = [];
         var dataDaThuThang = [];
@@ -128,11 +175,9 @@
         var t = (x.Thang !== undefined) ? x.Thang : x.thang;
         return 'Tháng ' + t;
         });
-
         dataThucTeThang = rawData.map(x => {
         return (x.DoActiveThu !== undefined) ? x.DoActiveThu : ((x.DoanhThu !== undefined) ? x.DoanhThu : x.doanhThu);
         });
-
         dataDaThuThang = dataThucTeThang.map(val => val * 0.9);
         } else {
         labelsThang = ['Tháng 12', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5'];
@@ -141,10 +186,8 @@
         }
 
         var ctxArea = document.getElementById('doanhThu6ThangChart');
-
         if (ctxArea) {
         var ctx = ctxArea.getContext('2d');
-
         var gradientBlue = ctx.createLinearGradient(0, 0, 0, 400);
         gradientBlue.addColorStop(0, 'rgba(24, 144, 255, 0.35)');
         gradientBlue.addColorStop(1, 'rgba(24, 144, 255, 0.01)');

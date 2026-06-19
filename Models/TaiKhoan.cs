@@ -39,7 +39,10 @@ namespace HeThongQuanLyPhongTro.Models
         public string? SoTaiKhoan { get; set; }
 
         [StringLength(100)]
+
         public string? ChuTaiKhoan { get; set; }
+        [StringLength(50)]
+        public string? MaNganHang { get; set; }
 
         // 1 Chủ trọ quản lý nhiều Tòa nhà
         public virtual ICollection<ToaNha> ToaNhas { get; set; } = new List<ToaNha>();

@@ -10,6 +10,8 @@
     <title>Đăng Nhập - Phòng Trọ Xinh</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- 📦 TÍCH HỢP SWEETALERT2 ĐỂ HIỂN THỊ THÔNG BÁO LIÊN HỆ ĐẸP MẮT -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         /* CSS ẩn mũi tên dropdown mặc định của trình duyệt để dùng giao diện tùy biến */
         input::-webkit-calendar-picker-indicator {
@@ -133,12 +135,36 @@
             </div>
         </div>
     </div>
+
+    <!-- 🎯 SỬA LẠI ĐOẠN NÀY: DÙNG ID ĐỂ GẮN SỰ KIỆN CLICK SWEETALERT2 -->
     <div class="text-center pb-6 text-sm text-gray-600">
         Bạn muốn trở thành chủ trọ trên hệ thống?
-        <a href="mailto:admin@phongtroxinh.com" class="text-blue-600 font-bold hover:underline">Liên hệ Admin ngay</a>
+        <a href="#" id="btnLienHeAdmin" class="text-blue-600 font-bold hover:underline">Liên hệ Admin ngay</a>
     </div>
 
     <script>
+        // 🛠️ ĐOẠN SCRIPT HIỂN THỊ POPUP LIÊN HỆ NHANH CHÓNG (CÁCH 3)
+        document.getElementById('btnLienHeAdmin').onclick = function (e) {
+        e.preventDefault();
+        Swal.fire({
+        title: '<strong>Đăng ký làm Chủ trọ</strong>',
+        icon: 'info',
+        html:
+        '<div class="text-left text-sm text-gray-600 space-y-3 p-1">' +
+        '<p>Để đăng ký quyền quản lý tòa nhà trên hệ thống <b>Phòng Trọ Xinh</b>, bạn vui lòng liên hệ với chúng mình qua các thông tin dưới đây. Rất mong được hợp tác với quý Chủ trọ. <b>Phòng Trọ Xinh xin cảm ơn!</b></p>' +
+        '<div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-2 font-semibold mt-2 text-gray-800">' +
+        '<p><i class="fas fa-phone-alt text-blue-500 mr-2.5"></i> Hotline: <span>0869.189.018</span></p>' +
+        '<p><i class="fas fa-envelope text-red-500 mr-2.5"></i> Email: <span>adminphongtroxinh@gmail.com</span></p>' +
+        '<p><i class="fab fa-comment-dots text-green-500 mr-2.5"></i> Zalo: <span class="text-blue-600 underline">0869.189.018</span></p>' +
+        '</div>' +
+        '<p class="text-xs text-gray-400 italic mt-3 text-center">* Đội ngũ Admin hỗ trợ duyệt hồ sơ và làm việc từ 8h00 - 22h00 hàng ngày.*</p>' +
+        '</div>',
+        showCloseButton: true,
+        confirmButtonText: 'Đóng lại',
+        confirmButtonColor: '#2563eb'
+        });
+        };
+
         // 1. LOGIC ẨN/HIỆN MẬT KHẨU (CON MẮT)
         document.getElementById('togglePassword').addEventListener('click', function () {
         const passwordInput = document.getElementById('passwordInput');
@@ -158,7 +184,7 @@
         }
         });
 
-        // 2. YÊU CẦU 2: LOGIC DROPDOWN QUẢN LÝ TÀI KHOẢN CÓ NÚT XÓA X TRỰC QUAN
+        // 2. LOGIC DROPDOWN QUẢN LÝ TÀI KHOẢN CÓ NÚT XÓA X TRỰC QUAN
         document.addEventListener('DOMContentLoaded', function () {
         const userInput = document.getElementById('usernameInput');
         const passInput = document.getElementById('passwordInput');

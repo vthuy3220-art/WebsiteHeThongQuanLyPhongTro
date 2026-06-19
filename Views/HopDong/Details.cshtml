@@ -4,31 +4,50 @@
     ViewData["Title"] = "Chi tiết hợp đồng";
     var nguoiOList = ViewBag.NguoiOList as List<HeThongQuanLyPhongTro.Models.NguoiOHopDong>;
     var hoaDons = ViewBag.HoaDons as List<HeThongQuanLyPhongTro.Models.HoaDon>;
+    var role = ViewBag.Role ?? Context.Session.GetString("Role");
 }
+
 <div class="flex justify-end space-x-3 mb-4">
     <a href="@Url.Action("XuatPdf", "HopDong", new { id = Model.MaHopDong })"
        target="_blank"
-       class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+       class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all">
         <i class="fas fa-file-pdf mr-2"></i> Xuất PDF hợp đồng
     </a>
 </div>
-<div class="max-w-4xl mx-auto">
+
+<div class="max-w-6xl mx-auto">
     <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <!-- Header -->
         <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-xl font-bold text-white">Chi tiết hợp đồng</h1>
                     <p class="text-purple-100">Mã hợp đồng: <strong class="text-yellow-200">@Model.MaHopDong</strong></p>
                 </div>
-                <a asp-action="Index" class="text-white hover:text-purple-200">
-                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
-                </a>
+                @if (role == "Admin" || role == "SuperAdmin")
+                {
+                    <a asp-action="Index" class="text-white hover:text-purple-200 transition-all">
+                        <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                    </a>
+                }
+                else if (role == "Khach")
+                {
+                    <a asp-controller="KhachHang" asp-action="HopDongCuaToi" class="text-white hover:text-purple-200 transition-all">
+                        <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                    </a>
+                }
+                else
+                {
+                    <a asp-action="Index" class="text-white hover:text-purple-200 transition-all">
+                        <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                    </a>
+                }
             </div>
         </div>
 
         <div class="p-6">
-            <!-- Thông tin hợp đồng -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- ========== THÔNG TIN HỢP ĐỒNG ========== -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <p class="text-gray-500 text-sm">🔢 Mã hợp đồng</p>
                     <p class="font-bold text-lg text-blue-600">@Model.MaHopDong</p>
@@ -68,8 +87,13 @@
                     <p class="text-gray-500 text-sm">🏢 Tòa nhà</p>
                     <p class="font-semibold">@(Model.PhongNavigation?.ToaNha?.TenToaNha ?? "N/A")</p>
                 </div>
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-gray-500 text-sm">👤 Chủ trọ</p>
+                    <p class="font-semibold">@(Model.PhongNavigation?.ToaNha?.MaChuTro ?? 0)</p>
+                </div>
+            </div>
 
-            <!-- Thông tin khách hàng (người đại diện) -->
+            <!-- ========== THÔNG TIN KHÁCH HÀNG ========== -->
             <div class="border rounded-lg p-4 mb-6">
                 <h3 class="font-bold text-lg mb-3 flex items-center">
                     <i class="fas fa-user-circle text-blue-500 mr-2"></i>
@@ -84,7 +108,7 @@
                 </div>
             </div>
 
-            <!-- Danh sách người ở -->
+            <!-- ========== DANH SÁCH NGƯỜI Ở ========== -->
             <div class="border rounded-lg p-4 mb-6">
                 <h3 class="font-bold text-lg mb-3 flex items-center">
                     <i class="fas fa-users text-green-500 mr-2"></i>
@@ -92,31 +116,33 @@
                 </h3>
                 @if (nguoiOList != null && nguoiOList.Any())
                 {
-                    <table class="w-full border">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="p-2 text-left">STT</th>
-                                <th class="p-2 text-left">Họ tên</th>
-                                <th class="p-2 text-left">CCCD</th>
-                                <th class="p-2 text-left">Số điện thoại</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @{
-                                int stt = 1;
-                                foreach (var n in nguoiOList)
-                                {
-                                    <tr class="border-t">
-                                        <td class="p-2">@stt</td>
-                                        <td class="p-2">@n.HoTen</td>
-                                        <td class="p-2">@n.CCCD</td>
-                                        <td class="p-2">@n.SoDienThoai</td>
-                                    </tr>
-                                    stt++;
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-2 text-left border">STT</th>
+                                    <th class="p-2 text-left border">Họ tên</th>
+                                    <th class="p-2 text-left border">CCCD</th>
+                                    <th class="p-2 text-left border">Số điện thoại</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    int stt = 1;
+                                    foreach (var n in nguoiOList)
+                                    {
+                                        <tr class="border-t">
+                                            <td class="p-2 border">@stt</td>
+                                            <td class="p-2 border">@n.HoTen</td>
+                                            <td class="p-2 border">@n.CCCD</td>
+                                            <td class="p-2 border">@n.SoDienThoai</td>
+                                        </tr>
+                                        stt++;
+                                    }
                                 }
-                            }
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 }
                 else
                 {
@@ -127,7 +153,7 @@
                 }
             </div>
 
-            <!-- Danh sách hóa đơn -->
+            <!-- ========== DANH SÁCH HÓA ĐƠN (CHỈ 1 BẢNG DUY NHẤT) ========== -->
             <div class="border rounded-lg p-4">
                 <h3 class="font-bold text-lg mb-3 flex items-center">
                     <i class="fas fa-receipt text-purple-500 mr-2"></i>
@@ -135,69 +161,26 @@
                 </h3>
                 @if (hoaDons != null && hoaDons.Any())
                 {
-                    <table class="w-full border">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="p-2 text-left">Tháng/Năm</th>
-                                <th class="p-2 text-right">Số tiền</th>
-                                <th class="p-2 text-center">Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var hd in hoaDons)
-                            {
-                                <tr class="border-t">
-                                    <td class="p-2">@hd.Thang/@hd.Nam</td>
-                                    <td class="p-2 text-right">@(hd.TongTien?.ToString("N0") ?? "0") đ</td>
-                                    <td class="p-2 text-center">
-                                        @if (hd.TrangThai == "Đã thanh toán")
-                                        {
-                                            <span class="text-green-600">✓ Đã thanh toán</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-red-600">Chưa thanh toán</span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <div class="text-center py-4 text-gray-500">
-                        <p>Chưa có hóa đơn nào</p>
-                    </div>
-                }
-            </div>
-            <!-- Hóa đơn - VẪN HIỂN THỊ DÙ HỢP ĐỒNG ĐÃ KẾT THÚC -->
-            <div class="bg-white rounded-xl shadow-md overflow-hidden mt-4">
-                <div class="bg-gray-50 px-6 py-3 border-b">
-                    <h3 class="font-semibold">🧾 Danh sách hóa đơn</h3>
-                </div>
-                <div class="p-4">
-                    @if (ViewBag.HoaDons != null && ((List<HoaDon>)ViewBag.HoaDons).Any())
-                    {
-                        <table class="w-full">
-                            <thead class="bg-gray-100">
-                                <tr class="border-b">
-                                    <th class="p-2 text-left">Mã hóa đơn</th>
-                                    <th class="p-2 text-left">Tháng/Năm</th>
-                                    <th class="p-2 text-right">Tổng tiền</th>
-                                    <th class="p-2 text-left">Trạng thái</th>
-                                    <th class="p-2 text-center">Thao tác</th>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-2 text-left border">Mã hóa đơn</th>
+                                    <th class="p-2 text-left border">Tháng/Năm</th>
+                                    <th class="p-2 text-right border">Tổng tiền</th>
+                                    <th class="p-2 text-center border">Trạng thái</th>
+                                    <th class="p-2 text-center border">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in ViewBag.HoaDons)
+                                @foreach (var hd in hoaDons)
                                 {
-                                    <tr class="border-b">
-                                        <td class="p-2">@item.MaHoaDon.ToString("00000")</td>
-                                        <td class="p-2">@item.Thang/@item.Nam</td>
-                                        <td class="p-2 text-right">@String.Format("{0:N0}", item.TongTien) đ</td>
-                                        <td class="p-2">
-                                            @if (item.TrangThai == "Đã thanh toán")
+                                    <tr class="border-t">
+                                        <td class="p-2 border">@hd.MaHoaDon.ToString("D5")</td>
+                                        <td class="p-2 border">@hd.Thang/@hd.Nam</td>
+                                        <td class="p-2 text-right border">@(hd.TongTien?.ToString("N0") ?? "0") đ</td>
+                                        <td class="p-2 text-center border">
+                                            @if (hd.TrangThai == "Đã thanh toán")
                                             {
                                                 <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Đã thanh toán</span>
                                             }
@@ -206,38 +189,44 @@
                                                 <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Chưa thanh toán</span>
                                             }
                                         </td>
-                                        <td class="p-2 text-center">
-                                            <a asp-controller="HoaDon" asp-action="Details" asp-route-id="@item.MaHoaDon" class="text-blue-500 hover:underline">Chi tiết</a>
+                                        <td class="p-2 text-center border">
+                                            <a asp-controller="HoaDon" asp-action="Details" asp-route-id="@hd.MaHoaDon"
+                                               class="text-blue-500 hover:text-blue-700 hover:underline text-sm">
+                                                <i class="fas fa-eye"></i> Chi tiết
+                                            </a>
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
-                    }
-                    else
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-gray-500">
+                        <i class="fas fa-file-invoice text-3xl mb-2"></i>
+                        <p>Chưa có hóa đơn nào</p>
+                    </div>
+                }
+            </div>
+
+            <!-- ========== NÚT THAO TÁC ========== -->
+            <div class="flex flex-wrap justify-between items-center gap-3 mt-6 pt-4 border-t">
+                <div>
+                    @if (Model.TrangThai == "Hiệu lực")
                     {
-                        <p class="text-gray-500 text-center">Chưa có hóa đơn nào</p>
+                        <form asp-action="ChamDut" asp-route-id="@Model.MaHopDong" method="post" class="inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+                                    onclick="return confirm('Bạn có chắc muốn chấm dứt hợp đồng này?')">
+                                <i class="fas fa-times-circle mr-2"></i> Chấm dứt hợp đồng
+                            </button>
+                        </form>
                     }
                 </div>
-            </div>
-            <!-- Nút thao tác -->
-            <div class="flex justify-end space-x-3 mt-6 pt-4 border-t">
-                @if (Model.TrangThai == "Hiệu lực")
-                {
-                    <form asp-action="ChamDut" asp-route-id="@Model.MaHopDong" method="post">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                                onclick="return confirm('Chấm dứt hợp đồng này?')">
-                            <i class="fas fa-times-circle mr-2"></i> Chấm dứt hợp đồng
-                        </button>
-                    </form>
-                }
-                @{
-                    var role = ViewBag.Role ?? Context.Session.GetString("Role");
-                }
 
-                <div class="mt-4 flex gap-3">
-                    @if (role == "Admin")
+                <div class="flex gap-3">
+                    @if (role == "Admin" || role == "SuperAdmin")
                     {
                         <a asp-action="Index" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all">
                             <i class="fas fa-arrow-left mr-2"></i> Quay lại danh sách
@@ -250,11 +239,11 @@
                         </a>
                     }
 
-                    <a asp-action="XuatPdf" asp-route-id="@Model.MaHopDong" target="_blank" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all">
+                    <a asp-action="XuatPdf" asp-route-id="@Model.MaHopDong" target="_blank"
+                       class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all">
                         <i class="fas fa-file-pdf mr-2"></i> Xuất PDF
                     </a>
                 </div>
-                
             </div>
         </div>
     </div>

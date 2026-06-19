@@ -31,25 +31,43 @@
 
             <form method="post">
                 <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Tên ngân hàng</label>
-                    <input asp-for="TenNganHang" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="VD: Techcombank, Vietcombank, BIDV..." />
-                    <span asp-validation-for="TenNganHang" class="text-red-500 text-sm"></span>
+                    <label class="font-semibold text-gray-700">Ngân hàng</label>
+                    <select name="MaNganHang" id="selNganHang" class="w-full border rounded p-2 mt-1"
+                            onchange="syncTenNganHang()">
+                        @foreach (var item in (List<SelectListItem>)ViewBag.DanhSachNganHang)
+                        {
+                            if (item.Value == Model.MaNganHang)
+                            {
+                                <option value="@item.Value" selected>@item.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                    <input type="hidden" name="TenNganHang" id="tenNganHangHidden" value="@Model.TenNganHang" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Số tài khoản</label>
-                    <input asp-for="SoTaiKhoan" class="w-full px-4 py-2 border rounded-lg"
-                           placeholder="Nhập số tài khoản ngân hàng" />
-                    <span asp-validation-for="SoTaiKhoan" class="text-red-500 text-sm"></span>
+                    <label class="font-semibold text-gray-700">Số tài khoản</label>
+                    <input type="text" name="SoTaiKhoan" value="@Model.SoTaiKhoan"
+                           class="w-full border rounded p-2 mt-1" placeholder="Nhập số tài khoản" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Chủ tài khoản</label>
-                    <input asp-for="ChuTaiKhoan" class="w-full px-4 py-2 border rounded-lg"
-                           placeholder="Tên chủ tài khoản" />
-                    <span asp-validation-for="ChuTaiKhoan" class="text-red-500 text-sm"></span>
+                    <label class="font-semibold text-gray-700">Chủ tài khoản</label>
+                    <input type="text" name="ChuTaiKhoan" value="@Model.ChuTaiKhoan"
+                           class="w-full border rounded p-2 mt-1" placeholder="Nhập tên chủ tài khoản" />
                 </div>
+
+                <script>
+                    function syncTenNganHang() {
+                        var sel = document.getElementById('selNganHang');
+                        var text = sel.options[sel.selectedIndex].text;
+                        document.getElementById('tenNganHangHidden').value = text;
+                    }
+                </script>
 
                 <div class="bg-yellow-50 p-4 rounded-lg mb-4">
                     <div class="flex items-start gap-3">

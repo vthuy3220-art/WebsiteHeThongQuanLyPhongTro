@@ -32,181 +32,77 @@ namespace HeThongQuanLyPhongTro.Controllers
             return GetCurrentRole() == "ChuTro";
         }
 
-        // ==================== XUẤT PDF HỢP ĐỒNG ====================
-        public async Task<IActionResult> XuatPdf(int id)
+        // ==================== LOAD VIEW BAGS ====================
+        private async Task LoadViewBags()
         {
-            var hopDong = await _context.HopDong
-                .Include(h => h.PhongNavigation).ThenInclude(p => p.ToaNha).ThenInclude(t => t.CoSo)
-                .Include(h => h.KhachHangNavigation)
-                .FirstOrDefaultAsync(h => h.MaHopDong == id);
+            var role = GetCurrentRole();
+            var userId = GetCurrentUserId();
 
-            if (hopDong == null) return NotFound();
+            var queryPhong = _context.Phong
+                .Where(p => p.TrangThai == "Trống");
 
-            var nguoiOList = await _context.NguoiOHopDong
-                .Where(n => n.MaHopDong == id)
-                .ToListAsync();
+            // ✅ PHÂN QUYỀN: Chủ trọ chỉ thấy phòng của mình
+            if (role == "ChuTro")
+            {
+                queryPhong = queryPhong.Where(p => p.MaChuTro == userId);
+            }
 
-            string htmlContent = TaoNoiDungHopDongHtml(hopDong, nguoiOList);
-
-            await new BrowserFetcher().DownloadAsync();
-            using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
-            using var page = await browser.NewPageAsync();
-            await page.SetContentAsync(htmlContent);
-            var pdfBytes = await page.PdfDataAsync();
-
-            return File(pdfBytes, "application/pdf", $"HopDong_{hopDong.MaHopDong}.pdf");
+            ViewBag.PhongList = await queryPhong.ToListAsync();
+            ViewBag.KhachHangList = await _context.KhachHang.ToListAsync();
         }
 
-        // ==================== HTML MẪU HỢP ĐỒNG ====================
-        private string TaoNoiDungHopDongHtml(HopDong hopDong, List<NguoiOHopDong> nguoiOList)
+        // ==================== TẠO HÓA ĐƠN TỰ ĐỘNG ====================
+        private async Task TaoHoaDonChoHopDong(int maHopDong, decimal giaPhong, DateTime ngayBatDau, DateTime ngayKetThuc)
         {
-            string danhSachNguoiOBang = "";
-            if (nguoiOList != null && nguoiOList.Any())
+            int currentMonth = ngayBatDau.Month;
+            int currentYear = ngayBatDau.Year;
+            int endMonth = ngayKetThuc.Month;
+            int endYear = ngayKetThuc.Year;
+
+            var hopDong = await _context.HopDong
+                .FirstOrDefaultAsync(h => h.MaHopDong == maHopDong);
+
+            // ✅ PHÂN QUYỀN: Lấy MaChuTro từ hợp đồng
+            int maChuTro = hopDong?.MaChuTro ?? 0;
+
+            while (currentYear < endYear || (currentYear == endYear && currentMonth <= endMonth))
             {
-                int stt = 1;
-                foreach (var n in nguoiOList)
+                var existingHoaDon = await _context.HoaDon
+                    .AnyAsync(h => h.MaHopDong == maHopDong && h.Thang == currentMonth && h.Nam == currentYear);
+
+                if (!existingHoaDon)
                 {
-                    danhSachNguoiOBang += $@"
-    <tr>
-        <td class='text-center'>{stt}</td>
-        <td>{n.HoTen}</td>
-        <td>{n.CCCD}</td>
-        <td>{n.SoDienThoai}</td>
-        <td></td>
-    </tr>";
-                    stt++;
+                    var hoaDon = new HoaDon
+                    {
+                        MaHopDong = maHopDong,
+                        MaChuTro = maChuTro,  // ✅ PHÂN QUYỀN: Lưu mã chủ trọ vào hóa đơn
+                        Thang = currentMonth,
+                        Nam = currentYear,
+                        TongTien = giaPhong,
+                        TrangThai = "Chờ thanh toán",
+                        NgayTao = DateTime.Now
+                    };
+                    _context.HoaDon.Add(hoaDon);
+                }
+
+                currentMonth++;
+                if (currentMonth > 12)
+                {
+                    currentMonth = 1;
+                    currentYear++;
                 }
             }
-            else
-            {
-                danhSachNguoiOBang = @"
-    <tr>
-        <td colspan='5' class='text-center'>Không có người ở chung</td>
-    </tr>";
-            }
 
-            return $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='UTF-8'>
-    <title>HỢP ĐỒNG THUÊ PHÒNG</title>
-    <style>
-        body {{ font-family: 'Times New Roman', Times, serif; font-size: 14px; margin: 40px; line-height: 1.5; }}
-        .center {{ text-align: center; }}
-        .bold {{ font-weight: bold; }}
-        .title {{ font-size: 18px; font-weight: bold; text-transform: uppercase; margin: 20px 0; }}
-        .indent {{ text-indent: 30px; }}
-        .sign-left {{ float: left; width: 45%; text-align: center; }}
-        .sign-right {{ float: right; width: 45%; text-align: center; }}
-        .clear {{ clear: both; }}
-        .dieu {{ margin: 15px 0; }}
-        .dieu-title {{ font-size: 15px; font-weight: bold; margin: 15px 0 8px 0; }}
-        .sign-line {{ border-top: 1px solid #000; width: 80%; margin: 35px auto 8px auto; }}
-        table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
-        th, td {{ border: 1px solid #000; padding: 8px; text-align: left; }}
-        th {{ background: #f0f0f0; text-align: center; }}
-        .text-center {{ text-align: center; }}
-        .header {{ margin-bottom: 20px; }}
-    </style>
-</head>
-<body>
-<div class='header'>
-    <div class='center'>
-        <div class='bold'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-        <div>Độc lập - Tự do - Hạnh phúc</div>
-        <div>---------------</div>
-        <div class='title'>HỢP ĐỒNG THUÊ PHÒNG</div>
-        <div>Số: <strong>{hopDong.MaHopDong}</strong></div>
-        <div><i>(Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau)</i></div>
-    </div>
-</div>
-
-<div class='indent'>
-    - Căn cứ Bộ luật Dân sự số 91/2015/QH13 ngày 24/11/2015 của Quốc hội.<br>
-    - Căn cứ vào nhu cầu và khả năng của các bên.
-</div>
-
-<div style='margin: 15px 0;'>
-    Hôm nay, ngày <strong>{DateTime.Now:dd/MM/yyyy}</strong>, tại địa chỉ: <strong>{hopDong.PhongNavigation?.ToaNha?.DiaChi ?? ""}</strong>
-</div>
-
-<div class='dieu-title'>CHÚNG TÔI GỒM:</div>
-
-<div class='dieu'>
-    <div class='dieu-title'>BÊN A (Bên cho thuê - Chủ trọ)</div>
-    <div>- Họ và tên: <strong>Vũ Thị Thanh Thúy</strong></div>
-    <div>- Số CCCD/CMND: 001082008547</div>
-    <div>- Hộ khẩu thường trú: Ngọc Thụy – Long Biên – Hà Nội</div>
-    <div>- Số điện thoại: 0869189018</div>
-</div>
-
-<div class='dieu'>
-    <div class='dieu-title'>BÊN B (Bên thuê - Đại diện)</div>
-    <div>- Họ và tên: <strong>{hopDong.KhachHangNavigation?.HoTen}</strong></div>
-    <div>- Số CCCD/CMND: {hopDong.KhachHangNavigation?.CCCD}</div>
-    <div>- Số điện thoại: {hopDong.KhachHangNavigation?.SoDienThoai}</div>
-    <div>- Email: {hopDong.KhachHangNavigation?.Email}</div>
-    <div>- Hộ khẩu thường trú: {hopDong.KhachHangNavigation?.DiaChi}</div>
-</div>
-
-<div class='dieu'>
-    <div class='dieu-title'>DANH SÁCH NGƯỜI Ở CHUNG:</div>
-    <tr>
-        <thead><tr><th>STT</th><th>Họ và tên</th><th>CCCD/CMND</th><th>Số điện thoại</th><th>Quan hệ</th></tr></thead>
-        <tbody>{danhSachNguoiOBang}</tbody>
-    </table>
-</div>
-
-<div class='dieu'>
-    <div class='dieu-title'>Điều 1: ĐỐI TƯỢNG THUÊ</div>
-    <div>1.1. Bên A đồng ý cho Bên B thuê căn phòng: <strong>{hopDong.PhongNavigation?.TenPhong}</strong></div>
-    <div>1.2. Địa chỉ: <strong>{hopDong.PhongNavigation?.ToaNha?.DiaChi}</strong></div>
-    <div>1.3. Diện tích: <strong>{hopDong.PhongNavigation?.DienTich} m²</strong></div>
-</div>
-
-<div class='dieu'>
-    <div class='dieu-title'>Điều 2: THỜI HẠN THUÊ</div>
-    <div>Thời hạn thuê: <strong>{hopDong.NgayBatDau:dd/MM/yyyy}</strong> đến ngày <strong>{hopDong.NgayKetThuc:dd/MM/yyyy}</strong></div>
-</div>
-
-<div class='dieu'>
-    <div class='dieu-title'>Điều 3: GIÁ THUÊ VÀ PHƯƠNG THỨC THANH TOÁN</div>
-    <div>3.1. Giá thuê phòng: <strong>{(hopDong.PhongNavigation?.GiaPhong ?? 0):N0} đồng/tháng</strong></div>
-    <div>3.2. Tiền đặt cọc: <strong>{(hopDong.TienCoc ?? 0):N0} đồng</strong></div>
-    <div>3.3. Phương thức thanh toán: <strong>Chuyển khoản hoặc tiền mặt vào ngày 10 hàng tháng</strong></div>
-</div>
-
-<div class='dieu'>
-    <div class='dieu-title'>Điều 4-9: CÁC ĐIỀU KHOẢN KHÁC</div>
-    <div>Hai bên cam kết thực hiện đúng các điều khoản đã thỏa thuận.</div>
-    <div>Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá trị pháp lý như nhau.</div>
-</div>
-
-<div class='sign-box' style='margin-top: 40px;'>
-    <div class='sign-left'>
-        <div class='bold'>BÊN CHO THUÊ (BÊN A)</div>
-        <div class='sign-line'></div>
-        <div>Vũ Thị Thanh Thúy</div>
-    </div>
-    <div class='sign-right'>
-        <div class='bold'>BÊN THUÊ (BÊN B)</div>
-        <div class='sign-line'></div>
-        <div>{hopDong.KhachHangNavigation?.HoTen}</div>
-    </div>
-    <div class='clear'></div>
-</div>
-</body>
-</html>";
+            await _context.SaveChangesAsync();
         }
 
         // ==================== DANH SÁCH HỢP ĐỒNG ====================
         public async Task<IActionResult> Index(string searchString, string trangThai)
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            var role = HttpContext.Session.GetString("Role");
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
 
-            if (userId == null)
+            if (userId == 0)
             {
                 return RedirectToAction("Index", "Login");
             }
@@ -216,7 +112,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .Include(h => h.KhachHangNavigation)
                 .AsQueryable();
 
-            // Phân quyền: Chủ trọ chỉ thấy hợp đồng của phòng mình
+            // ✅ PHÂN QUYỀN: Chủ trọ chỉ thấy hợp đồng của phòng mình
             if (role == "ChuTro")
             {
                 var phongIds = await _context.Phong
@@ -256,25 +152,12 @@ namespace HeThongQuanLyPhongTro.Controllers
         // ==================== TẠO HỢP ĐỒNG MỚI (GET) ====================
         public async Task<IActionResult> Create()
         {
-            if (HttpContext.Session.GetInt32("UserId") == null)
+            if (GetCurrentUserId() == 0)
             {
                 return RedirectToAction("Index", "Login");
             }
 
-            var role = HttpContext.Session.GetString("Role");
-            var userId = HttpContext.Session.GetInt32("UserId");
-
-            var queryPhong = _context.Phong
-                .Where(p => p.TrangThai == "Trống");
-
-            if (role == "ChuTro")
-            {
-                queryPhong = queryPhong.Where(p => p.MaChuTro == userId);
-            }
-
-            ViewBag.PhongList = await queryPhong.ToListAsync();
-            ViewBag.KhachHangList = await _context.KhachHang.ToListAsync();
-
+            await LoadViewBags();
             return View();
         }
 
@@ -299,11 +182,20 @@ namespace HeThongQuanLyPhongTro.Controllers
             List<string> NguoiOCCCD,
             List<string> NguoiOSDT)
         {
-            // Kiểm tra phòng còn trống không
             var phong = await _context.Phong.FindAsync(maPhong);
             if (phong == null || phong.TrangThai != "Trống")
             {
                 TempData["Error"] = "Phòng không còn trống!";
+                await LoadViewBags();
+                return View();
+            }
+
+            // ✅ PHÂN QUYỀN: Kiểm tra chủ trọ có quyền với phòng này không
+            var role = GetCurrentRole();
+            var userId = GetCurrentUserId();
+            if (role == "ChuTro" && phong.MaChuTro != userId)
+            {
+                TempData["Error"] = "Bạn không có quyền tạo hợp đồng cho phòng này!";
                 await LoadViewBags();
                 return View();
             }
@@ -355,7 +247,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                     if (khachHang != null)
                     {
                         khachHang.MaTaiKhoan = taiKhoan.MaTaiKhoan;
-                        _context.Update(khachHang);
+                        _context.KhachHang.Update(khachHang);
                         await _context.SaveChangesAsync();
                     }
 
@@ -368,11 +260,14 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
 
             // ========== 3. TẠO HỢP ĐỒNG ==========
+            // ✅ PHÂN QUYỀN: Lấy MaChuTro từ phòng
+            int maChuTro = phong.MaChuTro;
+
             var hopDong = new HopDong
             {
                 MaPhong = maPhong,
                 MaKhachHang = maKhachHangCuoi,
-                MaChuTro = phong.MaChuTro,
+                MaChuTro = maChuTro,  // ✅ PHÂN QUYỀN: Lưu mã chủ trọ vào hợp đồng
                 NgayBatDau = ngayBatDau,
                 NgayKetThuc = ngayKetThuc,
                 TienCoc = tienCoc,
@@ -403,7 +298,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             // ========== 5. CẬP NHẬT TRẠNG THÁI PHÒNG ==========
             phong.TrangThai = "Đã thuê";
-            _context.Update(phong);
+            _context.Phong.Update(phong);
             await _context.SaveChangesAsync();
 
             // ========== 6. TẠO HÓA ĐƠN TỰ ĐỘNG ==========
@@ -413,29 +308,12 @@ namespace HeThongQuanLyPhongTro.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task LoadViewBags()
-        {
-            var role = HttpContext.Session.GetString("Role");
-            var userId = HttpContext.Session.GetInt32("UserId");
-
-            var queryPhong = _context.Phong
-                .Where(p => p.TrangThai == "Trống");
-
-            if (role == "ChuTro")
-            {
-                queryPhong = queryPhong.Where(p => p.MaChuTro == userId);
-            }
-
-            ViewBag.PhongList = await queryPhong.ToListAsync();
-            ViewBag.KhachHangList = await _context.KhachHang.ToListAsync();
-        }
-
         // ==================== CHẤM DỨT HỢP ĐỒNG ====================
         [HttpGet]
         public async Task<IActionResult> ChamDut(int? id)
         {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro")
+            var role = GetCurrentRole();
+            if (role != "SuperAdmin" && role != "Admin" && role != "ChuTro")
             {
                 TempData["Error"] = "Bạn không có quyền thực hiện chức năng này!";
                 return RedirectToAction("Index", "Login");
@@ -450,6 +328,18 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (hopDong == null) return NotFound();
 
+            // ✅ PHÂN QUYỀN: Chủ trọ chỉ chấm dứt hợp đồng của mình
+            if (role == "ChuTro")
+            {
+                var userId = GetCurrentUserId();
+                var phongCuaChuTro = await _context.Phong.FindAsync(hopDong.MaPhong);
+                if (phongCuaChuTro == null || phongCuaChuTro.MaChuTro != userId)
+                {
+                    TempData["Error"] = "Bạn không có quyền chấm dứt hợp đồng này!";
+                    return RedirectToAction("Index");
+                }
+            }
+
             return View(hopDong);
         }
 
@@ -457,10 +347,10 @@ namespace HeThongQuanLyPhongTro.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChamDutConfirmed(int id)
         {
-            var role = HttpContext.Session.GetString("Role");
-            var userId = HttpContext.Session.GetInt32("UserId");
+            var role = GetCurrentRole();
+            var userId = GetCurrentUserId();
 
-            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro")
+            if (role != "SuperAdmin" && role != "Admin" && role != "ChuTro")
             {
                 TempData["Error"] = "Bạn không có quyền thực hiện chức năng này!";
                 return RedirectToAction("Index", "Login");
@@ -472,25 +362,25 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (hopDong == null) return NotFound();
 
-            // Kiểm tra quyền Chủ trọ
+            // ✅ PHÂN QUYỀN: Chủ trọ chỉ chấm dứt hợp đồng của mình
             if (role == "ChuTro")
             {
                 var phongCuaChuTro = await _context.Phong.FindAsync(hopDong.MaPhong);
                 if (phongCuaChuTro == null || phongCuaChuTro.MaChuTro != userId)
                 {
                     TempData["Error"] = "Bạn không có quyền chấm dứt hợp đồng này!";
-                    return RedirectToAction("Index", "Login");
+                    return RedirectToAction("Index");
                 }
             }
 
             hopDong.TrangThai = "Đã hủy";
-            _context.Update(hopDong);
+            _context.HopDong.Update(hopDong);
 
             var phongTrong = hopDong.PhongNavigation;
             if (phongTrong != null)
             {
                 phongTrong.TrangThai = "Trống";
-                _context.Update(phongTrong);
+                _context.Phong.Update(phongTrong);
             }
 
             await _context.SaveChangesAsync();
@@ -498,48 +388,14 @@ namespace HeThongQuanLyPhongTro.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ==================== TẠO HÓA ĐƠN TỰ ĐỘNG ====================
-        private async Task TaoHoaDonChoHopDong(int maHopDong, decimal giaPhong, DateTime ngayBatDau, DateTime ngayKetThuc)
-        {
-            int currentMonth = ngayBatDau.Month;
-            int currentYear = ngayBatDau.Year;
-            int endMonth = ngayKetThuc.Month;
-            int endYear = ngayKetThuc.Year;
-
-            while (currentYear < endYear || (currentYear == endYear && currentMonth <= endMonth))
-            {
-                var existingHoaDon = await _context.HoaDon
-                    .AnyAsync(h => h.MaHopDong == maHopDong && h.Thang == currentMonth && h.Nam == currentYear);
-
-                if (!existingHoaDon)
-                {
-                    var hoaDon = new HoaDon
-                    {
-                        MaHopDong = maHopDong,
-                        Thang = currentMonth,
-                        Nam = currentYear,
-                        TongTien = giaPhong,
-                        TrangThai = "Chưa thanh toán",
-                        NgayTao = DateTime.Now
-                    };
-                    _context.HoaDon.Add(hoaDon);
-                }
-
-                currentMonth++;
-                if (currentMonth > 12)
-                {
-                    currentMonth = 1;
-                    currentYear++;
-                }
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
         // ==================== CHI TIẾT HỢP ĐỒNG ====================
         public async Task<IActionResult> Details(int? id)
         {
-            if (HttpContext.Session.GetInt32("UserId") == null)
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            // Chặn quyền Admin hoàn toàn theo yêu cầu hệ thống của bạn
+            if (userId == 0 || role == "Admin" || role == "SuperAdmin")
             {
                 return RedirectToAction("Index", "Login");
             }
@@ -553,9 +409,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (hopDong == null) return NotFound();
 
-            var role = HttpContext.Session.GetString("Role");
-            var userId = HttpContext.Session.GetInt32("UserId");
-
+            // ✅ PHÂN QUYỀN BẢO MẬT: Khách thuê chỉ xem được đúng hợp đồng của mình
             if (role == "Khach")
             {
                 var khachHang = await _context.KhachHang
@@ -564,6 +418,15 @@ namespace HeThongQuanLyPhongTro.Controllers
                 {
                     TempData["Error"] = "Bạn không có quyền xem hợp đồng này!";
                     return RedirectToAction("HopDongCuaToi", "KhachHang");
+                }
+            }
+            // ✅ PHÂN QUYỀN BẢO MẬT: Chủ trọ chỉ xem được hợp đồng phòng thuộc toà nhà của mình quản lý
+            else if (role == "ChuTro")
+            {
+                if (hopDong.MaChuTro != userId && hopDong.PhongNavigation?.MaChuTro != userId)
+                {
+                    TempData["Error"] = "Bạn không có quyền xem hợp đồng này!";
+                    return RedirectToAction("Index");
                 }
             }
 
@@ -584,25 +447,180 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(hopDong);
         }
 
-        // ==================== API LẤY THÔNG TIN PHÒNG ====================
-        [HttpGet]
-        public async Task<IActionResult> GetPhongInfo(int maPhong)
+        // ==================== XUẤT PDF ====================
+        public async Task<IActionResult> XuatPdf(int id)
         {
-            var phong = await _context.Phong
-                .FirstOrDefaultAsync(p => p.MaPhong == maPhong);
+            var hopDong = await _context.HopDong
+                .Include(h => h.PhongNavigation).ThenInclude(p => p.ToaNha).ThenInclude(t => t.CoSo)
+                .Include(h => h.KhachHangNavigation)
+                .FirstOrDefaultAsync(h => h.MaHopDong == id);
 
-            if (phong == null)
-                return Json(new { success = false });
+            if (hopDong == null) return NotFound();
 
-            var toaNha = await _context.ToaNha.FirstOrDefaultAsync(t => t.MaToaNha == phong.MaToaNha);
+            var nguoiOList = await _context.NguoiOHopDong
+                .Where(n => n.MaHopDong == id)
+                .ToListAsync();
 
-            return Json(new
+            string htmlContent = TaoNoiDungHopDongHtml(hopDong, nguoiOList);
+
+            await new BrowserFetcher().DownloadAsync();
+            using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+            using var page = await browser.NewPageAsync();
+            await page.SetContentAsync(htmlContent);
+            var pdfBytes = await page.PdfDataAsync();
+
+            return File(pdfBytes, "application/pdf", $"HopDong_{hopDong.MaHopDong}.pdf");
+        }
+
+        // ==================== HTML MẪU HỢP ĐỒNG CHUẨN PHÁP LÝ ====================
+        private string TaoNoiDungHopDongHtml(HopDong hopDong, List<NguoiOHopDong> nguoiOList)
+        {
+            var ngayKy = hopDong.NgayBatDau ?? DateTime.Now;
+            var thoiHanThang = 0;
+            if (hopDong.NgayBatDau.HasValue && hopDong.NgayKetThuc.HasValue)
             {
-                success = true,
-                giaPhong = phong.GiaPhong,
-                dienTich = phong.DienTich,
-                tenCoSo = toaNha?.CoSo?.TenCoSo ?? "N/A"
-            });
+                thoiHanThang = ((hopDong.NgayKetThuc.Value.Year - hopDong.NgayBatDau.Value.Year) * 12) + hopDong.NgayKetThuc.Value.Month - hopDong.NgayBatDau.Value.Month;
+            }
+
+            var sb = new StringBuilder();
+            sb.Append(@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='utf-8' />
+                <style>
+                    body { font-family: 'Times New Roman', Times, serif; font-size: 14pt; line-height: 1.5; margin: 0; padding: 0; color: #000; }
+                    .page { width: 210mm; min-height: 297mm; padding: 20mm 15mm 20mm 25mm; margin: auto; box-sizing: border-box; }
+                    .text-center { text-align: center; }
+                    .text-right { text-align: right; }
+                    .bold { font-weight: bold; }
+                    .italic { font-style: italic; }
+                    .underline { text-decoration: underline; }
+                    .header-title { font-size: 13pt; text-transform: uppercase; }
+                    .main-title { font-size: 16pt; font-weight: bold; margin-top: 30px; margin-bottom: 30px; text-transform: uppercase; }
+                    .section-title { font-weight: bold; text-transform: uppercase; margin-top: 15px; margin-bottom: 5px; }
+                    .indent { padding-left: 25px; }
+                    .table-sign { width: 100%; margin-top: 40px; border: none; }
+                    .table-sign td { width: 50%; text-align: center; vertical-align: top; border: none; }
+                    .sign-space { height: 100px; }
+                </style>
+            </head>
+            <body>
+                <div class='page'>
+                    <div class='text-center bold header-title'>CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                    <div class='text-center bold underline' style='font-size: 14pt; margin-top: 5px;'>Độc lập – Tự do – Hạnh phúc</div>
+                    <div class='text-center' style='margin-top: 10px;'>---------------</div>
+                    
+                    <div class='text-center main-title'>HỢP ĐỒNG CHO THUÊ PHÒNG</div>
+                    
+                    <p class='italic'>Hôm nay, ngày " + ngayKy.Day + @" tháng " + ngayKy.Month + @" năm " + ngayKy.Year + @"</p>
+                    
+                    <p class='bold italic'>Chúng tôi gồm :</p>
+                    
+                    <div class='section-title'>I . BÊN CHO THUÊ ( BÊN A )</div>
+                    <div class='indent'>
+                        <p><span class='bold'>Ông ( Bà ) :</span> ............................................................ <span class='bold'>. ĐT :</span> ....................................</p>
+                        <p><span class='bold'>CCCD số :</span> ............................................................</p>
+                        <p><span class='bold'>TT tại :</span> .....................................................................................................................................</p>
+                        <p><span class='bold'>Là chủ sở hữu ngôi nhà số :</span> " + (hopDong.PhongNavigation?.ToaNha?.DiaChi ?? "........................................................................................") + @"</p>
+                    </div>
+
+                    <div class='section-title'>II . BÊN THUÊ ( BÊN B )</div>
+                    <div class='indent'>
+                        <p><span class='bold'>Đại diện : Ông ( Bà ) :</span> " + (hopDong.KhachHangNavigation?.HoTen ?? "....................................") + @" <span class='bold'>. SN :</span> " + (hopDong.KhachHangNavigation?.NgaySinh.HasValue == true ? hopDong.KhachHangNavigation.NgaySinh.Value.ToString("dd/MM/yyyy") : "....................") + @"</p>
+                        <p><span class='bold'>CCCD số :</span> " + (hopDong.KhachHangNavigation?.CCCD ?? "....................................") + @"</p>
+                        <p><span class='bold'>HKTT :</span> " + (hopDong.KhachHangNavigation?.DiaChi ?? "........................................................................") + @"</p>
+                        <p><span class='bold'>ĐT :</span> " + (hopDong.KhachHangNavigation?.SoDienThoai ?? "....................................") + @"</p>
+                        <p><span class='bold'>Tổng số người ở :</span> " + (nguoiOList != null ? (nguoiOList.Count + 1).ToString() : "1") + @" Người</p>
+                        
+                        <p class='bold italic' style='margin-top: 10px; margin-bottom: 5px;'>Người Ở Cùng :</p>");
+
+            if (nguoiOList != null && nguoiOList.Any())
+            {
+                foreach (var no in nguoiOList)
+                {
+                    sb.Append("<p class='indent'>- <span class='bold'>Họ và tên :</span> " + no.HoTen + @" . <span class='bold'>CCCD :</span> " + (string.IsNullOrEmpty(no.CCCD) ? "...................." : no.CCCD) + @" . <span class='bold'>ĐT :</span> " + (string.IsNullOrEmpty(no.SoDienThoai) ? "...................." : no.SoDienThoai) + "</p>");
+                }
+            }
+            else
+            {
+                sb.Append("<p class='indent italic'>Không có người ở cùng.</p>");
+            }
+
+            sb.Append(@"
+                    </div>
+
+                    <p class='italic' style='margin-top: 20px;'><span class='bold'>Sau khi thoả thuận , hai Bên cùng kí hợp đồng với các điều khoản sau đây :</span></p>
+                    
+                    <div class='section-title'>ĐIỀU I : NỘI DUNG HỢP ĐỒNG</div>
+                    <div class='indent'>
+                        <p>- Bên A đồng ý cho Bên B thuê phòng <span class='bold'>" + (hopDong.PhongNavigation?.TenPhong ?? "....................") + @"</span></p>
+                        <p>- Trang thiết bị của phòng gồm có : Điều hoà + giường tủ + bình nóng lạnh + thiết bị vệ sinh .</p>
+                        <p>- Trang thiết bị dùng chung của ngôi nhà : Máy giặt .</p>
+                        <p>- Mục đích cho thuê : Để ở .</p>
+                        <p>- Hợp đồng có thời hạn : <span class='bold'>" + thoiHanThang + @"</span> tháng , tính từ ngày <span class='bold'>" + (hopDong.NgayBatDau.HasValue ? hopDong.NgayBatDau.Value.ToString("dd/MM/yyyy") : "..../..../.......") + @"</span> đến hết ngày <span class='bold'>" + (hopDong.NgayKetThuc.HasValue ? hopDong.NgayKetThuc.Value.ToString("dd/MM/yyyy") : "..../..../.......") + @"</span></p>
+                    </div>
+
+                    <div class='section-title'>ĐIỀU II : GIÁ CẢ , ĐẶT CỌC VÀ PHƯƠNG THỨC THANH TOÁN</div>
+                    <div class='indent'>
+                        <p>1. Giá thuê phòng là : <span class='bold'>" + (hopDong.PhongNavigation?.GiaPhong ?? 0).ToString("N0") + @" đ/1 tháng</span> .</p>
+                        <p>2. Giá thuê trên cố định trong 6 tháng đầu .</p>
+                        <p>3. Giá dịch vụ :</p>
+                        <p class='indent'>- Điện : ........đ/KWh</p>
+                        <p class='indent'>- Nước : ......đ/người.</p>
+                        <p class='indent'>- Dịch vụ chung ( Điện máy giặt + điện cầu thang + dọn vệ sinh ) : ......... / Người .</p>
+                        <p>4. Phương thức thanh toán :</p>
+                        <p class='indent'>- Bên B đặt cọc cho Bên A số tiền là : <span class='bold'>" + (hopDong.TienCoc ?? 0).ToString("N0") + @" đ</span> . Tiền đặt cọc sẽ được Bên A hoàn trả sau 07 ngày khi kết thúc HĐ . Số tiền đặt cọc này có thể được Bên A sử dụng để khắc phục sự cố hoặc vi phạm do Bên B gây ra , Bên B có trách nhiệm hoàn trả số tiền bồi thường này cho Bên A sau 02 ngày theo thông báo , nếu không thì Bên A có quyền đơn phương chấm dứt hợp đồng .</p>
+                        <p class='indent'>- Bên B thanh toán cho Bên A tiền thuê phòng : 1 tháng/lần . Thời hạn đóng tiền là chuyển khoản từ ngày 28 Đến ngày 03 hàng tháng . Nếu trả chậm bị tính 100.000đ/ngày . Thời gian chậm trả không quá 03 ngày , số lần chậm trả không quá 02 lần .</p>
+                        <p class='indent'>- Bên B thanh toán chi phí DV cố định ( nước + mạng + dv chung ) vào đầu tháng .</p>
+                        <p class='indent'>- Hình thức thanh toán : Tiền mặt hoặc chuyển khoản .</p>
+                    </div>
+
+                    <div class='section-title'>ĐIỀU III : QUYỀN VÀ TRÁCH NHIỆM CỦA BÊN B</div>
+                    <div class='indent'>
+                        <p>1. Sử dụng phòng tại Điều 1 đúng mục đích , đóng tiền theo thời hạn quy định trong hợp đồng .</p>
+                        <p>2. Sau 1 tuần đầu Bên A bàn giao trang thiết bị , trong quá trình sử dụng bị hư hỏng Bên B phải tự sửa chữa , thay thế , khắc phục hoặc bồi thường cho Bên A ( Bao gồm cả tắc đường thoát nước , cháy bóng đèn ) .</p>
+                        <p>3. Nghiêm cấm mọi hành vi tàng trữ , sử dụng các chất ma tuý , chất dễ cháy nổ , mại dâm , cờ bạc .... Mọi hành vi vi phạm pháp luật Bên B hoàn toàn chịu trách nhiệm .</p>
+                        <p>4. Không được đập phá tháo dỡ , không được thay đổi cấu trúc nhà , không đóng đinh , dán tranh ảnh , vẽ , bôi bẩn lên tường , cửa phòng .</p>
+                        <p>5. Bên B cam kết thực hiện hợp đồng với thời hạn nêu trên , nếu bên B chuyển trước thời hạn sẽ bị mất toàn bộ số tiền cọc .Nếu muốn kết thúc hợp đồng theo đúng thời hạn hai Bên thoả thuận thì Bên B phải báo cho bên A trước 30 ngày , nếu ko báo sẽ bị phạt 50% tiền đặt cọc .</p>
+                        <p>6. Các trường hợp thay đổi người ở hoặc chuyển nhượng phòng phải có sự đồng ý của Bên A .</p>
+                        <p>7. Tuân thủ tuyệt đối nội quy của toàn nhà : không cờ bạc mại dâm , không sử dụng tàng trữ ma tuý , vũ khí trái phép , không cho người lạ ngủ qua đêm , tụ tập rượu chè , gây rối trật tự , mất vệ sinh , ý thức kém , làm ảnh hưởng tới người xung quanh . <span class='bold'>Nếu vi phạm sẽ bị phạt theo nội quy của toà nhà , hoặc Bên A có quyền đơn phương chấm dứt hợp đồng . ( Bên B sẽ không nhận được tiền đặt cọc )</span></p>
+                        <p>8. Sau khi kết thúc Hợp đồng , Bên B có trách nhiệm thu dọn đồ đạc , trả lại phòng theo đúng nguyên trạng ban đầu và chịu chi phí 200.000đ để bên A thuê người dọn vệ sinh công nghiệp .</p>
+                        <p>9. Bên B trách nhiệm đi khai báo với công an khu vực để làm tạm trú , tạm vắng .</p>
+                        <p>10. Tuyệt đối đảm bảo an toàn PCCC , khóa gas , rút các thiết bị điện khi đi ra ngoài . Chịu hoàn toàn trách nhiệm nếu để xảy ra cháy nổ .</p>
+                        <p>11. Sau khi hết thời hạn thuê nhà mà hai bên không có thỏa thuận gì khác thì hợp đồng sẽ tự động gia hạn thêm 06 tháng mà không cần kí lại .</p>
+                    </div>
+
+                    <div class='section-title'>ĐIỀU IV : CÁC THOẢ THUẬN KHÁC</div>
+                    <div class='indent'>
+                        <p>1. Mọi tài sản của Bên B thì Bên B phải tự bảo quản , tự chịu trách nhiệm nếu xảy ra mất mát . Bên A không chịu trách nhiệm với các vấn đề trộm cắp , cháy nổ , tai nạn liên quan tới tính mạng con người của Bên B trong quá trình thuê phòng .</p>
+                        <p>2. Bên A có quyền chấm dứt hợp đồng trước hạn nếu Bên B vi phạm các điều khoản trong hợp đồng và Bên B không được nhận lại tiền đặt cọc .</p>
+                        <p>3. Mọi tranh chấp phát sinh liên quan tới hợp đồng này nếu không thể giải quyết thông qua thương lượng , hoà giải sẽ được đưa ra toà án có thẩm quyền để giải quyết theo quy định của pháp luật .</p>
+                        <p>4. Hợp đồng này được lập thành 02 bản , mỗi bên giữ 1 bản có giá trị như nhau . Hợp đồng này có hiệu lực kể từ ngày kí .</p>
+                        <p>5. Sau khi kí hợp đồng Bên B nộp lại cho bên A bản photo CMND/CCCD của tất cả những người ở phòng mình .</p>
+                    </div>
+
+                    <table class='table-sign'>
+                        <tr>
+                            <td>
+                                <div class='bold'>ĐẠI DIỆN BÊN A</div>
+                                <div class='italic'>(Kí ghi rõ họ tên)</div>
+                                <div class='sign-space'></div>
+                                <div class='bold' style='margin-top: 30px;'>................................................</div>
+                            </td>
+                            <td>
+                                <div class='bold'>ĐẠI DIỆN BÊN B</div>
+                                <div class='italic'>(Kí ghi rõ họ tên)</div>
+                                <div class='sign-space'></div>
+                                <div class='bold' style='margin-top: 30px;'>" + (hopDong.KhachHangNavigation?.HoTen ?? "....................................") + @"</div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </body>
+            </html>");
+
+            return sb.ToString();
         }
     }
 }

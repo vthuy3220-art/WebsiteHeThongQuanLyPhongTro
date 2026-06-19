@@ -1,6 +1,7 @@
 ﻿using HeThongQuanLyPhongTro.Data;
 using HeThongQuanLyPhongTro.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace HeThongQuanLyPhongTro.Controllers
@@ -31,49 +32,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             return GetCurrentRole() == "ChuTro";
         }
 
-        // ==================== CẬP NHẬT NGÂN HÀNG (CHỈ CHỦ TRỌ) ====================
-        public async Task<IActionResult> CapNhatNganHang()
-        {
-            var userId = GetCurrentUserId();
-            if (userId == 0) return RedirectToAction("Index", "Login");
-
-            if (!IsChuTro())
-            {
-                TempData["Error"] = "Chỉ Chủ trọ mới có quyền cập nhật thông tin ngân hàng!";
-                return RedirectToAction("Index", "Dashboard");
-            }
-
-            var taiKhoan = await _context.TaiKhoan.FindAsync(userId);
-            if (taiKhoan == null) return NotFound();
-
-            return View(taiKhoan);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CapNhatNganHang(TaiKhoan model)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == 0) return RedirectToAction("Index", "Login");
-
-            if (!IsChuTro())
-            {
-                TempData["Error"] = "Chỉ Chủ trọ mới có quyền cập nhật thông tin ngân hàng!";
-                return RedirectToAction("Index", "Dashboard");
-            }
-
-            var taiKhoan = await _context.TaiKhoan.FindAsync(userId);
-            if (taiKhoan == null) return NotFound();
-
-            taiKhoan.TenNganHang = model.TenNganHang;
-            taiKhoan.SoTaiKhoan = model.SoTaiKhoan;
-            taiKhoan.ChuTaiKhoan = model.ChuTaiKhoan;
-
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Cập nhật thông tin ngân hàng thành công!";
-
-            return RedirectToAction("Index", "Dashboard");
-        }
 
         // ==================== LẤY DANH SÁCH KHÁCH HÀNG CỦA CHỦ TRỌ ====================
         private async Task<List<int>> GetKhachHangIdsOfChuTro(int chuTroId)
@@ -403,7 +361,67 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             return RedirectToAction(nameof(DanhSachKhachHang));
         }
+        private List<SelectListItem> GetDanhSachNganHang()
+        {
+            return new List<SelectListItem>
+    {
+        new SelectListItem { Value = "", Text = "-- Chọn ngân hàng --" },
+        new SelectListItem { Value = "mbbank", Text = "MB Bank" },
+        new SelectListItem { Value = "techcombank", Text = "Techcombank" },
+        new SelectListItem { Value = "vietcombank", Text = "Vietcombank" },
+        new SelectListItem { Value = "bidv", Text = "BIDV" },
+        new SelectListItem { Value = "vietinbank", Text = "Vietinbank" },
+        new SelectListItem { Value = "tpbank", Text = "TPBank" },
+        new SelectListItem { Value = "acb", Text = "ACB" },
+        new SelectListItem { Value = "sacombank", Text = "Sacombank" },
+        new SelectListItem { Value = "vpbank", Text = "VPBank" },
+        new SelectListItem { Value = "agribank", Text = "Agribank" },
+        new SelectListItem { Value = "ocb", Text = "OCB" },
+        new SelectListItem { Value = "hdbank", Text = "HDBank" },
+        new SelectListItem { Value = "msb", Text = "MSB" },
+        new SelectListItem { Value = "seabank", Text = "SeABank" },
+        new SelectListItem { Value = "shb", Text = "SHB" },
+    };
+        }
 
+        public async Task<IActionResult> CapNhatNganHang()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Index", "Login");
+            if (!IsChuTro())
+            {
+                TempData["Error"] = "Chỉ Chủ trọ mới có quyền cập nhật thông tin ngân hàng!";
+                return RedirectToAction("Index", "Dashboard");
+            }
+            var taiKhoan = await _context.TaiKhoan.FindAsync(userId);
+            if (taiKhoan == null) return NotFound();
+            ViewBag.DanhSachNganHang = GetDanhSachNganHang();
+            return View(taiKhoan);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CapNhatNganHang(int MaTaiKhoan, string MaNganHang, string TenNganHang, string SoTaiKhoan, string ChuTaiKhoan)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Index", "Login");
+            if (!IsChuTro())
+            {
+                TempData["Error"] = "Chỉ Chủ trọ mới có quyền cập nhật thông tin ngân hàng!";
+                return RedirectToAction("Index", "Dashboard");
+            }
+            var taiKhoan = await _context.TaiKhoan.FindAsync(userId);
+            if (taiKhoan == null) return NotFound();
+
+            taiKhoan.MaNganHang = MaNganHang;
+            taiKhoan.TenNganHang = TenNganHang;
+            taiKhoan.SoTaiKhoan = SoTaiKhoan;
+            taiKhoan.ChuTaiKhoan = ChuTaiKhoan;
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Cập nhật thông tin ngân hàng thành công!";
+            return RedirectToAction("Index", "Dashboard");
+        }
         private bool TaiKhoanExists(int id)
         {
             return _context.TaiKhoan.Any(e => e.MaTaiKhoan == id);

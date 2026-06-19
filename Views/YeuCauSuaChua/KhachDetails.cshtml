@@ -2,7 +2,15 @@
 
 @{
     ViewData["Title"] = "Chi tiết yêu cầu sửa chữa";
-    Layout = "_Layout";
+    var isAjax = Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+    if (isAjax)
+    {
+        Layout = null;
+    }
+    else
+    {
+        Layout = "_Layout";
+    }
 }
 
 <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">

@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Chi tiết hợp đồng";
-    Layout = "_Layout";
     var nguoiOList = ViewBag.NguoiOList as List<HeThongQuanLyPhongTro.Models.NguoiOHopDong>;
     var hoaDons = ViewBag.HoaDons as List<HeThongQuanLyPhongTro.Models.HoaDon>;
 }
@@ -106,7 +105,8 @@
                                     }
                                 </td>
                                 <td class="p-2 text-center">
-                                    <a asp-controller="KhachHang" asp-action="HoaDonChiTiet" asp-route-id="@item.MaHoaDon" class="text-blue-500 hover:underline">Chi tiết</a>
+                                    <a asp-controller="KhachHang" asp-action="HoaDonChiTiet" asp-route-id="@item.MaHoaDon"
+                                       class="text-blue-500 hover:underline">Chi tiết</a>
                                 </td>
                             </tr>
                         }
@@ -125,7 +125,8 @@
         <a asp-action="HopDongCuaToi" class="bg-gray-500 text-white px-4 py-2 rounded-lg text-center hover:bg-gray-600">
             <i class="fas fa-arrow-left mr-2"></i> Quay lại
         </a>
-        <a asp-action="XuatPdf" asp-controller="HopDong" asp-route-id="@Model.MaHopDong" target="_blank" class="bg-red-500 text-white px-4 py-2 rounded-lg text-center hover:bg-red-600">
+        <a asp-action="XuatPdf" asp-controller="HopDong" asp-route-id="@Model.MaHopDong" target="_blank"
+           class="bg-red-500 text-white px-4 py-2 rounded-lg text-center hover:bg-red-600">
             <i class="fas fa-file-pdf mr-2"></i> Xuất PDF
         </a>
     </div>
