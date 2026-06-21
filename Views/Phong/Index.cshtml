@@ -106,10 +106,11 @@
                                        class="text-yellow-500 hover:text-yellow-700" title="Sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@item.MaPhong"
-                                       class="text-red-500 hover:text-red-700" title="Xóa">
+                                    <button type="button"
+                                            onclick="moPopupXoaPhong('/Phong/Delete/@item.MaPhong', '@item.TenPhong', '@item.ToaNha?.TenToaNha', '@item.GiaPhong.ToString("N0")')"
+                                            class="text-red-500 hover:text-red-700 focus:outline-none" title="Xóa">
                                         <i class="fas fa-trash"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -128,3 +129,88 @@
         }
     </div>
 </div>
+<!-- ==================== KHỐI POPUP MODAL PHÒNG TRỌ CỠ LỚN (MAX-W-LG) SẠCH BÁCH ICON ==================== -->
+<div id="deletePhongModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
+        <!-- Header -->
+        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base">
+                Xác nhận gỡ bỏ phòng trọ khỏi hệ thống
+            </h3>
+            <button onclick="dongPopupXoaPhong()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors focus:outline-none">
+                <i class="fas fa-times text-base"></i>
+            </button>
+        </div>
+        <!-- Body -->
+        <div class="p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
+            <p>Bạn có chắc chắn muốn xóa vĩnh viễn phòng trọ này ra khỏi hệ thống danh sách không?</p>
+
+            <div class="bg-red-50/40 border border-red-100 rounded-xl p-4 space-y-2 text-slate-700 font-medium">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Tên phòng:</span>
+                    <span class="text-slate-900 font-bold text-base" id="popupRoomName">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Thuộc tòa nhà:</span>
+                    <span class="text-blue-600 font-bold" id="popupBuildingName">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Giá niêm yết:</span>
+                    <span class="text-slate-800 font-bold" id="popupRoomPrice">0</span><span> đ/tháng</span>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-400 font-normal">Lưu ý: Khi xóa phòng, toàn bộ dữ liệu kiểm kê cơ sở vật chất thuộc phòng này sẽ bị xóa theo. Hệ thống sẽ báo lỗi nếu phòng đang có hợp đồng thuê còn hiệu lực.</p>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+            <button onclick="dongPopupXoaPhong()" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors focus:outline-none">
+                Hủy
+            </button>
+            <a id="btnConfirmDeletePhong" href="#" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-500/10 transition-colors flex items-center justify-center">
+                Xác nhận xóa
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function moPopupXoaPhong(deleteUrl, roomName, buildingName, price) {
+        // Đổ dữ liệu động vào giao diện modal mẫu
+        document.getElementById('popupRoomName').innerText = roomName;
+        document.getElementById('popupBuildingName').innerText = buildingName ? buildingName : 'Chưa cập nhật';
+        document.getElementById('popupRoomPrice').innerText = price;
+
+        // Gán link hành động xóa thực tế vào thẻ a của popup
+        const confirmBtn = document.getElementById('btnConfirmDeletePhong');
+        confirmBtn.setAttribute('href', deleteUrl);
+
+        // Hiển thị modal kèm hiệu ứng chuyển động mượt mà
+        const modal = document.getElementById('deletePhongModal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-95');
+        }, 10);
+
+        // Hiệu ứng đổi text nút bấm khi nhấn thực tế
+        confirmBtn.onclick = function() {
+            this.style.pointerEvents = 'none';
+            this.innerText = 'Đang xóa...';
+        };
+    }
+
+    function dongPopupXoaPhong() {
+        const modal = document.getElementById('deletePhongModal');
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    // Nhấn phím Escape đóng nhanh cửa sổ modal
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            dongPopupXoaPhong();
+        }
+    });
+</script>

@@ -627,23 +627,41 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(khachHang);
         }
 
-        // ==================== XÓA KHÁCH HÀNG ====================
+        // ==================== XÓA TÀI KHOẢN KHÁCH  ====================
         public async Task<IActionResult> Delete(int? id)
         {
+            var userId = GetCurrentUserId();
             var role = GetCurrentRole();
-            if (role != "Admin" && role != "SuperAdmin")
-            {
-                return RedirectToAction("Index", "Login");
-            }
+            if (userId == 0) return RedirectToAction("Index", "Login");
 
             if (id == null) return NotFound();
 
-            var khachHang = await _context.KhachHang
-                .FirstOrDefaultAsync(m => m.MaKhachHang == id);
+            var taiKhoan = await _context.TaiKhoan.FindAsync(id);
+            if (taiKhoan == null) return NotFound();
 
-            if (khachHang == null) return NotFound();
+            // Thực hiện xóa liên kết với khách hàng trước
+            if (taiKhoan.VaiTro == "Khach")
+            {
+                var khachHang = await _context.KhachHang.FirstOrDefaultAsync(k => k.MaTaiKhoan == id);
+                if (khachHang != null)
+                {
+                    khachHang.MaTaiKhoan = null;
+                    _context.Update(khachHang);
+                    await _context.SaveChangesAsync();
+                }
+            }
 
-            return View(khachHang);
+            // Xóa tài khoản khỏi DB
+            _context.TaiKhoan.Remove(taiKhoan);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Xóa tài khoản người dùng thành công!";
+
+            // Tự động nhận diện vai trò để điều hướng về đúng trang danh sách đang xem
+            if (role == "ChuTro")
+            {
+                return RedirectToAction("DanhSachKhachHang");
+            }
+            return RedirectToAction("Index");
         }
 
         [HttpPost, ActionName("Delete")]

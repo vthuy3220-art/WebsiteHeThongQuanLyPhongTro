@@ -7,10 +7,7 @@
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Quản lý thanh toán</h1>
-            <p class="text-gray-500 mt-1">Danh sách các giao dịch thanh toán</p>
-        </div>
+
         <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all">
             <i class="fas fa-plus mr-2"></i> Thêm thanh toán
         </a>
@@ -84,9 +81,11 @@
                                     <a asp-action="Edit" asp-route-id="@item.MaThanhToan" class="text-yellow-500 hover:text-yellow-700" title="Sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@item.MaThanhToan" class="text-red-500 hover:text-red-700" title="Xóa">
+                                    <button type="button"
+                                            onclick="moPopupXoaThanhToan('/ThanhToans/Delete/@item.MaThanhToan', '@item.MaThanhToan', 'HD@(item.HoaDonNavigation?.MaHoaDon)', '@(item.SoTien?.ToString("N0") ?? "0")')"
+                                            class="text-red-500 hover:text-red-700 focus:outline-none" title="Xóa">
                                         <i class="fas fa-trash"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -112,3 +111,79 @@
         }
     </div>
 </div>
+<div id="deleteThanhToanModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
+        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base">
+                Xác nhận hủy gỡ bỏ giao dịch thanh toán
+            </h3>
+            <button onclick="dongPopupXoaThanhToan()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors focus:outline-none">
+                <i class="fas fa-times text-base"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
+            <p>Bạn có chắc chắn muốn xóa vĩnh viễn lịch sử bản ghi giao dịch thanh toán này ra khỏi cơ sở dữ liệu không?</p>
+
+            <div class="bg-red-50/40 border border-red-100 rounded-xl p-4 space-y-2 text-slate-700 font-medium">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-32 inline-block">Mã giao dịch:</span>
+                    <span class="text-slate-900 font-bold" id="popupPaymentCode">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-32 inline-block">Liên kết hóa đơn:</span>
+                    <span class="text-blue-600 font-bold" id="popupPaymentInvoice">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-32 inline-block">Số tiền xác nhận:</span>
+                    <span class="text-red-600 font-bold text-base" id="popupPaymentAmount">0</span><span class="text-red-600 font-bold"> đ</span>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-400 font-normal">Lưu ý: Hành động này chỉ xóa lịch sử ghi nhận chứng từ thanh toán của hệ thống. Trạng thái thực tế của hóa đơn gốc sẽ không tự động đảo ngược.</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+            <button onclick="dongPopupXoaThanhToan()" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors focus:outline-none">
+                Hủy
+            </button>
+            <a id="btnConfirmDeleteThanhToan" href="#" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-500/10 transition-colors flex items-center justify-center">
+                Xác nhận xóa
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function moPopupXoaThanhToan(deleteUrl, paymentCode, invoiceCode, amount) {
+        document.getElementById('popupPaymentCode').innerText = paymentCode;
+        document.getElementById('popupPaymentInvoice').innerText = invoiceCode;
+        document.getElementById('popupPaymentAmount').innerText = amount;
+
+        const confirmBtn = document.getElementById('btnConfirmDeleteThanhToan');
+        confirmBtn.setAttribute('href', deleteUrl);
+
+        const modal = document.getElementById('deleteThanhToanModal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-95');
+        }, 10);
+
+        confirmBtn.onclick = function() {
+            this.style.pointerEvents = 'none';
+            this.innerText = 'Đang xóa...';
+        };
+    }
+
+    function dongPopupXoaThanhToan() {
+        const modal = document.getElementById('deleteThanhToanModal');
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            dongPopupXoaThanhToan();
+        }
+    });
+</script>

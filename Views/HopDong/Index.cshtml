@@ -6,76 +6,74 @@
 
 <div class="space-y-6">
     <div class="flex justify-between items-center">
-     
-        <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all flex items-center">
+        <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all flex items-center shadow-sm">
             <i class="fas fa-file-contract mr-2"></i> Tạo hợp đồng mới
         </a>
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
-            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-xl shadow-sm font-medium text-sm">
+            <i class="fas fa-check-circle mr-2 text-green-500"></i> @TempData["Success"]
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
-            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl shadow-sm font-medium text-sm">
+            <i class="fas fa-exclamation-circle mr-2 text-red-500"></i> @TempData["Error"]
         </div>
     }
 
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-100">
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Mã HĐ</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Phòng</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Khách hàng</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Ngày bắt đầu</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Ngày kết thúc</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Tiền cọc</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Trạng thái</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Thao tác</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mã HĐ</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phòng</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Khách hàng</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ngày bắt đầu</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ngày kết thúc</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tiền cọc</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-100">
                     @foreach (var item in Model)
                     {
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4">@item.MaHopDong</td>
-                            <td class="px-6 py-4">@item.PhongNavigation?.TenPhong</td>
+                        <tr class="hover:bg-gray-50/80 transition-colors font-medium text-slate-700">
+                            <td class="px-6 py-4 font-mono text-slate-500">#@item.MaHopDong</td>
+                            <td class="px-6 py-4 text-slate-900 font-semibold">@item.PhongNavigation?.TenPhong</td>
                             <td class="px-6 py-4">@item.KhachHangNavigation?.HoTen</td>
-                            <td class="px-6 py-4">@item.NgayBatDau?.ToString("dd/MM/yyyy")</td>
-                            <td class="px-6 py-4">@item.NgayKetThuc?.ToString("dd/MM/yyyy")</td>
-                            <td class="px-6 py-4">@item.TienCoc?.ToString("N0") đ</td>
+                            <td class="px-6 py-4 font-mono text-xs">@item.NgayBatDau?.ToString("dd/MM/yyyy")</td>
+                            <td class="px-6 py-4 font-mono text-xs">@item.NgayKetThuc?.ToString("dd/MM/yyyy")</td>
+                            <td class="px-6 py-4 font-bold text-slate-800">@item.TienCoc?.ToString("N0") đ</td>
                             <td class="px-6 py-4">
                                 @if (item.TrangThai == "Hiệu lực")
                                 {
-                                    <span class="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-md text-xs font-semibold whitespace-nowrap inline-block text-center w-24">
-                                        <i class="fas fa-check-circle mr-1"></i> Hiệu lực
+                                    <span class="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-md text-xs font-bold whitespace-nowrap inline-flex items-center justify-center w-24">
+                                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span> Hiệu lực
                                     </span>
                                 }
                                 else
                                 {
-                                    <span class="px-3 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-md text-xs font-semibold whitespace-nowrap inline-block text-center w-24">
-                                        <i class="fas fa-history mr-1"></i> Kết thúc
+                                    <span class="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-md text-xs font-bold whitespace-nowrap inline-flex items-center justify-center w-24">
+                                        <span class="w-1.5 h-1.5 bg-slate-400 rounded-full mr-1.5"></span> Kết thúc
                                     </span>
                                 }
                             </td>
                             <td class="px-6 py-4">
-                                <div class="flex space-x-2">
-                                    <a asp-action="Details" asp-route-id="@item.MaHopDong" class="text-blue-500 hover:text-blue-700">
+                                <div class="flex space-x-3 items-center">
+                                    <a asp-action="Details" asp-route-id="@item.MaHopDong" class="text-blue-500 hover:text-blue-700 text-base transition-colors" title="Xem chi tiết">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     @if (item.TrangThai == "Hiệu lực")
                                     {
-                                        <form asp-action="ChamDut" asp-route-id="@item.MaHopDong" method="post"
-                                              onsubmit="return confirm('Chấm dứt hợp đồng này?')" style="display:inline">
+                                        <form id="form-cham-dut-@item.MaHopDong" asp-action="ChamDut" asp-route-id="@item.MaHopDong" method="post" style="display:inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="text-red-500 hover:text-red-700">
+                                            <button type="button" onclick="moPopupConfirm(@item.MaHopDong, '@item.PhongNavigation?.TenPhong', '@item.KhachHangNavigation?.HoTen')" class="text-red-500 hover:text-red-700 text-base transition-colors" title="Chấm dứt hợp đồng">
                                                 <i class="fas fa-times-circle"></i>
                                             </button>
                                         </form>
@@ -89,3 +87,83 @@
         </div>
     </div>
 </div>
+
+<div id="confirmModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
+        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center">
+                Xác nhận hành động hệ thống
+            </h3>
+            <button onclick="dongPopupConfirm()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors focus:outline-none">
+                <i class="fas fa-times text-base"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
+            <p>Bạn có chắc chắn muốn <span class="text-red-600 font-bold">chấm dứt hiệu lực hợp đồng</span> liên kết thuê phòng này không?</p>
+
+            <div class="bg-orange-50/60 border border-orange-100 rounded-xl p-4 space-y-2 text-slate-700 font-medium">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Phòng trọ:</span>
+                    <span class="text-blue-600 font-bold text-base" id="popupRoomName">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Khách thuê:</span>
+                    <span class="text-slate-900 font-bold" id="popupCustomerName">N/A</span>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-400 font-normal">LƯU Ý: Hành động này sẽ cập nhật trạng thái phòng về trống và hủy kích hoạt các hóa đơn chưa thu của chu kỳ hiện tại.</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+            <button onclick="dongPopupConfirm()" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors focus:outline-none">
+                Hủy
+            </button>
+            <button id="btnSubmitPopup" type="button" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-500/10 transition-colors focus:outline-none flex items-center">
+                <i class="fas fa-check mr-1"></i> Xác nhận xóa
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentTargetFormId = null;
+
+    function moPopupConfirm(id, roomName, customerName) {
+        currentTargetFormId = 'form-cham-dut-' + id;
+
+        document.getElementById('popupRoomName').innerText = roomName;
+        document.getElementById('popupCustomerName').innerText = customerName;
+
+        const modal = document.getElementById('confirmModal');
+        modal.classList.remove('hidden');
+
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-95');
+        }, 10);
+    }
+
+    function dongPopupConfirm() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            currentTargetFormId = null;
+        }, 300);
+    }
+
+    document.getElementById('btnSubmitPopup').addEventListener('click', function () {
+        if (currentTargetFormId) {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Đang xử lý...';
+            document.getElementById(currentTargetFormId).submit();
+        }
+    });
+
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            dongPopupConfirm();
+        }
+    });
+</script>

@@ -348,9 +348,23 @@ namespace HeThongQuanLyPhongTro.Controllers
                 chiSoNuocCu = lichSuThangTruoc.ChiSoNuocMoi;
             }
 
-            // Tính toán
-            decimal soDien = Math.Max(0, chiSoDienMoi - chiSoDienCu);
-            decimal soNuoc = Math.Max(0, chiSoNuocMoi - chiSoNuocCu);
+            // 🔴 BẮT LỖI LOGIC: Chặn trường hợp chỉ số mới thấp hơn chỉ số cũ
+            if (chiSoDienMoi < chiSoDienCu)
+            {
+                TempData["Error"] = $"Cập nhật thất bại! Chỉ số ĐIỆN mới ({chiSoDienMoi}) không được thấp hơn chỉ số cũ ({chiSoDienCu}).";
+                return RedirectToAction(nameof(Details), new { id = maHoaDon });
+            }
+
+            if (chiSoNuocMoi < chiSoNuocCu)
+            {
+                TempData["Error"] = $"Cập nhật thất bại! Chỉ số NƯỚC mới ({chiSoNuocMoi}) không được thấp hơn chỉ số cũ ({chiSoNuocCu}).";
+                return RedirectToAction(nameof(Details), new { id = maHoaDon });
+            }
+
+            // ✅ Tính toán (Loại bỏ hoàn toàn Math.Max vì dữ liệu đã được đảm bảo >= 0)
+            decimal soDien = chiSoDienMoi - chiSoDienCu;
+            decimal soNuoc = chiSoNuocMoi - chiSoNuocCu;
+
             decimal tienDien = soDien * giaDien;
             decimal tienNuoc = soNuoc * giaNuoc;
             decimal tienDichVu = soNguoi * 200000;
@@ -413,9 +427,7 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             TempData["Success"] = $"Cập nhật thành công! Điện cũ: {chiSoDienCu}, Nước cũ: {chiSoNuocCu}";
             return RedirectToAction(nameof(Details), new { id = maHoaDon });
-        }
-
-        // ==================== KHÁCH XÁC NHẬN ĐÃ CHUYỂN KHOẢN ====================
+        }        // ==================== KHÁCH XÁC NHẬN ĐÃ CHUYỂN KHOẢN ====================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> KhachXacNhan(int id)
@@ -791,8 +803,49 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+        // ==================== TẠO HÓA ĐƠN THÁNG ĐỒNG BỘ NGÀY ====================
+        [HttpPost]
+        public async Task<IActionResult> TaoHoaDonThang(int thang, int nam, int ngayChotCoDinh = 25)
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
 
-        // ==================== XUẤT PDF HÓA ĐƠN ====================
+            if (userId == 0 || role != "ChuTro")
+                return RedirectToAction("Index", "Login");
+
+            // Lấy danh sách các hợp đồng còn hiệu lực của riêng chủ trọ này
+            var hopDongs = await _context.HopDong
+                .Where(h => h.TrangThai == "DangHieuLuc" && h.MaChuTro == userId)
+                .ToListAsync();
+
+            foreach (var hd in hopDongs)
+            {
+                // Kiểm tra xem tháng đó phòng này đã có hóa đơn chưa để tránh tạo trùng
+                bool daCoHoaDon = await _context.HoaDon
+                    .AnyAsync(h => h.MaHopDong == hd.MaHopDong && h.Thang == thang && h.Nam == nam);
+
+                if (daCoHoaDon) continue;
+
+                // Ép ngày lập phiếu đồng bộ về ngày chốt cố định của tháng/năm đó (Ví dụ: ngày 25)
+                DateTime ngayLapMoi = new DateTime(nam, thang, ngayChotCoDinh);
+
+                var hoaDonMoi = new HoaDon
+                {
+                    MaHopDong = hd.MaHopDong,
+                    Thang = thang,
+                    Nam = nam,
+                    NgayTao = ngayLapMoi,         // Sử dụng duy nhất trường NgayTao theo đúng DB của bạn
+                    TongTien = 0,                // Khởi tạo ban đầu tổng tiền = 0
+                    TrangThai = "Chưa thanh toán"  // Trạng thái mặc định ban đầu
+                };
+
+                _context.HoaDon.Add(hoaDonMoi);
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Đã khởi tạo loạt hóa đơn đồng bộ ngày {ngayChotCoDinh} cho tháng {thang}/{nam}!";
+            return RedirectToAction(nameof(Index));
+                }        // ==================== XUẤT PDF HÓA ĐƠN ====================
         public async Task<IActionResult> XuatPdf(int id)
         {
             var userId = GetCurrentUserId();

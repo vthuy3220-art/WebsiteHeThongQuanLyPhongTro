@@ -65,6 +65,8 @@ namespace HeThongQuanLyPhongTro.Controllers
             // ✅ PHÂN QUYỀN: Lấy MaChuTro từ hợp đồng
             int maChuTro = hopDong?.MaChuTro ?? 0;
 
+            int ngayChotCoDinh = 25; // <--- Đặt ngày chốt cố định bạn muốn tại đây
+
             while (currentYear < endYear || (currentYear == endYear && currentMonth <= endMonth))
             {
                 var existingHoaDon = await _context.HoaDon
@@ -72,6 +74,9 @@ namespace HeThongQuanLyPhongTro.Controllers
 
                 if (!existingHoaDon)
                 {
+                    // 🔴 SỬA TẠI ĐÂY: Ép ngày tạo chạy theo tháng/năm của hóa đơn đó thay vì lấy ngày hiện tại
+                    DateTime ngayLapDongBo = new DateTime(currentYear, currentMonth, ngayChotCoDinh);
+
                     var hoaDon = new HoaDon
                     {
                         MaHopDong = maHopDong,
@@ -80,7 +85,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                         Nam = currentYear,
                         TongTien = giaPhong,
                         TrangThai = "Chờ thanh toán",
-                        NgayTao = DateTime.Now
+                        NgayTao = ngayLapDongBo // ✅ ĐÃ ĐỒNG BỘ: Luôn luôn là ngày 25 của tháng đó
                     };
                     _context.HoaDon.Add(hoaDon);
                 }
@@ -94,9 +99,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
 
             await _context.SaveChangesAsync();
-        }
-
-        // ==================== DANH SÁCH HỢP ĐỒNG ====================
+        }        // ==================== DANH SÁCH HỢP ĐỒNG ====================
         public async Task<IActionResult> Index(string searchString, string trangThai)
         {
             var userId = GetCurrentUserId();
@@ -200,25 +203,109 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return View();
             }
 
+            // 🔴 1. KIỂM TRA LOGIC NGÀY THÁNG
+            if (ngayKetThuc < ngayBatDau)
+            {
+                TempData["Error"] = "Lỗi: Ngày kết thúc không được sớm hơn ngày bắt đầu hợp đồng!";
+                await LoadViewBags();
+                return View();
+            }
+
+            // Chuẩn hóa dữ liệu đầu vào để kiểm tra chính xác
+            string sdtChuan = SoDienThoai?.Trim() ?? "";
+            string cccdChuan = CCCD?.Trim() ?? "";
+            string emailChuan = Email?.Trim() ?? "";
+
+            // 🔴 2. KIỂM TRA ĐỊNH DẠNG CƠ BẢN (ĐỘ DÀI & ĐUÔI EMAIL)
+            if (sdtChuan.Length != 10 || !sdtChuan.All(char.IsDigit))
+            {
+                TempData["Error"] = "Lỗi: Số điện thoại phải bao gồm đúng 10 chữ số!";
+                await LoadViewBags();
+                return View();
+            }
+
+            if (cccdChuan.Length != 12 || !cccdChuan.All(char.IsDigit))
+            {
+                TempData["Error"] = "Lỗi: Số CCCD phải bao gồm đúng 12 chữ số!";
+                await LoadViewBags();
+                return View();
+            }
+
+            if (!emailChuan.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase) || emailChuan.Length <= 10)
+            {
+                TempData["Error"] = "Lỗi: Email đăng ký phải đúng định dạng @gmail.com!";
+                await LoadViewBags();
+                return View();
+            }
+
+            // 🔴 3. KIỂM TRA TRÙNG LẶP VỚI KHÁCH ĐANG CÓ HỢP ĐỒNG HIỆU LỰC
+            // Lấy danh sách MaKhachHang của những hợp đồng đang có hiệu lực
+            var danhSachMaKhachDangThue = await _context.HopDong
+                .Where(h => h.TrangThai == "Hiệu lực")
+                .Select(h => h.MaKhachHang)
+                .ToListAsync();
+
+            if (danhSachMaKhachDangThue.Any())
+            {
+                // Kiểm tra trùng Số điện thoại
+                bool trungSdt = await _context.KhachHang.AnyAsync(k =>
+                    danhSachMaKhachDangThue.Contains(k.MaKhachHang) && k.SoDienThoai == sdtChuan);
+                if (trungSdt)
+                {
+                    TempData["Error"] = $"Lỗi: Số điện thoại '{sdtChuan}' đang thuộc về một người dùng có hợp đồng Hiệu lực!";
+                    await LoadViewBags();
+                    return View();
+                }
+
+                // Kiểm tra trùng CCCD
+                bool trungCccd = await _context.KhachHang.AnyAsync(k =>
+                    danhSachMaKhachDangThue.Contains(k.MaKhachHang) && k.CCCD == cccdChuan);
+                if (trungCccd)
+                {
+                    TempData["Error"] = $"Lỗi: Số CCCD '{cccdChuan}' đang thuộc về một người dùng có hợp đồng Hiệu lực!";
+                    await LoadViewBags();
+                    return View();
+                }
+
+                // Kiểm tra trùng Email
+                bool trungEmail = await _context.KhachHang.AnyAsync(k =>
+                    danhSachMaKhachDangThue.Contains(k.MaKhachHang) && k.Email == emailChuan);
+                if (trungEmail)
+                {
+                    TempData["Error"] = $"Lỗi: Email '{emailChuan}' đang thuộc về một người dùng có hợp đồng Hiệu lực!";
+                    await LoadViewBags();
+                    return View();
+                }
+            }
+
             int maKhachHangCuoi = 0;
 
-            // ========== 1. TẠO HOẶC LẤY KHÁCH HÀNG ==========
+            // ========== XỬ LÝ TIẾP TỤC NẾU VƯỢT QUA TOÀN BỘ KIỂM TRA ==========
+            // Tìm xem người này trước đó đã từng ở trọ hệ thống chưa (nhưng hợp đồng cũ đã hết hạn/hủy)
             var khachHangTonTai = await _context.KhachHang
-                .FirstOrDefaultAsync(k => k.SoDienThoai == SoDienThoai);
+                .FirstOrDefaultAsync(k => k.SoDienThoai == sdtChuan);
 
             if (khachHangTonTai != null)
             {
                 maKhachHangCuoi = khachHangTonTai.MaKhachHang;
-                TempData["Info"] = "Khách hàng đã tồn tại, sử dụng thông tin cũ!";
+                // Cập nhật lại thông tin mới nhất nếu có thay đổi
+                khachHangTonTai.HoTen = HoTen.Trim();
+                khachHangTonTai.CCCD = cccdChuan;
+                khachHangTonTai.Email = emailChuan;
+                khachHangTonTai.DiaChi = DiaChi ?? "";
+                khachHangTonTai.NgaySinh = NgaySinh;
+                _context.KhachHang.Update(khachHangTonTai);
+                await _context.SaveChangesAsync();
+                TempData["Info"] = "Sử dụng lại hồ sơ khách hàng cũ và cập nhật thông tin mới!";
             }
             else
             {
                 var khachHangMoi = new KhachHang
                 {
                     HoTen = HoTen.Trim(),
-                    SoDienThoai = SoDienThoai.Trim(),
-                    Email = Email ?? "",
-                    CCCD = CCCD ?? "",
+                    SoDienThoai = sdtChuan,
+                    Email = emailChuan,
+                    CCCD = cccdChuan,
                     DiaChi = DiaChi ?? "",
                     NgaySinh = NgaySinh
                 };
@@ -260,14 +347,13 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
 
             // ========== 3. TẠO HỢP ĐỒNG ==========
-            // ✅ PHÂN QUYỀN: Lấy MaChuTro từ phòng
             int maChuTro = phong.MaChuTro;
 
             var hopDong = new HopDong
             {
                 MaPhong = maPhong,
                 MaKhachHang = maKhachHangCuoi,
-                MaChuTro = maChuTro,  // ✅ PHÂN QUYỀN: Lưu mã chủ trọ vào hợp đồng
+                MaChuTro = maChuTro,
                 NgayBatDau = ngayBatDau,
                 NgayKetThuc = ngayKetThuc,
                 TienCoc = tienCoc,
@@ -307,7 +393,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             TempData["Success"] = $"Tạo hợp đồng thành công! Mã hợp đồng: {hopDong.MaHopDong}";
             return RedirectToAction(nameof(Index));
         }
-
         // ==================== CHẤM DỨT HỢP ĐỒNG ====================
         [HttpGet]
         public async Task<IActionResult> ChamDut(int? id)

@@ -54,6 +54,16 @@
 
 <div class="mantis-theme min-h-screen p-4 text-slate-800 animate-fade-in">
 
+    <div id="surveySuccessBanner" class="hidden bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-xl mb-6 card-shadow text-sm font-semibold flex items-center justify-between transition-all duration-300">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2 text-base text-green-500"></i>
+            <span id="surveySuccessMessage">Đã gửi khảo sát đến khách hàng sắp hết hạn hợp đồng thành công!</span>
+        </div>
+        <button type="button" onclick="document.getElementById('surveySuccessBanner').classList.add('hidden')" class="text-green-500 hover:text-green-700 focus:outline-none pl-2">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
     @if (TempData["Success"] != null)
     {
         <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-xl mb-6 card-shadow text-sm font-semibold flex items-center">
@@ -226,14 +236,11 @@
                                 </div>
                             </div>
                             <div class="shrink-0 pl-2">
-                                <form action="@Url.Action("GuiKhaoSatGiaHan", "Dashboard")" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@item.MaHopDong" />
-
-                                    <button type="submit" class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow-md shadow-orange-500/10 transition-colors flex items-center gap-1">
-                                        <i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        onclick="executeSendSurvey(this, @item.MaHopDong)"
+                                        class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow-md shadow-orange-500/10 transition-colors flex items-center gap-1 focus:outline-none">
+                                    <i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát
+                                </button>
                             </div>
                         </div>
                     }
@@ -346,97 +353,119 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // ĐÃ SỬA: Thay thế tên biến sai từ DoActiveThuTheoThangList thành DoanhThuTheoThangList
+        // Lấy dữ liệu danh sách doanh thu thực tế từ Model truyền xuống
         var rawData = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]");
-        var labelsThang = [], dataThucTeThang = [], dataDaThuThang = [];
+        var labelsThang = [], dataThucTeThuTien = [];
 
         if (rawData && rawData.length > 0) {
-        var dataCopy = [...rawData].reverse();
-        labelsThang = dataCopy.map(x => 'Tháng ' + (x.thang !== undefined ? x.thang : x.Thang));
-        dataThucTeThang = dataCopy.map(x => (x.doanhThu !== undefined ? x.doanhThu : x.DoanhThu));
-        dataDaThuThang = dataThucTeThang.map(val => val * 0.85);
-        } else {
-        labelsThang = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6'];
-        dataThucTeThang = [25000000, 34000000, 42000000, 58000000, 75000000, 92000000];
-        dataDaThuThang = [21000000, 29000000, 35000000, 50000000, 64000000, 79000000];
-        }
+            var dataCopy = [...rawData].reverse();
+            labelsThang = dataCopy.map(x => 'Tháng ' + (x.thang !== undefined ? x.thang : x.Thang));
 
-        var labelsTuan = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
-        var dataThucTeTuan = [15000000, 18000000, 12000000, 22000000];
-        var dataDaThuTuan = [13000000, 15000000, 10000000, 19000000];
+            // ✅ ĐÃ ĐỔI: Lấy chính xác số tiền thực tế thu được (Hóa đơn đã thanh toán) từ DB
+            dataThucTeThuTien = dataCopy.map(x => (x.daThu !== undefined ? x.daThu : (x.DaThu !== undefined ? x.DaThu : 0)));
+        } else {
+            // Dữ liệu mẫu dự phòng nếu cơ sở dữ liệu trống
+            labelsThang = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6'];
+            dataThucTeThuTien = [25000000, 34000000, 42000000, 58000000, 75000000, 92000000];
+        }
 
         var ctxArea = document.getElementById('areaChart').getContext('2d');
         var gradientBlue = ctxArea.createLinearGradient(0, 0, 0, 400);
         gradientBlue.addColorStop(0, 'rgba(24, 144, 255, 0.25)');
         gradientBlue.addColorStop(1, 'rgba(24, 144, 255, 0.01)');
-        var gradientLight = ctxArea.createLinearGradient(0, 0, 0, 400);
-        gradientLight.addColorStop(0, 'rgba(24, 144, 255, 0.08)');
-        gradientLight.addColorStop(1, 'rgba(24, 144, 255, 0)');
 
         var areaChartInstance = new Chart(ctxArea, {
-        type: 'line',
-        data: {
-        labels: labelsThang,
+            type: 'line',
+            data: {
+                labels: labelsThang,
         datasets: [
-        { label: 'Doanh thu phát sinh', data: dataThucTeThang, borderColor: '#1890ff', backgroundColor: gradientBlue, borderWidth: 2, fill: true, tension: 0.1, pointBackgroundColor: '#fff', pointBorderColor: '#1890ff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6 },
-        { label: 'Thực tế thu tiền', data: dataDaThuThang, borderColor: '#91caff', backgroundColor: gradientLight, borderWidth: 1.5, fill: true, tension: 0.1, pointRadius: 0, pointHoverRadius: 4 }
-        ]
+            {
+                label: 'Thực tế thu tiền', // ✅ Đổi nhãn thành Thực tế thu tiền
+                data: dataDaThuThang,      // ✅ Chỉ dùng 1 mảng dữ liệu duy nhất
+                borderColor: '#1890ff',
+                backgroundColor: gradientBlue,
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#1890ff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }
+        ]            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: true } // Hiện nhãn "Thực tế thu tiền" ở phía trên biểu đồ
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#8c8c8c' } },
+                    y: {
+                        grid: { color: '#f0f0f0' },
+                        ticks: {
+                            color: '#8c8c8c',
+                            callback: function(v) { return v >= 1000000 ? (v/1000000)+'Tr' : v; }
+                        }
+                    }
+                }
+            }
+        });
+ 
+        // 🚀 HÀM GỬI KHẢO SÁT CHẠY AJAX BẤT ĐỒNG BỘ REALTIME
+        function executeSendSurvey(buttonElement, contractId) {
+        var btn = $(buttonElement);
+
+        // Khóa nút tạm thời để chống spam click chuột liên tục
+        btn.prop('disabled', true).addClass('opacity-50').html('<i class="fas fa-spinner fa-spin text-[10px]"></i> Đang gửi...');
+
+        // Lấy Token chống giả mạo request của ASP.NET Core có sẵn trên trang
+        var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        var params = new URLSearchParams();
+        params.append('id', contractId);
+        if (token) params.append('__RequestVerificationToken', token);
+
+        fetch('/Dashboard/GuiKhaoSatGiaHan', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'
         },
-        options: {
-        responsive: true, maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: false } },
-        scales: {
-        x: { grid: { display: false }, ticks: { color: '#8c8c8c' } },
-        y: { grid: { color: '#f0f0f0' }, ticks: { color: '#8c8c8c', callback: function(v) { return v >= 1000000 ? (v/1000000)+'Tr' : v; } } }
-        }
-        }
-        });
+        body: params.toString()
+        })
+        .then(res => res.json())
+        .then(response => {
+        if (response.success) {
+        // 1. Hiển thị dải màu xanh lá cây lên đầu trang
+        document.getElementById('surveySuccessMessage').innerText = response.message;
+        document.getElementById('surveySuccessBanner').classList.remove('hidden');
 
-        function switchPeriod(type) {
-        var btnThang = document.getElementById('btnThang');
-        var btnTuan = document.getElementById('btnTuan');
-        if (type === 'Thang') {
-        btnThang.className = "px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all";
-        btnTuan.className = "px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all";
-        areaChartInstance.data.labels = labelsThang;
-        areaChartInstance.data.datasets[0].data = dataThucTeThang;
-        areaChartInstance.data.datasets[1].data = dataDaThuThang;
+        // 2. Cuộn nhẹ màn hình lên trên để người dùng nhìn thấy dải màu xanh lập tức
+        $('html, body').animate({ scrollTop: 0 }, 300);
+
+        // 3. Khôi phục trạng thái nút bấm ban đầu
+        btn.prop('disabled', false).removeClass('opacity-50').html('<i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát');
+
+        // 4. Tự động ẩn dải màu xanh sau 8 giây
+        setTimeout(function() {
+        document.getElementById('surveySuccessBanner').classList.add('hidden');
+        }, 8000);
         } else {
-        btnTuan.className = "px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all";
-        btnThang.className = "px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all";
-        areaChartInstance.data.labels = labelsTuan;
-        areaChartInstance.data.datasets[0].data = dataThucTeTuan;
-        areaChartInstance.data.datasets[1].data = dataDaThuTuan;
+        alert("Lỗi: " + response.message);
+        btn.prop('disabled', false).removeClass('opacity-50').html('<i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát');
         }
-        areaChartInstance.update();
-        }
-
-        var rawTop = @Html.Raw(Model.TopPhongList != null ? Json.Serialize(Model.TopPhongList) : "[]");
-        var barLabels = [], barData = [];
-        if (rawTop && rawTop.length > 0) {
-        barLabels = rawTop.map(x => (x.tenPhong !== undefined ? x.tenPhong : x.TenPhong));
-        barData = rawTop.map(x => (x.tongDoanhThu !== undefined ? x.tongDoanhThu : x.TongDoanhThu));
-        document.getElementById('topRevenueText').innerText = barData.reduce((a, b) => a + b, 0).toLocaleString('vi-VN');
-        } else {
-        barLabels = ['Phòng trống'];
-        barData = [0];
-        }
-
-        var ctxBar = document.getElementById('barChart').getContext('2d');
-        new Chart(ctxBar, {
-        type: 'bar',
-        data: { labels: barLabels, datasets: [{ data: barData, backgroundColor: '#87e8de', hoverBackgroundColor: '#36cfc9', borderRadius: 4, barPercentage: 0.45 }] },
-        options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return 'Thành tiền: ' + c.parsed.y.toLocaleString('vi-VN') + ' đ'; } } } },
-        scales: { x: { grid: { display: false }, ticks: { color: '#8c8c8c', font: { size: 11 } } }, y: { display: false } }
-        }
+        })
+        .catch(err => {
+        alert("Lỗi kết nối máy chủ, không thể kích hoạt lệnh gửi khảo sát!");
+        btn.prop('disabled', false).removeClass('opacity-50').html('<i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát');
         });
+        }
 
         function showInvoiceDetails(id) {
         fetch('/Dashboard/GetInvoiceDetails?id=' + id)

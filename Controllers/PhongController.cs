@@ -149,6 +149,16 @@ namespace HeThongQuanLyPhongTro.Controllers
             {
                 ModelState.AddModelError("MaToaNha", "Vui lòng chọn tòa nhà");
             }
+            else if (IsChuTro())
+            {
+                var toaNhaHopLe = await _context.ToaNha
+                    .AnyAsync(t => t.MaToaNha == phong.MaToaNha && t.MaChuTro == userId);
+
+                if (!toaNhaHopLe)
+                {
+                    ModelState.AddModelError("MaToaNha", "Tòa nhà không hợp lệ");
+                }
+            }
 
             if (ModelState.IsValid)
             {
@@ -215,11 +225,23 @@ namespace HeThongQuanLyPhongTro.Controllers
             var phongCu = await _context.Phong.FindAsync(id);
             if (phongCu == null) return NotFound();
 
-            // Kiểm tra quyền
+            // Kiểm tra quyền sở hữu phòng
             if (IsChuTro() && phongCu.MaChuTro != GetCurrentUserId())
             {
                 TempData["Error"] = "Bạn không có quyền sửa phòng này!";
                 return RedirectToAction(nameof(Index));
+            }
+
+            // Kiểm tra tòa nhà được chọn có thuộc chủ trọ hiện tại không
+            if (IsChuTro())
+            {
+                var toaNhaHopLe = await _context.ToaNha
+                    .AnyAsync(t => t.MaToaNha == phong.MaToaNha && t.MaChuTro == GetCurrentUserId());
+
+                if (!toaNhaHopLe)
+                {
+                    ModelState.AddModelError("MaToaNha", "Tòa nhà không hợp lệ");
+                }
             }
 
             if (ModelState.IsValid)
@@ -254,26 +276,36 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // GET: Xóa phòng
+
         public async Task<IActionResult> Delete(int? id)
         {
             if (GetCurrentUserId() == 0) return RedirectToAction("Index", "Login");
             if (id == null || id.Value <= 0) return NotFound();
 
-            var phong = await _context.Phong
-                .Include(p => p.ToaNha)
-                    .ThenInclude(t => t.CoSo)
-                .FirstOrDefaultAsync(m => m.MaPhong == id.Value);
-
+            var phong = await _context.Phong.FindAsync(id.Value);
             if (phong == null) return NotFound();
 
-            // Kiểm tra quyền
             if (IsChuTro() && phong.MaChuTro != GetCurrentUserId())
             {
                 TempData["Error"] = "Bạn không có quyền xóa phòng này!";
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(phong);
+            var coHopDongHieuLuc = await _context.HopDong.AnyAsync(h => h.MaPhong == id.Value && h.TrangThai == "Hiệu lực");
+            if (coHopDongHieuLuc)
+            {
+                TempData["Error"] = "Không thể xóa phòng trọ này vì đang dính hợp đồng thuê còn hiệu lực!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var danhSachCSVC = _context.CoSoVatChat.Where(csvc => csvc.MaPhong == id.Value);
+            _context.CoSoVatChat.RemoveRange(danhSachCSVC);
+
+            _context.Phong.Remove(phong);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Xóa phòng trọ ra khỏi danh sách quản lý thành công!";
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Phong/Delete/5
@@ -285,18 +317,23 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (phong == null)
             {
-                return NotFound(); // Nếu không tìm thấy phòng thì trả về trang lỗi 404
+                return NotFound();
+            }
+
+            // Kiểm tra quyền: chủ trọ chỉ được xóa phòng của chính mình
+            if (IsChuTro() && phong.MaChuTro != GetCurrentUserId())
+            {
+                TempData["Error"] = "Bạn không có quyền xóa phòng này!";
+                return RedirectToAction(nameof(Index));
             }
 
             var danhSachCSVC = _context.CoSoVatChat.Where(csvc => csvc.MaPhong == id);
-
-
             _context.CoSoVatChat.RemoveRange(danhSachCSVC);
-
 
             _context.Phong.Remove(phong);
 
             await _context.SaveChangesAsync();
+            TempData["Success"] = "Xóa phòng thành công!";
 
             return RedirectToAction(nameof(Index));
         }

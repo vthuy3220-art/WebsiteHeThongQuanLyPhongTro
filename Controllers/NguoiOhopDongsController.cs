@@ -163,21 +163,22 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(nguoiO);
         }
 
-        // ==================== SỬA DỨT ĐIỂM HÀM XÓA (GET) DÒNG 165 ====================
-        // Xóa - GET: Hiển thị trang xác nhận xóa
+        // ===================== XÓA (GET)  ====================
+        // Xóa 
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
-            var nguoiO = await _context.NguoiOHopDong
-                .Include(n => n.HopDongNavigation)
-                .ThenInclude(h => h.PhongNavigation)
-                .FirstOrDefaultAsync(m => m.MaNguoiO == id);
+            var nguoiO = await _context.NguoiOHopDong.FindAsync(id);
+            if (nguoiO != null)
+            {
+                _context.NguoiOHopDong.Remove(nguoiO);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Xóa hồ sơ thành viên người ở cùng thành công!";
+            }
 
-            if (nguoiO == null) return NotFound();
-
-
-            return View(nguoiO);
+            // Đảm bảo quay trở về đúng trang Quản lý danh sách ở Dashboard
+            return RedirectToAction("QuanLyNguoiO", "Dashboard");
         }
 
 

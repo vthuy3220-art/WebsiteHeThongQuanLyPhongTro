@@ -251,10 +251,51 @@
     </section>
 
     <footer class="bg-gray-800 text-white py-6 mt-8">
-        <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2024 Phòng Trọ Xinh - Tìm phòng trọ giá rẻ</p>
-            <p class="text-gray-400 text-sm mt-2">Hotline: 0869 189 018 | Email: phongtro@gmail.com</p>
+        <div class="bg-[#1e293b] text-slate-400 text-center py-6 text-sm border-t border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 space-y-2">
+                <p class="font-medium text-slate-300">
+                    &copy; @DateTime.Now.Year Phòng Trọ Xinh - Tìm phòng trọ giá rẻ
+                    <span class="mx-2 text-slate-600">|</span>
+                    <span>Bạn muốn trở thành chủ trọ?</span>
+                    <a href="#" id="btnLienHeAdmin" class="text-blue-400 hover:text-blue-300 font-bold hover:underline transition-colors ml-1">Liên hệ Admin ngay</a>
+                </p>
+                <p class="text-xs text-slate-500">
+                    Hotline: 0869 189 018 <span class="mx-1 text-slate-700">|</span> Email: phongtro@gmail.com
+                </p>
+            </div>
         </div>
+        <!-- Nhúng thư viện SweetAlert2 nếu trang chủ chưa có -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+            var btnLienHe = document.getElementById('btnLienHeAdmin');
+            if (btnLienHe) {
+            btnLienHe.onclick = function (e) {
+            e.preventDefault(); // Ngăn trình duyệt nhảy trang bậy
+
+            Swal.fire({
+            title: '<strong>Đăng ký hợp tác Chủ trọ</strong>',
+            icon: 'info',
+            html:
+            '<div class="text-left text-sm text-gray-600 space-y-3 p-1">' +
+            '<p>Để đăng ký quyền quản lý tòa nhà trên hệ thống <b>Phòng Trọ Xinh</b>, bạn vui lòng liên hệ với chúng mình qua các thông tin dưới đây. Rất mong được hợp tác với quý Chủ trọ. <b>Phòng Trọ Xinh xin cảm ơn!</b></p>' +
+            '<div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-2 font-semibold mt-2 text-gray-800">' +
+            '<p><i class="fas fa-phone-alt text-blue-500 mr-2.5"></i> Hotline: <span class="text-gray-900">0869.189.018</span></p>' +
+            '<p><i class="fas fa-envelope text-red-500 mr-2.5"></i> Email: <span class="text-gray-900">adminphongtroxinh@gmail.com</span></p>' +
+            '<p><i class="fab fa-comment-dots text-green-500 mr-2.5"></i> Zalo hỗ trợ: <span class="text-blue-600 underline">0869.189.018</span></p>' +
+            '</div>' +
+            '<p class="text-xs text-gray-400 italic mt-3 text-center">* Đội ngũ Admin hỗ trợ duyệt hồ sơ và làm việc từ 8h00 - 22h00 hàng ngày.*</p>' +
+            '</div>',
+            showCloseButton: true,
+            confirmButtonText: 'Đóng lại',
+            confirmButtonColor: '#2563eb'
+            });
+            };
+            }
+            });
+        </script>
+
     </footer>
 
 </body>

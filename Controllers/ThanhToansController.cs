@@ -325,33 +325,33 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (userId == 0)
                 return RedirectToAction("Index", "Login");
 
-            if (id == null)
-                return NotFound();
+            if (id == null) return NotFound();
 
             var thanhToan = await _context.ThanhToan
                 .Include(t => t.HoaDonNavigation)
-                .ThenInclude(h => h.HopDongNavigation)
-                .ThenInclude(h => h.PhongNavigation)
-                .FirstOrDefaultAsync(m => m.MaThanhToan == id);
+                .FirstOrDefaultAsync(t => t.MaThanhToan == id);
 
-            if (thanhToan == null)
-                return NotFound();
+            if (thanhToan == null) return NotFound();
 
-            // ✅ CHỦ TRỌ CHỈ XÓA THANH TOÁN CỦA MÌNH
+            // CHỦ TRỌ CHỈ XÓA THANH TOÁN CỦA MÌNH
             if (role != "ChuTro")
             {
-                TempData["Error"] = "Bạn không có quyền xóa thanh toán!";
+                TempData["Error"] = "Bạn không có quyền thực hiện hành động gỡ bỏ giao dịch!";
                 return RedirectToAction("Index", "Home");
             }
 
-            if (thanhToan.HoaDonNavigation == null ||
-                thanhToan.HoaDonNavigation.MaChuTro != userId)
+            if (thanhToan.HoaDonNavigation == null || thanhToan.HoaDonNavigation.MaChuTro != userId)
             {
-                TempData["Error"] = "Bạn không có quyền xóa thanh toán này!";
+                TempData["Error"] = "Bản ghi thanh toán không thuộc quyền quản lý của bạn!";
                 return RedirectToAction("Index");
             }
 
-            return View(thanhToan);
+            // Thực hiện loại bỏ bản ghi khỏi hệ thống
+            _context.ThanhToan.Remove(thanhToan);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã gỡ bỏ bản ghi lịch sử giao dịch thanh toán thành công!";
+            return RedirectToAction(nameof(Index));
         }
 
         // ==================== XÓA THANH TOÁN (POST) ====================

@@ -7,6 +7,7 @@
 
 <div class="space-y-6">
     <div class="flex justify-between items-center">
+
         <a asp-action="TaoTaiKhoanKhach" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all">
             <i class="fas fa-user-plus mr-2"></i> Tạo tài khoản khách
         </a>
@@ -68,11 +69,11 @@
                                        class="text-yellow-500 hover:text-yellow-700 transition" title="Sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@item.MaTaiKhoan"
-                                       class="text-red-500 hover:text-red-700 transition" title="Xóa"
-                                       onclick="return confirm('Bạn có chắc muốn xóa tài khoản @item.TenDangNhap?')">
+                                    <button type="button"
+                                            onclick="moPopupXoaTaiKhoan('/TaiKhoan/Delete/@item.MaTaiKhoan', '@item.TenDangNhap', '@item.VaiTro')"
+                                            class="text-red-500 hover:text-red-700 mx-1 focus:outline-none" title="Xóa">
                                         <i class="fas fa-trash"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -91,3 +92,74 @@
         }
     </div>
 </div>
+<div id="deleteTaiKhoanModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
+        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base">
+                Xác nhận gỡ bỏ tài khoản người dùng
+            </h3>
+            <button onclick="dongPopupXoaTaiKhoan()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors focus:outline-none">
+                <i class="fas fa-times text-base"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
+            <p>Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản đăng nhập này ra khỏi cơ sở dữ liệu không?</p>
+
+            <div class="bg-red-50/40 border border-red-100 rounded-xl p-4 space-y-2 text-slate-700 font-medium">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-32 inline-block">Tên đăng nhập:</span>
+                    <span class="text-slate-900 font-bold text-base" id="popupUsername">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-32 inline-block">Vai trò hệ thống:</span>
+                    <span class="text-blue-600 font-bold" id="popupUserRole">N/A</span>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-400 font-normal">Lưu ý: Hành động này sẽ thu hồi toàn bộ quyền truy cập của người dùng này vào hệ thống quản lý tòa nhà và không thể hoàn tác.</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+            <button onclick="dongPopupXoaTaiKhoan()" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors focus:outline-none">
+                Hủy
+            </button>
+            <a id="btnConfirmDeleteTaiKhoan" href="#" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-500/10 transition-colors flex items-center justify-center">
+                Xác nhận xóa
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function moPopupXoaTaiKhoan(deleteUrl, username, role) {
+        document.getElementById('popupUsername').innerText = username;
+        document.getElementById('popupUserRole').innerText = role;
+
+        const confirmBtn = document.getElementById('btnConfirmDeleteTaiKhoan');
+        confirmBtn.setAttribute('href', deleteUrl);
+
+        const modal = document.getElementById('deleteTaiKhoanModal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-95');
+        }, 10);
+
+        confirmBtn.onclick = function() {
+            this.style.pointerEvents = 'none';
+            this.innerText = 'Đang xóa...';
+        };
+    }
+
+    function dongPopupXoaTaiKhoan() {
+        const modal = document.getElementById('deleteTaiKhoanModal');
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            dongPopupXoaTaiKhoan();
+        }
+    });
+</script>

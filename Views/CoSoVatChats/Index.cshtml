@@ -8,9 +8,8 @@
 
 <div class="space-y-6">
     <div class="flex justify-between items-center">
-
         <div class="flex space-x-3">
-            <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all flex items-center">
+            <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all flex items-center shadow-sm">
                 <i class="fas fa-plus mr-2"></i> Thêm thiết bị mới
             </a>
         </div>
@@ -18,28 +17,28 @@
 
     @if (TempData["Success"] != null)
     {
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
-            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-xl shadow-sm text-sm font-medium">
+            <i class="fas fa-check-circle mr-2 text-green-500"></i> @TempData["Success"]
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
-            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl shadow-sm text-sm font-medium">
+            <i class="fas fa-exclamation-circle mr-2 text-red-500"></i> @TempData["Error"]
         </div>
     }
 
     <!-- BỘ LỌC -->
-    <div class="bg-white rounded-xl shadow-md p-4">
+    <div class="bg-white rounded-xl shadow-md p-4 border border-slate-100">
         <form asp-action="Index" method="get" class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[200px]">
                 <input type="text" name="searchString" value="@ViewBag.SearchString"
                        placeholder="Tìm kiếm theo tên thiết bị..."
-                       class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
             </div>
             <div class="min-w-[200px]">
-                <select name="maPhong" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select name="maPhong" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                     <option value="">-- Tất cả phòng --</option>
                     @if (phongListForFilter != null)
                     {
@@ -58,14 +57,14 @@
                 </select>
             </div>
             <div>
-                <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-all">
+                <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-all shadow-sm font-semibold">
                     <i class="fas fa-search mr-2"></i> Tìm kiếm
                 </button>
             </div>
             @if (maPhongHienTai.HasValue || !string.IsNullOrEmpty(ViewBag.SearchString))
             {
                 <div>
-                    <a asp-action="Index" class="inline-block px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-all">
+                    <a asp-action="Index" class="inline-block px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-all font-medium">
                         <i class="fas fa-times mr-1"></i> Xóa lọc
                     </a>
                 </div>
@@ -73,62 +72,63 @@
         </form>
     </div>
 
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-100">
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên thiết bị</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phòng</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Số lượng</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tình trạng</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mã</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên thiết bị</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phòng</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Số lượng</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tình trạng</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-100">
                     @foreach (var item in Model)
                     {
-                        <tr class="hover:bg-gray-50 transition-all">
-                            <td class="px-6 py-4">@item.MaCSVC</td>
-                            <td class="px-6 py-4 font-medium">@item.TenThietBi</td>
+                        <tr class="hover:bg-gray-50/80 transition-colors font-medium text-slate-700">
+                            <td class="px-6 py-4 font-mono text-slate-400">@item.MaCSVC</td>
+                            <td class="px-6 py-4 font-bold text-slate-900">@item.TenThietBi</td>
                             <td class="px-6 py-4 text-gray-600">
                                 @item.PhongNavigation?.TenPhong
                                 @if (item.PhongNavigation?.ToaNha != null)
                                 {
-                                    <span class="text-gray-400 text-xs"> · @item.PhongNavigation.ToaNha.TenToaNha</span>
+                                    <span class="text-gray-400 text-xs font-normal"> · @item.PhongNavigation.ToaNha.TenToaNha</span>
                                 }
                             </td>
-                            <td class="px-6 py-4 text-center">@item.SoLuong</td>
+                            <td class="px-6 py-4 text-center font-mono font-bold">@item.SoLuong</td>
                             <td class="px-6 py-4">
                                 @if (item.TinhTrang == "Tốt")
                                 {
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">@item.TinhTrang</span>
+                                    <span class="px-2.5 py-0.5 bg-green-50 text-green-700 border border-green-200 rounded-full text-xs font-bold">@item.TinhTrang</span>
                                 }
                                 else if (item.TinhTrang == "Hư")
                                 {
-                                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">@item.TinhTrang</span>
+                                    <span class="px-2.5 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded-full text-xs font-bold">@item.TinhTrang</span>
                                 }
                                 else
                                 {
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">@item.TinhTrang</span>
+                                    <span class="px-2.5 py-0.5 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full text-xs font-bold">@item.TinhTrang</span>
                                 }
                             </td>
                             <td class="px-6 py-4">
-                                <div class="flex justify-center space-x-3">
+                                <div class="flex justify-center space-x-3 items-center">
                                     <a asp-action="Details" asp-route-id="@item.MaCSVC"
-                                       class="text-blue-500 hover:text-blue-700" title="Chi tiết">
+                                       class="text-blue-500 hover:text-blue-700 transition-colors" title="Chi tiết">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <a asp-action="Edit" asp-route-id="@item.MaCSVC"
-                                       class="text-yellow-500 hover:text-yellow-700" title="Sửa">
+                                       class="text-yellow-500 hover:text-yellow-700 transition-colors" title="Sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@item.MaCSVC"
-                                       class="text-red-500 hover:text-red-700" title="Xóa"
-                                       onclick="return confirm('Bạn có chắc muốn xóa @item.TenThietBi?')">
+                                    <!-- Thay thế thuộc tính điều hướng trực tiếp bằng hàm kích hoạt popup dữ liệu động -->
+                                    <button type="button"
+                                            onclick="moPopupXoaCSVC('/CoSoVatChat/Delete/@item.MaCSVC', '@item.TenThietBi', '@item.PhongNavigation?.TenPhong', '@item.SoLuong')"
+                                            class="text-red-500 hover:text-red-700 transition-colors focus:outline-none" title="Xóa">
                                         <i class="fas fa-trash"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -141,9 +141,96 @@
         {
             <div class="text-center py-12">
                 <i class="fas fa-couch text-gray-300 text-5xl mb-3"></i>
-                <p class="text-gray-500">Chưa có dữ liệu cơ sở vật chất</p>
-                <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline">Thêm thiết bị đầu tiên</a>
+                <p class="text-gray-500 text-sm">Chưa có dữ liệu cơ sở vật chất</p>
+                <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline font-semibold text-sm">Thêm thiết bị đầu tiên</a>
             </div>
         }
     </div>
 </div>
+
+<!-- ==================== KHỐI POPUP MODAL TAILWIND CSS CỠ LỚN (MAX-W-LG) ĐÚNG YÊU CẦU ==================== -->
+<div id="deleteCsvcModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
+        <!-- Header -->
+        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center">
+                Cảnh báo gỡ bỏ cơ sở vật chất
+            </h3>
+            <button onclick="dongPopupXoaCSVC()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors focus:outline-none">
+                <i class="fas fa-times text-base"></i>
+            </button>
+        </div>
+        <!-- Body -->
+        <div class="p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
+            <p>Bạn có chắc chắn muốn <span class="text-red-600 font-bold">xóa vĩnh viễn</span> thiết bị vật chất này ra khỏi danh sách quản lý không?</p>
+
+            <div class="bg-red-50/40 border border-red-100 rounded-xl p-4 space-y-2 text-slate-700 font-medium">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Tên thiết bị:</span>
+                    <span class="text-slate-900 font-bold text-base" id="popupDeviceName">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Thuộc phòng:</span>
+                    <span class="text-blue-600 font-bold" id="popupRoomName">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Số lượng có:</span>
+                    <span class="px-2 py-0.5 bg-gray-100 text-slate-800 rounded font-mono font-bold text-xs" id="popupQuantity">0</span>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-400 font-normal">Chú ý: Toàn bộ dữ liệu liên quan đến lịch sử sửa chữa hoặc kiểm kê của thiết bị này cũng sẽ bị xóa theo và không thể phục hồi.</p>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+            <button onclick="dongPopupXoaCSVC()" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors focus:outline-none">
+                Hủy
+            </button>
+            <!-- Thẻ điều hướng thực hiện chuyển tiếp hành động URL -->
+            <a id="btnConfirmDeleteCsvc" href="#" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-500/10 transition-colors flex items-center justify-center">
+                <i class="fas fa-check mr-1"></i> Đồng ý xóa
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function moPopupXoaCSVC(deleteUrl, deviceName, roomName, quantity) {
+        // Đổ dữ liệu động từ dòng được chọn vào form mẫu của popup
+        document.getElementById('popupDeviceName').innerText = deviceName;
+        document.getElementById('popupRoomName').innerText = (roomName ? roomName : 'Chưa gán phòng');
+        document.getElementById('popupQuantity').innerText = quantity;
+
+        // Gán link hành động xóa vào nút Xác nhận của Popup
+        const confirmBtn = document.getElementById('btnConfirmDeleteCsvc');
+        confirmBtn.setAttribute('href', deleteUrl);
+
+        // Hiển thị modal kèm hiệu ứng mượt
+        const modal = document.getElementById('deleteCsvcModal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-95');
+        }, 10);
+
+        // Hiệu ứng click đổi trạng thái nút cho thật mắt
+        confirmBtn.onclick = function() {
+            this.style.pointerEvents = 'none';
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Đang xóa...';
+        };
+    }
+
+    function dongPopupXoaCSVC() {
+        const modal = document.getElementById('deleteCsvcModal');
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    // Đóng nhanh khi bấm phím Esc ngoài màn hình
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            dongPopupXoaCSVC();
+        }
+    });
+</script>

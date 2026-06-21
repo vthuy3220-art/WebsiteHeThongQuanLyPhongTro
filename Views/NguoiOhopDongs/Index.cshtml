@@ -39,7 +39,7 @@
                                     @item.HopDongNavigation.PhongNavigation.TenPhong
                                 </div>
                                 <div class="text-xs text-gray-500 mt-0.5">
-                                Đại diện: @(item.HopDongNavigation.KhachHangNavigation?.HoTen ?? "Chưa rõ")
+                                    Đại diện: @(item.HopDongNavigation.KhachHangNavigation?.HoTen ?? "Chưa rõ")
                                 </div>
                                 <div class="text-[11px] text-gray-400 font-mono">
                                     (HĐ #@item.MaHopDong)
@@ -57,7 +57,11 @@
                         <td class="p-3">
                             <a asp-controller="NguoiOhopDongs" asp-action="Details" asp-route-id="@item.MaNguoiO" class="text-blue-500"><i class="fas fa-eye"></i></a>
                             <a asp-controller="NguoiOhopDongs" asp-action="Edit" asp-route-id="@item.MaNguoiO" class="text-yellow-500 mx-2"><i class="fas fa-edit"></i></a>
-                            <a asp-controller="NguoiOhopDongs" asp-action="Delete" asp-route-id="@item.MaNguoiO" class="text-red-500"><i class="fas fa-trash"></i></a>
+                            <button type="button"
+                                    onclick="moPopupXoaNguoiO('/NguoiOHopDongs/Delete/@item.MaNguoiO', '@item.HoTen', '@item.HopDongNavigation?.PhongNavigation?.TenPhong', '@item.CCCD')"
+                                    class="text-red-500 hover:text-red-700 focus:outline-none" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </td>
                     </tr>
                 }
@@ -65,3 +69,84 @@
         </table>
     </div>
 </div>
+<div id="deleteNguoiOModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
+        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base">
+                Xác nhận gỡ bỏ thông tin người ở cùng
+            </h3>
+            <button onclick="dongPopupXoaNguoiO()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors focus:outline-none">
+                <i class="fas fa-times text-base"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
+            <p>Bạn có chắc chắn muốn xóa vĩnh viễn thông tin thành viên người ở cùng này khỏi hệ thống hợp đồng không?</p>
+
+            <div class="bg-red-50/40 border border-red-100 rounded-xl p-4 space-y-2 text-slate-700 font-medium">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Họ và tên:</span>
+                    <span class="text-slate-900 font-bold text-base" id="popupResidentName">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Thuộc phòng:</span>
+                    <span class="text-blue-600 font-bold" id="popupResidentRoom">N/A</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-gray-400 font-normal w-24 inline-block">Số CCCD:</span>
+                    <span class="text-slate-800 font-mono" id="popupResidentCccd">N/A</span>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-400 font-normal">Lưu ý: Hành động này sẽ loại bỏ hồ sơ tạm trú của thành viên này khỏi hợp đồng hiện tại. Lịch sử hóa đơn thu chi không bị ảnh hưởng.</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+            <button onclick="dongPopupXoaNguoiO()" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors focus:outline-none">
+                Hủy
+            </button>
+            <a id="btnConfirmDeleteNguoiO" href="#" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-500/10 transition-colors flex items-center justify-center">
+                Xác nhận xóa
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function moPopupXoaNguoiO(deleteUrl, residentName, roomName, cccd) {
+        // Đổ thông tin động thu thập được vào giao diện mẫu modal
+        document.getElementById('popupResidentName').innerText = residentName;
+        document.getElementById('popupResidentRoom').innerText = roomName ? roomName : 'Chưa gán phòng';
+        document.getElementById('popupResidentCccd').innerText = cccd ? cccd : 'Chưa cập nhật';
+
+        // Gán link hành động xóa vào thẻ <a> điều hướng ngầm
+        const confirmBtn = document.getElementById('btnConfirmDeleteNguoiO');
+        confirmBtn.setAttribute('href', deleteUrl);
+
+        // Hiển thị modal kèm hiệu ứng mượt mà
+        const modal = document.getElementById('deleteNguoiOModal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-95');
+        }, 10);
+
+        // Đổi trạng thái text của nút khi click thực tế
+        confirmBtn.onclick = function() {
+            this.style.pointerEvents = 'none';
+            this.innerText = 'Đang xóa...';
+        };
+    }
+
+    function dongPopupXoaNguoiO() {
+        const modal = document.getElementById('deleteNguoiOModal');
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    // Hỗ trợ phím Escape đóng nhanh modal ngoài màn hình
+    window.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            dongPopupXoaNguoiO();
+        }
+    });
+</script>
