@@ -79,7 +79,7 @@
     @if (Model.TrangThai == "Đã thanh toán")
     {
         <div class="bg-green-100 text-green-800 p-3 text-center rounded-lg font-medium border border-green-200">
-            ✅ Hóa đơn này đã được xác nhận thanh toán thành công.
+            Hóa đơn này đã được xác nhận thanh toán thành công.
         </div>
     }
 
@@ -97,6 +97,12 @@
                 <input type="hidden" id="chiSoNuocCu" value="@chiSoNuocCu" />
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-gray-600 font-bold block mb-1">Ngày lập phiếu</label>
+                        <input type="date" name="ngayLapPhieu" id="ngayLapPhieu"
+                               class="w-full p-2 border rounded-lg font-mono focus:ring-2 focus:ring-blue-500"
+                               value="@(Model.NgayTao?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))" required />
+                    </div>
                     <div class="bg-gray-200/60 p-2.5 rounded-lg">
                         <label class="text-xs text-gray-600 font-bold block mb-1">Điện cũ (kWh)</label>
                         <input type="text" class="w-full p-2 bg-gray-100 border rounded-lg font-mono text-gray-500" value="@chiSoDienCu" readonly disabled />
@@ -136,7 +142,7 @@
         var qrUrl = $"https://img.vietqr.io/image/{tenNganHang}-{soTaiKhoan}-compact.png?amount={tongTien}&addInfo=TT_HD{Model.MaHoaDon:D5}_{Model.Thang}{Model.Nam}&accountName={chuTaiKhoanUrlEncoded}";
 
         <div class="bg-white rounded-xl shadow p-5 text-center border border-gray-100">
-            <h3 class="font-bold text-lg mb-3 text-slate-800">📱 Quét mã QR để thanh toán nhanh</h3>
+            <h3 class="font-bold text-lg mb-3 text-slate-800">Quét mã QR để thanh toán nhanh</h3>
             <img src="@qrUrl" class="mx-auto w-48 h-48 border rounded-lg shadow-sm" onerror="this.onerror=null; this.src='https://placehold.co/200x200?text=QR+Code'" />
             <div class="mt-4 text-left bg-gray-50 p-4 rounded-xl text-sm space-y-1 text-gray-700 border">
                 <p><strong>Ngân hàng:</strong> @tenNganHang</p>
@@ -152,7 +158,7 @@
     @if (!isAjax && isKhach && Model.TrangThai == "Chưa thanh toán" && Model.KhachXacNhan != true)
     {
         <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-            <p class="text-yellow-800 font-medium mb-2 text-sm">⚠️ Lưu ý: Sau khi thực hiện chuyển khoản thành công, bạn vui lòng nhấn nút dưới đây để thông báo hệ thống!</p>
+            <p class="text-yellow-800 font-medium mb-2 text-sm">Lưu ý: Sau khi thực hiện chuyển khoản thành công, bạn vui lòng nhấn nút dưới đây để thông báo hệ thống!</p>
             <form method="post" asp-action="KhachXacNhan" asp-controller="HoaDon">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.MaHoaDon" />
@@ -195,7 +201,17 @@
                 <tr><td class="font-medium py-1">Số điện thoại:</td><td class="font-mono">@hopDong?.KhachHangNavigation?.SoDienThoai</td></tr>
                 <tr><td class="font-medium py-1">Kỳ hóa đơn:</td><td class="font-medium text-slate-800">Tháng @Model.Thang / Năm @Model.Nam</td></tr>
                 <tr><td class="font-medium py-1">Ngày lập phiếu:</td><td>@(Model.NgayTao?.ToString("dd/MM/yyyy") ?? DateTime.Now.ToString("dd/MM/yyyy"))</td></tr>
-                <tr><td class="font-medium py-1">Hạn đóng tiền:</td><td class="text-rose-600 font-semibold">@(Model.NgayTao?.AddDays(7).ToString("dd/MM/yyyy") ?? DateTime.Now.AddDays(7).ToString("dd/MM/yyyy"))</td></tr>
+                <tr>
+                    <td class="font-medium py-1">Hạn đóng tiền:</td>
+                    <td class="text-rose-600 font-semibold">
+                        @{
+                            // Lấy ngày lập phiếu (mặc định là 25), sau đó cộng thêm 1 tháng và lấy ngày 10
+                            DateTime ngayLap = Model.NgayTao ?? DateTime.Now;
+                            DateTime hanDongTien = new DateTime(ngayLap.Year, ngayLap.Month, 1).AddMonths(1).AddDays(9);
+                        }
+                        @hanDongTien.ToString("dd/MM/yyyy")
+                    </td>
+                </tr>
             </table>
         </div>
 

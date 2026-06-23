@@ -50,6 +50,20 @@ namespace HeThongQuanLyPhongTro.Controllers
             return khachHangIds;
         }
 
+        // ==================== LẤY DANH SÁCH TÀI KHOẢN CỦA KHÁCH HÀNG THUỘC CHỦ TRỌ ====================
+        private async Task<List<int>> GetTaiKhoanIdsOfChuTro(int chuTroId)
+        {
+            var khachHangIds = await GetKhachHangIdsOfChuTro(chuTroId);
+
+            var taiKhoanIds = await _context.KhachHang
+                .Where(k => khachHangIds.Contains(k.MaKhachHang) && k.MaTaiKhoan != null)
+                .Select(k => k.MaTaiKhoan ?? 0)
+                .Distinct()
+                .ToListAsync();
+
+            return taiKhoanIds;
+        }
+
         // ==================== DANH SÁCH KHÁCH HÀNG (CHỦ TRỌ) ====================
         public async Task<IActionResult> DanhSachKhachHang()
         {
@@ -62,10 +76,10 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Index", "Dashboard");
             }
 
-            var khachHangIds = await GetKhachHangIdsOfChuTro(userId);
+            var taiKhoanIds = await GetTaiKhoanIdsOfChuTro(userId);
 
             var taiKhoans = await _context.TaiKhoan
-                .Where(t => t.VaiTro == "Khach" && khachHangIds.Contains(t.MaTaiKhoan))
+                .Where(t => t.VaiTro == "Khach" && taiKhoanIds.Contains(t.MaTaiKhoan))
                 .ToListAsync();
 
             ViewBag.Title = "Danh sách tài khoản khách hàng";
@@ -90,9 +104,8 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .FirstOrDefaultAsync(m => m.MaTaiKhoan == id);
             if (taiKhoan == null || taiKhoan.VaiTro != "Khach") return NotFound();
 
-            // Kiểm tra khách hàng có thuộc quyền quản lý của chủ trọ này không
-            var khachHangIds = await GetKhachHangIdsOfChuTro(userId);
-            if (!khachHangIds.Contains(taiKhoan.MaTaiKhoan))
+            var taiKhoanIds = await GetTaiKhoanIdsOfChuTro(userId);
+            if (!taiKhoanIds.Contains(taiKhoan.MaTaiKhoan))
             {
                 TempData["Error"] = "Bạn không có quyền xem tài khoản này!";
                 return RedirectToAction(nameof(DanhSachKhachHang));
@@ -113,14 +126,9 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Index", "Dashboard");
             }
 
-            // Lấy danh sách khách hàng đang thuê phòng của chủ trọ này (chưa có tài khoản)
             var phongIds = await _context.Phong
                 .Where(p => p.MaChuTro == userId)
                 .Select(p => p.MaPhong)
-                .ToListAsync();
-
-            var khachHangChuaCoTaiKhoan = await _context.KhachHang
-                .Where(k => (k.MaTaiKhoan == null || k.MaTaiKhoan == 0))
                 .ToListAsync();
 
             var khachHangIds = await _context.HopDong
@@ -129,9 +137,9 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            var khachHangList = khachHangChuaCoTaiKhoan
-                .Where(k => khachHangIds.Contains(k.MaKhachHang))
-                .ToList();
+            var khachHangList = await _context.KhachHang
+                .Where(k => khachHangIds.Contains(k.MaKhachHang) && (k.MaTaiKhoan == null || k.MaTaiKhoan == 0))
+                .ToListAsync();
 
             ViewBag.KhachHangList = khachHangList;
             return View();
@@ -150,7 +158,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Index", "Dashboard");
             }
 
-            // Kiểm tra khách hàng có thuộc quyền quản lý không
             var khachHangIds = await GetKhachHangIdsOfChuTro(userId);
             if (!khachHangIds.Contains(maKhachHang))
             {
@@ -165,7 +172,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction(nameof(DanhSachKhachHang));
             }
 
-            // Kiểm tra tên đăng nhập đã tồn tại
             var exists = await _context.TaiKhoan
                 .AnyAsync(t => t.TenDangNhap == tenDangNhap);
 
@@ -176,7 +182,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return View();
             }
 
-            // Tạo tài khoản
             var taiKhoan = new TaiKhoan
             {
                 TenDangNhap = tenDangNhap,
@@ -189,7 +194,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context.TaiKhoan.Add(taiKhoan);
             await _context.SaveChangesAsync();
 
-            // Liên kết với khách hàng
             khachHang.MaTaiKhoan = taiKhoan.MaTaiKhoan;
             _context.Update(khachHang);
             await _context.SaveChangesAsync();
@@ -206,19 +210,15 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .Select(p => p.MaPhong)
                 .ToListAsync();
 
-            var khachHangChuaCoTaiKhoan = await _context.KhachHang
-                .Where(k => (k.MaTaiKhoan == null || k.MaTaiKhoan == 0))
-                .ToListAsync();
-
             var khachHangIds = await _context.HopDong
                 .Where(h => phongIds.Contains(h.MaPhong))
                 .Select(h => h.MaKhachHang)
                 .Distinct()
                 .ToListAsync();
 
-            return khachHangChuaCoTaiKhoan
-                .Where(k => khachHangIds.Contains(k.MaKhachHang))
-                .ToList();
+            return await _context.KhachHang
+                .Where(k => khachHangIds.Contains(k.MaKhachHang) && (k.MaTaiKhoan == null || k.MaTaiKhoan == 0))
+                .ToListAsync();
         }
 
         // ==================== SỬA TÀI KHOẢN KHÁCH (CHỦ TRỌ) ====================
@@ -238,9 +238,8 @@ namespace HeThongQuanLyPhongTro.Controllers
             var taiKhoan = await _context.TaiKhoan.FindAsync(id);
             if (taiKhoan == null || taiKhoan.VaiTro != "Khach") return NotFound();
 
-            // Kiểm tra quyền
-            var khachHangIds = await GetKhachHangIdsOfChuTro(userId);
-            if (!khachHangIds.Contains(taiKhoan.MaTaiKhoan))
+            var taiKhoanIds = await GetTaiKhoanIdsOfChuTro(userId);
+            if (!taiKhoanIds.Contains(taiKhoan.MaTaiKhoan))
             {
                 TempData["Error"] = "Bạn không có quyền sửa tài khoản này!";
                 return RedirectToAction(nameof(DanhSachKhachHang));
@@ -264,9 +263,8 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (id != taiKhoan.MaTaiKhoan) return NotFound();
 
-            // Kiểm tra quyền
-            var khachHangIds = await GetKhachHangIdsOfChuTro(userId);
-            if (!khachHangIds.Contains(taiKhoan.MaTaiKhoan))
+            var taiKhoanIds = await GetTaiKhoanIdsOfChuTro(userId);
+            if (!taiKhoanIds.Contains(taiKhoan.MaTaiKhoan))
             {
                 TempData["Error"] = "Bạn không có quyền sửa tài khoản này!";
                 return RedirectToAction(nameof(DanhSachKhachHang));
@@ -317,9 +315,8 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .FirstOrDefaultAsync(m => m.MaTaiKhoan == id);
             if (taiKhoan == null || taiKhoan.VaiTro != "Khach") return NotFound();
 
-            // Kiểm tra quyền
-            var khachHangIds = await GetKhachHangIdsOfChuTro(userId);
-            if (!khachHangIds.Contains(taiKhoan.MaTaiKhoan))
+            var taiKhoanIds = await GetTaiKhoanIdsOfChuTro(userId);
+            if (!taiKhoanIds.Contains(taiKhoan.MaTaiKhoan))
             {
                 TempData["Error"] = "Bạn không có quyền xóa tài khoản này!";
                 return RedirectToAction(nameof(DanhSachKhachHang));
@@ -344,7 +341,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             var taiKhoan = await _context.TaiKhoan.FindAsync(id);
             if (taiKhoan != null && taiKhoan.VaiTro == "Khach")
             {
-                // Xóa liên kết với khách hàng trước
                 var khachHang = await _context.KhachHang
                     .FirstOrDefaultAsync(k => k.MaTaiKhoan == id);
                 if (khachHang != null)
@@ -361,27 +357,28 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             return RedirectToAction(nameof(DanhSachKhachHang));
         }
+
         private List<SelectListItem> GetDanhSachNganHang()
         {
             return new List<SelectListItem>
-    {
-        new SelectListItem { Value = "", Text = "-- Chọn ngân hàng --" },
-        new SelectListItem { Value = "mbbank", Text = "MB Bank" },
-        new SelectListItem { Value = "techcombank", Text = "Techcombank" },
-        new SelectListItem { Value = "vietcombank", Text = "Vietcombank" },
-        new SelectListItem { Value = "bidv", Text = "BIDV" },
-        new SelectListItem { Value = "vietinbank", Text = "Vietinbank" },
-        new SelectListItem { Value = "tpbank", Text = "TPBank" },
-        new SelectListItem { Value = "acb", Text = "ACB" },
-        new SelectListItem { Value = "sacombank", Text = "Sacombank" },
-        new SelectListItem { Value = "vpbank", Text = "VPBank" },
-        new SelectListItem { Value = "agribank", Text = "Agribank" },
-        new SelectListItem { Value = "ocb", Text = "OCB" },
-        new SelectListItem { Value = "hdbank", Text = "HDBank" },
-        new SelectListItem { Value = "msb", Text = "MSB" },
-        new SelectListItem { Value = "seabank", Text = "SeABank" },
-        new SelectListItem { Value = "shb", Text = "SHB" },
-    };
+            {
+                new SelectListItem { Value = "", Text = "-- Chọn ngân hàng --" },
+                new SelectListItem { Value = "mbbank", Text = "MB Bank" },
+                new SelectListItem { Value = "techcombank", Text = "Techcombank" },
+                new SelectListItem { Value = "vietcombank", Text = "Vietcombank" },
+                new SelectListItem { Value = "bidv", Text = "BIDV" },
+                new SelectListItem { Value = "vietinbank", Text = "Vietinbank" },
+                new SelectListItem { Value = "tpbank", Text = "TPBank" },
+                new SelectListItem { Value = "acb", Text = "ACB" },
+                new SelectListItem { Value = "sacombank", Text = "Sacombank" },
+                new SelectListItem { Value = "vpbank", Text = "VPBank" },
+                new SelectListItem { Value = "agribank", Text = "Agribank" },
+                new SelectListItem { Value = "ocb", Text = "OCB" },
+                new SelectListItem { Value = "hdbank", Text = "HDBank" },
+                new SelectListItem { Value = "msb", Text = "MSB" },
+                new SelectListItem { Value = "seabank", Text = "SeABank" },
+                new SelectListItem { Value = "shb", Text = "SHB" },
+            };
         }
 
         public async Task<IActionResult> CapNhatNganHang()
@@ -422,6 +419,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             TempData["Success"] = "Cập nhật thông tin ngân hàng thành công!";
             return RedirectToAction("Index", "Dashboard");
         }
+
         private bool TaiKhoanExists(int id)
         {
             return _context.TaiKhoan.Any(e => e.MaTaiKhoan == id);

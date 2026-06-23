@@ -1,19 +1,22 @@
 ﻿using HeThongQuanLyPhongTro.Data;
 using HeThongQuanLyPhongTro.Models;
+using HeThongQuanLyPhongTro.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
 using PuppeteerSharp;
+using System.Text;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
     public class HopDongController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ThongBaoService _thongBaoService;
 
         public HopDongController(ApplicationDbContext context)
         {
             _context = context;
+            _thongBaoService = new ThongBaoService(_context);
         }
 
         // ==================== HELPER METHODS ====================
@@ -41,7 +44,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             var queryPhong = _context.Phong
                 .Where(p => p.TrangThai == "Trống");
 
-            // ✅ PHÂN QUYỀN: Chủ trọ chỉ thấy phòng của mình
             if (role == "ChuTro")
             {
                 queryPhong = queryPhong.Where(p => p.MaChuTro == userId);
@@ -51,7 +53,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             ViewBag.KhachHangList = await _context.KhachHang.ToListAsync();
         }
 
-        // ==================== TẠO HÓA ĐƠN TỰ ĐỘNG ====================
         private async Task TaoHoaDonChoHopDong(int maHopDong, decimal giaPhong, DateTime ngayBatDau, DateTime ngayKetThuc)
         {
             int currentMonth = ngayBatDau.Month;
@@ -60,46 +61,65 @@ namespace HeThongQuanLyPhongTro.Controllers
             int endYear = ngayKetThuc.Year;
 
             var hopDong = await _context.HopDong
+                .Include(h => h.KhachHangNavigation)  // ✅ Thêm Include để lấy thông tin khách
+        .Include(h => h.PhongNavigation)      // ✅ Thêm Include để lấy thông tin phòng
                 .FirstOrDefaultAsync(h => h.MaHopDong == maHopDong);
 
-            // ✅ PHÂN QUYỀN: Lấy MaChuTro từ hợp đồng
             int maChuTro = hopDong?.MaChuTro ?? 0;
-
-            int ngayChotCoDinh = 25; // <--- Đặt ngày chốt cố định bạn muốn tại đây
-
+            List<HoaDon> hoaDonMoiList = new List<HoaDon>();
             while (currentYear < endYear || (currentYear == endYear && currentMonth <= endMonth))
             {
-                var existingHoaDon = await _context.HoaDon
+                var exists = await _context.HoaDon
                     .AnyAsync(h => h.MaHopDong == maHopDong && h.Thang == currentMonth && h.Nam == currentYear);
 
-                if (!existingHoaDon)
+                if (!exists)
                 {
-                    // 🔴 SỬA TẠI ĐÂY: Ép ngày tạo chạy theo tháng/năm của hóa đơn đó thay vì lấy ngày hiện tại
-                    DateTime ngayLapDongBo = new DateTime(currentYear, currentMonth, ngayChotCoDinh);
-
                     var hoaDon = new HoaDon
                     {
                         MaHopDong = maHopDong,
-                        MaChuTro = maChuTro,  // ✅ PHÂN QUYỀN: Lưu mã chủ trọ vào hóa đơn
+                        MaChuTro = maChuTro,
                         Thang = currentMonth,
                         Nam = currentYear,
                         TongTien = giaPhong,
-                        TrangThai = "Chờ thanh toán",
-                        NgayTao = ngayLapDongBo // ✅ ĐÃ ĐỒNG BỘ: Luôn luôn là ngày 25 của tháng đó
+                        TrangThai = "Chưa thanh toán",  // ✅ Tất cả đều là Chưa thanh toán
+                        NgayTao = null
                     };
                     _context.HoaDon.Add(hoaDon);
+                    hoaDonMoiList.Add(hoaDon);
                 }
 
                 currentMonth++;
-                if (currentMonth > 12)
-                {
-                    currentMonth = 1;
-                    currentYear++;
-                }
+                if (currentMonth > 12) { currentMonth = 1; currentYear++; }
             }
 
             await _context.SaveChangesAsync();
-        }        // ==================== DANH SÁCH HỢP ĐỒNG ====================
+            if (hopDong?.KhachHangNavigation != null && _thongBaoService != null)
+            {
+                var khachHang = hopDong.KhachHangNavigation;
+                var phong = hopDong.PhongNavigation;
+
+                // Chỉ gửi 1 thông báo tổng hợp thay vì gửi từng tháng
+                if (hoaDonMoiList.Any())
+                {
+                    // Lấy tháng đầu tiên và tháng cuối cùng
+                    var thangDau = hoaDonMoiList.First();
+                    var thangCuoi = hoaDonMoiList.Last();
+
+                    string thongBaoNoiDung = $"Hợp đồng thuê phòng {phong?.TenPhong} đã được tạo thành công. " +
+                                             $"Hóa đơn cho các tháng từ {thangDau.Thang}/{thangDau.Nam} đến {thangCuoi.Thang}/{thangCuoi.Nam} đã được tạo. " +
+                                             $"Vui lòng kiểm tra và thanh toán đúng hạn!";
+
+                    await _thongBaoService.GuiKhach(
+                        khachHang.MaKhachHang,
+                        "📋 Hóa đơn các tháng đã được tạo",
+                        thongBaoNoiDung,
+                        "info",
+                        $"/KhachHang/HoaDonChiTiet/{hoaDonMoiList.First().MaHoaDon}"
+                    );
+                }
+            }
+        }
+        // ==================== DANH SÁCH HỢP ĐỒNG ====================
         public async Task<IActionResult> Index(string searchString, string trangThai)
         {
             var userId = GetCurrentUserId();
@@ -115,7 +135,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .Include(h => h.KhachHangNavigation)
                 .AsQueryable();
 
-            // ✅ PHÂN QUYỀN: Chủ trọ chỉ thấy hợp đồng của phòng mình
             if (role == "ChuTro")
             {
                 var phongIds = await _context.Phong
@@ -193,7 +212,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return View();
             }
 
-            // ✅ PHÂN QUYỀN: Kiểm tra chủ trọ có quyền với phòng này không
             var role = GetCurrentRole();
             var userId = GetCurrentUserId();
             if (role == "ChuTro" && phong.MaChuTro != userId)
@@ -203,7 +221,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return View();
             }
 
-            // 🔴 1. KIỂM TRA LOGIC NGÀY THÁNG
             if (ngayKetThuc < ngayBatDau)
             {
                 TempData["Error"] = "Lỗi: Ngày kết thúc không được sớm hơn ngày bắt đầu hợp đồng!";
@@ -211,12 +228,10 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return View();
             }
 
-            // Chuẩn hóa dữ liệu đầu vào để kiểm tra chính xác
             string sdtChuan = SoDienThoai?.Trim() ?? "";
             string cccdChuan = CCCD?.Trim() ?? "";
             string emailChuan = Email?.Trim() ?? "";
 
-            // 🔴 2. KIỂM TRA ĐỊNH DẠNG CƠ BẢN (ĐỘ DÀI & ĐUÔI EMAIL)
             if (sdtChuan.Length != 10 || !sdtChuan.All(char.IsDigit))
             {
                 TempData["Error"] = "Lỗi: Số điện thoại phải bao gồm đúng 10 chữ số!";
@@ -238,8 +253,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return View();
             }
 
-            // 🔴 3. KIỂM TRA TRÙNG LẶP VỚI KHÁCH ĐANG CÓ HỢP ĐỒNG HIỆU LỰC
-            // Lấy danh sách MaKhachHang của những hợp đồng đang có hiệu lực
             var danhSachMaKhachDangThue = await _context.HopDong
                 .Where(h => h.TrangThai == "Hiệu lực")
                 .Select(h => h.MaKhachHang)
@@ -247,7 +260,6 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (danhSachMaKhachDangThue.Any())
             {
-                // Kiểm tra trùng Số điện thoại
                 bool trungSdt = await _context.KhachHang.AnyAsync(k =>
                     danhSachMaKhachDangThue.Contains(k.MaKhachHang) && k.SoDienThoai == sdtChuan);
                 if (trungSdt)
@@ -257,7 +269,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                     return View();
                 }
 
-                // Kiểm tra trùng CCCD
                 bool trungCccd = await _context.KhachHang.AnyAsync(k =>
                     danhSachMaKhachDangThue.Contains(k.MaKhachHang) && k.CCCD == cccdChuan);
                 if (trungCccd)
@@ -267,7 +278,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                     return View();
                 }
 
-                // Kiểm tra trùng Email
                 bool trungEmail = await _context.KhachHang.AnyAsync(k =>
                     danhSachMaKhachDangThue.Contains(k.MaKhachHang) && k.Email == emailChuan);
                 if (trungEmail)
@@ -280,15 +290,12 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             int maKhachHangCuoi = 0;
 
-            // ========== XỬ LÝ TIẾP TỤC NẾU VƯỢT QUA TOÀN BỘ KIỂM TRA ==========
-            // Tìm xem người này trước đó đã từng ở trọ hệ thống chưa (nhưng hợp đồng cũ đã hết hạn/hủy)
             var khachHangTonTai = await _context.KhachHang
                 .FirstOrDefaultAsync(k => k.SoDienThoai == sdtChuan);
 
             if (khachHangTonTai != null)
             {
                 maKhachHangCuoi = khachHangTonTai.MaKhachHang;
-                // Cập nhật lại thông tin mới nhất nếu có thay đổi
                 khachHangTonTai.HoTen = HoTen.Trim();
                 khachHangTonTai.CCCD = cccdChuan;
                 khachHangTonTai.Email = emailChuan;
@@ -314,7 +321,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 maKhachHangCuoi = khachHangMoi.MaKhachHang;
             }
 
-            // ========== 2. TẠO TÀI KHOẢN (nếu được chọn) ==========
             if (taoTaiKhoan && !string.IsNullOrEmpty(tenDangNhap) && !string.IsNullOrEmpty(matKhau))
             {
                 var tonTai = await _context.TaiKhoan.AnyAsync(t => t.TenDangNhap == tenDangNhap);
@@ -346,7 +352,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 }
             }
 
-            // ========== 3. TẠO HỢP ĐỒNG ==========
             int maChuTro = phong.MaChuTro;
 
             var hopDong = new HopDong
@@ -362,7 +367,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context.HopDong.Add(hopDong);
             await _context.SaveChangesAsync();
 
-            // ========== 4. THÊM DANH SÁCH NGƯỜI Ở ==========
             if (NguoiOHoTen != null && NguoiOHoTen.Any())
             {
                 for (int i = 0; i < NguoiOHoTen.Count; i++)
@@ -382,15 +386,120 @@ namespace HeThongQuanLyPhongTro.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // ========== 5. CẬP NHẬT TRẠNG THÁI PHÒNG ==========
             phong.TrangThai = "Đã thuê";
             _context.Phong.Update(phong);
             await _context.SaveChangesAsync();
 
-            // ========== 6. TẠO HÓA ĐƠN TỰ ĐỘNG ==========
             await TaoHoaDonChoHopDong(hopDong.MaHopDong, phong.GiaPhong, ngayBatDau, ngayKetThuc);
 
             TempData["Success"] = $"Tạo hợp đồng thành công! Mã hợp đồng: {hopDong.MaHopDong}";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // ==================== TẠO HÓA ĐƠN HÀNG LOẠT (ĐÃ SỬA LỖI) ====================
+        public async Task<IActionResult> TaoHangLoat()
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0 || role != "ChuTro")
+            {
+                TempData["Error"] = "Bạn không có quyền tạo hóa đơn!";
+                return RedirectToAction("Index", "Home");
+            }
+
+            int ngayChot = 25;
+            int dem = 0;
+            int demSkipped = 0;
+            int demFuture = 0;
+
+            var hopDongs = await _context.HopDong
+                .Include(h => h.PhongNavigation)
+                .Where(h => h.TrangThai == "Hiệu lực" && h.MaChuTro == userId)
+                .ToListAsync();
+
+            foreach (var hopDong in hopDongs)
+            {
+                // ✅ SỬA LỖI: NgayBatDau có thể là DateTime?
+                DateTime ngayBatDau;
+                if (hopDong.NgayBatDau.HasValue)
+                {
+                    ngayBatDau = hopDong.NgayBatDau.Value;
+                }
+                else
+                {
+                    ngayBatDau = DateTime.Now;
+                }
+
+                // ✅ SỬA LỖI: NgayKetThuc có thể là DateTime?
+                DateTime ngayKetThuc;
+                if (hopDong.NgayKetThuc.HasValue)
+                {
+                    ngayKetThuc = hopDong.NgayKetThuc.Value;
+                }
+                else
+                {
+                    ngayKetThuc = DateTime.Now.AddMonths(6);
+                }
+
+                // Duyệt từ tháng bắt đầu đến tháng kết thúc
+                for (int nam = ngayBatDau.Year; nam <= ngayKetThuc.Year; nam++)
+                {
+                    int thangTu = (nam == ngayBatDau.Year) ? ngayBatDau.Month : 1;
+                    int thangDen = (nam == ngayKetThuc.Year) ? ngayKetThuc.Month : 12;
+
+                    for (int thang = thangTu; thang <= thangDen; thang++)
+                    {
+                        bool exists = await _context.HoaDon
+                            .AnyAsync(h => h.MaHopDong == hopDong.MaHopDong &&
+                                           h.Thang == thang &&
+                                           h.Nam == nam);
+
+                        if (!exists && hopDong.PhongNavigation != null)
+                        {
+                            DateTime ngayLap;
+                            try
+                            {
+                                ngayLap = new DateTime(nam, thang, ngayChot);
+                            }
+                            catch
+                            {
+                                ngayLap = new DateTime(nam, thang, 1).AddMonths(1).AddDays(-1);
+                            }
+
+                            if (ngayLap > ngayKetThuc)
+                            {
+                                ngayLap = ngayKetThuc;
+                            }
+
+                            string trangThai = ngayLap > DateTime.Now ? "Chờ" : "Chưa thanh toán";
+                            if (trangThai == "Chờ") demFuture++;
+
+                            var hoaDonMoi = new HoaDon
+                            {
+                                MaHopDong = hopDong.MaHopDong,
+                                MaChuTro = userId,
+                                Thang = thang,
+                                Nam = nam,
+                                NgayTao = ngayLap,
+                                TongTien = hopDong.PhongNavigation.GiaPhong,
+                                TrangThai = trangThai
+                            };
+
+                            _context.HoaDon.Add(hoaDonMoi);
+                            dem++;
+                        }
+                        else
+                        {
+                            demSkipped++;
+                        }
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"✅ Đã tạo {dem} hóa đơn mới! (Trong đó {demFuture} hóa đơn trong tương lai - trạng thái 'Chờ', bỏ qua {demSkipped} tháng đã có)";
             return RedirectToAction(nameof(Index));
         }
         // ==================== CHẤM DỨT HỢP ĐỒNG ====================
@@ -413,7 +522,6 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (hopDong == null) return NotFound();
 
-            // ✅ PHÂN QUYỀN: Chủ trọ chỉ chấm dứt hợp đồng của mình
             if (role == "ChuTro")
             {
                 var userId = GetCurrentUserId();
@@ -447,7 +555,6 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (hopDong == null) return NotFound();
 
-            // ✅ PHÂN QUYỀN: Chủ trọ chỉ chấm dứt hợp đồng của mình
             if (role == "ChuTro")
             {
                 var phongCuaChuTro = await _context.Phong.FindAsync(hopDong.MaPhong);
@@ -479,7 +586,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             var userId = GetCurrentUserId();
             var role = GetCurrentRole();
 
-            // Chặn quyền Admin hoàn toàn theo yêu cầu hệ thống của bạn
             if (userId == 0 || role == "Admin" || role == "SuperAdmin")
             {
                 return RedirectToAction("Index", "Login");
@@ -494,7 +600,6 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (hopDong == null) return NotFound();
 
-            // ✅ PHÂN QUYỀN BẢO MẬT: Khách thuê chỉ xem được đúng hợp đồng của mình
             if (role == "Khach")
             {
                 var khachHang = await _context.KhachHang
@@ -505,7 +610,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                     return RedirectToAction("HopDongCuaToi", "KhachHang");
                 }
             }
-            // ✅ PHÂN QUYỀN BẢO MẬT: Chủ trọ chỉ xem được hợp đồng phòng thuộc toà nhà của mình quản lý
             else if (role == "ChuTro")
             {
                 if (hopDong.MaChuTro != userId && hopDong.PhongNavigation?.MaChuTro != userId)

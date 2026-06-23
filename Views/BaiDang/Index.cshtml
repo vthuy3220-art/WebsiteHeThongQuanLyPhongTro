@@ -9,38 +9,37 @@
     <div class="flex justify-between items-center flex-wrap gap-3">
         @if (role == "ChuTro")
         {
-            <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all">
-                <i class="fas fa-plus mr-2"></i> Đăng tin mới
+            <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all text-sm font-semibold">
+                Đăng tin mới
             </a>
         }
         else
         {
-            <div class="text-gray-600 font-medium"><i class="fas fa-shield-alt mr-1"></i> Bảng kiểm duyệt bài đăng hệ thống</div>
+            <div class="text-gray-600 font-medium text-sm sm:text-base">Bảng kiểm duyệt bài đăng hệ thống</div>
         }
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
-            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded text-sm font-medium">
+            @TempData["Success"]
         </div>
     }
     @if (TempData["Error"] != null)
     {
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
-            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded text-sm font-medium">
+            @TempData["Error"]
         </div>
     }
 
-    <!-- Bộ lọc -->
     <div class="bg-white rounded-xl shadow-md p-4">
-        <form method="get" class="flex gap-3">
+        <form method="get" class="flex flex-col sm:flex-row gap-3">
             <input type="text" name="searchString" value="@ViewBag.SearchString"
                    placeholder="Tìm theo tiêu đề, tên phòng..."
-                   class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
 
-            <select name="trangThai" class="px-3 py-2 border rounded-lg">
-                @foreach (var item in ViewBag.TrangThaiList)
+            <select name="trangThai" class="px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                @foreach (var item in ViewBag.TrangThaiList ?? new List<string>())
                 {
                     if (ViewBag.TrangThai == item)
                     {
@@ -53,14 +52,13 @@
                 }
             </select>
 
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg">
-                <i class="fas fa-search mr-2"></i> Tìm kiếm
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                Tìm kiếm
             </button>
         </form>
     </div>
 
-    <!-- Danh sách bài đăng dạng card -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach (var item in Model)
         {
             <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all border border-gray-100 flex flex-col justify-between">
@@ -78,91 +76,97 @@
 
                     <div class="p-4 pb-2">
                         <div class="flex justify-between items-start mb-2 gap-2">
-                            <h3 class="font-bold text-lg text-gray-800 line-clamp-1 flex-1">@item.TieuDe</h3>
+                            <h3 class="font-bold text-base sm:text-lg text-gray-800 line-clamp-1 flex-1 break-words">@item.TieuDe</h3>
 
-                            @if (item.TrangThai == "Approved")
+                            @* SỬA LOGIC HIỂN THỊ TRẠNG THÁI TIẾNG VIỆT VÀ TIẾNG ANH ĐỒNG BỘ CHO CHỦ TRỌ *@
+                            @if (item.TrangThai == "Hiển thị" || item.TrangThai == "Approved")
                             {
-                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-semibold shrink-0">
-                                    <i class="fas fa-check-circle"></i> Đã duyệt
+                                <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-md text-[11px] font-bold whitespace-nowrap">
+                                    Hiển thị
                                 </span>
                             }
-                            else if (item.TrangThai == "Pending")
+                            else if (item.TrangThai == "Chờ duyệt" || item.TrangThai == "Pending")
                             {
-                                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-[10px] font-semibold shrink-0 animate-pulse">
-                                    <i class="fas fa-clock"></i> Chờ duyệt
+                                <span class="inline-block px-2.5 py-1 bg-amber-50 text-orange-600 border border-amber-200 rounded-md text-[11px] font-bold animate-pulse whitespace-nowrap">
+                                    Chờ duyệt
+                                </span>
+                            }
+                            else if (item.TrangThai == "Ẩn")
+                            {
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 text-gray-600 border border-gray-200 rounded-md text-[11px] font-bold whitespace-nowrap">
+                                    Đang ẩn
                                 </span>
                             }
                             else
                             {
-                                <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-[10px] font-semibold shrink-0">
-                                    <i class="fas fa-times-circle"></i> Từ chối
+                                <span class="px-2.5 py-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-md text-[11px] font-bold whitespace-nowrap">
+                                    Từ chối
                                 </span>
                             }
                         </div>
 
-                        <p class="text-gray-500 text-sm mb-2">
-                            <i class="fas fa-bed mr-1 text-blue-500"></i> Phòng: @item.PhongNavigation?.TenPhong
+                        <p class="text-gray-500 text-xs sm:text-sm mb-2 break-words">
+                            Phòng: @item.PhongNavigation?.TenPhong
                             <span class="text-gray-400">(@item.PhongNavigation?.ToaNha?.TenToaNha)</span>
                         </p>
 
-                        <p class="text-gray-600 text-sm line-clamp-2 mb-3">@item.MoTa</p>
+                        <p class="text-gray-600 text-xs sm:text-sm line-clamp-2 mb-3 break-words">@item.MoTa</p>
                     </div>
                 </div>
 
-                <div class="p-4 pt-0 border-t border-gray-50 mt-auto">
-                    <div class="flex justify-between items-center text-[11px] text-gray-400 py-2">
-                        <span><i class="fas fa-calendar-alt mr-1"></i> Đăng lúc: @item.NgayDang?.ToString("dd/MM/yyyy HH:mm")</span>
+                <div class="p-4 pt-0 border-t border-gray-50 mt-auto flex-shrink-0">
+                    <div class="flex justify-between items-center text-[10px] sm:text-[11px] text-gray-400 py-2">
+                        <span>Đăng lúc: @item.NgayDang?.ToString("dd/MM/yyyy HH:mm")</span>
                     </div>
 
-                    <div class="flex justify-between items-center pt-2">
-                        <div class="flex space-x-3 items-center">
-                            <a asp-action="Details" asp-route-id="@item.MaBaiDang" class="text-blue-500 hover:text-blue-700 text-sm font-medium" title="Xem chi tiết">
-                                <i class="fas fa-eye mr-1"></i> Xem
-                            </a>
-                            @if (role == "ChuTro")
+                    <div class="flex flex-wrap gap-3 items-center">
+                        <a asp-action="Details" asp-route-id="@item.MaBaiDang" class="text-blue-500 hover:text-blue-700 text-xs sm:text-sm font-medium whitespace-nowrap" title="Xem chi tiết">
+                            Xem
+                        </a>
+
+                        @if (role == "ChuTro")
+                        {
+                            @* THÊM ĐIỀU KIỆN NÀY: Chặn sửa/xóa nếu phòng đã cho thuê *@
+                            @if (item.PhongNavigation?.TrangThai == "Đã thuê")
                             {
-                                <a asp-action="Edit" asp-route-id="@item.MaBaiDang" class="text-yellow-500 hover:text-yellow-700 text-sm font-medium" title="Sửa">
-                                    <i class="fas fa-edit mr-1"></i> Sửa
-                                </a>
-                                <a asp-action="Delete" asp-route-id="@item.MaBaiDang" class="text-red-500 hover:text-red-700 text-sm font-medium" title="Xóa">
-                                    <i class="fas fa-trash mr-1"></i> Xóa
-                                </a>
+                                <span class="text-gray-400 text-xs sm:text-sm font-medium italic whitespace-nowrap">
+                                    <i class="fas fa-lock mr-1"></i> Đã chốt khách
+                                </span>
+                            }
+                            else
+                            {
+                                @* Các nút Sửa/Xóa chỉ hiện khi phòng còn trống và chưa bị Admin duyệt hiển thị *@
+                                @if (item.TrangThai != "Hiển thị" && item.TrangThai != "Approved")
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.MaBaiDang" class="text-yellow-500 hover:text-yellow-700 text-xs sm:text-sm font-medium whitespace-nowrap" title="Sửa">
+                                        Sửa
+                                    </a>
+                                    <button type="button" onclick="xoaBaiDang(@item.MaBaiDang)" class="text-red-500 hover:text-red-700 text-xs sm:text-sm font-medium whitespace-nowrap" title="Xóa">
+                                        Xóa
+                                    </button>
+                                }
+                            }
+                        }
+                    </div>
+
+                    @* ... Phần nút Ẩn/Hiện phía dưới (nếu có) cũng bọc tương tự *@
+                    @if (role == "ChuTro" && item.PhongNavigation?.TrangThai != "Đã thuê")
+                    {
+                        <div class="whitespace-nowrap">
+                            @if (item.TrangThai == "Hiển thị" || item.TrangThai == "Approved")
+                            {
+                                <button onclick="toggleTrangThai(@item.MaBaiDang, this)" class="text-[11px] sm:text-xs font-medium text-orange-500 hover:underline">
+                                    Ẩn tin đăng
+                                </button>
+                            }
+                            else if (item.TrangThai == "Ẩn")
+                            {
+                                <button onclick="toggleTrangThai(@item.MaBaiDang, this)" class="text-[11px] sm:text-xs font-medium text-green-500 hover:underline">
+                                    Hiện lại tin
+                                </button>
                             }
                         </div>
-
-                        @if (role == "Admin")
-                        {
-                            <div class="flex space-x-2">
-                                @if (item.TrangThai == "Pending" || item.TrangThai == "Rejected")
-                                {
-                                    <button onclick="duyetBai(@item.MaBaiDang, 'Approve')" class="bg-green-500 hover:bg-green-600 text-white text-xs px-2.5 py-1.5 rounded font-medium transition-colors">
-                                        <i class="fas fa-check mr-1"></i> Duyệt bài
-                                    </button>
-                                }
-                                @if (item.TrangThai == "Pending" || item.TrangThai == "Approved")
-                                {
-                                    <button onclick="duyetBai(@item.MaBaiDang, 'Reject')" class="bg-red-500 hover:bg-red-600 text-white text-xs px-2.5 py-1.5 rounded font-medium transition-colors">
-                                        <i class="fas fa-ban mr-1"></i> Từ chối
-                                    </button>
-                                }
-                            </div>
-                        }
-                        else if (role == "ChuTro")
-                        {
-                            @if (item.TrangThai == "Approved")
-                            {
-                                <button onclick="toggleTrangThai(@item.MaBaiDang, this)" class="text-xs font-medium text-orange-500 hover:underline">
-                                    <i class="fas fa-eye-slash mr-1"></i> Ẩn tin đăng
-                                </button>
-                            }
-                            else if (item.TrangThai == "Rejected")
-                            {
-                                <button onclick="toggleTrangThai(@item.MaBaiDang, this)" class="text-xs font-medium text-green-500 hover:underline">
-                                    <i class="fas fa-eye mr-1"></i> Kích hoạt lại
-                                </button>
-                            }
-                        }
-                    </div>
+                    }
                 </div>
             </div>
         }
@@ -171,20 +175,17 @@
     @if (!Model.Any())
     {
         <div class="bg-white rounded-xl shadow-md p-12 text-center">
-            <i class="fas fa-newspaper text-gray-300 text-5xl mb-3"></i>
-            <p class="text-gray-500">Không tìm thấy bài đăng nào tương ứng</p>
+            <p class="text-gray-500 text-sm sm:text-base">Không tìm thấy bài đăng nào tương ứng</p>
             @if (role == "ChuTro")
             {
-                <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline">Đăng tin đầu tiên</a>
+                <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline text-sm font-semibold">Đăng tin đầu tiên</a>
             }
         </div>
     }
 </div>
 
-<!-- Thêm SweetAlert2 cho đẹp -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Hàm xử lý duyệt bài của Admin
     function duyetBai(id, actionType) {
     Swal.fire({
     title: actionType === 'Approve' ? 'Xác nhận duyệt bài này?' : 'Xác nhận từ chối bài này?',
@@ -219,7 +220,6 @@
     });
     }
 
-    // Hàm ẩn/hiện của Chủ Trọ
     function toggleTrangThai(id, btn) {
     fetch(`@Url.Action("ToggleTrangThai", "BaiDang")?id=${id}`, {
     method: 'POST',
@@ -238,6 +238,43 @@
     })
     .catch(() => {
     Swal.fire('Lỗi!', 'Có lỗi xảy ra khi kết nối server.', 'error');
+    });
+    }
+
+
+    // Hàm gọi Popup xác nhận xóa bài đăng
+    function xoaBaiDang(id) {
+    Swal.fire({
+    title: 'Bạn có chắc chắn muốn xóa?',
+    text: "Bài đăng sẽ bị xóa vĩnh viễn và không thể khôi phục!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#EF4444', // Màu đỏ nguy hiểm
+    cancelButtonColor: '#6B7280',  // Màu xám nút hủy
+    confirmButtonText: 'Có, xóa ngay!',
+    cancelButtonText: 'Hủy'
+    }).then((result) => {
+    if (result.isConfirmed) {
+    fetch(`/BaiDang/XoaBaiDangApi?id=${id}`, {
+    method: 'POST',
+    headers: {
+    'Content-Type': 'application/json',
+    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+    }
+    })
+    .then(response => response.json())
+    .then(data => {
+    if (data.success) {
+    Swal.fire('Đã xóa!', 'Bài đăng của bạn đã được dọn dẹp sạch sẽ.', 'success')
+    .then(() => location.reload());
+    } else {
+    Swal.fire('Lỗi!', data.message || 'Có lỗi xảy ra khi xóa.', 'error');
+    }
+    })
+    .catch(() => {
+    Swal.fire('Lỗi!', 'Có lỗi kết nối máy chủ.', 'error');
+    });
+    }
     });
     }
 </script>

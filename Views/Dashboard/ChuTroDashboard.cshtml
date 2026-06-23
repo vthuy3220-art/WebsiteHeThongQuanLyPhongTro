@@ -150,10 +150,6 @@
             <div class="flex-grow relative w-full h-[320px]">
                 <canvas id="areaChart"></canvas>
             </div>
-            <div class="flex items-center justify-center gap-6 mt-4">
-                <div class="flex items-center text-xs text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 mr-2"></span> Tổng Doanh Thu Dự Kiến</div>
-                <div class="flex items-center text-xs text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-blue-200 mr-2"></span> Thực Tế Đã Thu (85%)</div>
-            </div>
         </div>
 
         <div class="bg-white rounded-xl card-shadow border border-slate-100 p-6 flex flex-col">
@@ -356,20 +352,31 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Lấy dữ liệu danh sách doanh thu thực tế từ Model truyền xuống
-        var rawData = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]");
-        var labelsThang = [], dataThucTeThuTien = [];
+        // ==========================================
+        // 1. KHỞI TẠO VÀ XỬ LÝ DỮ LIỆU BIỂU ĐỒ DIỆN TÍCH (AREA CHART)
+        // ==========================================
+        var rawDataThang = @Html.Raw(Model.DoanhThuTheoThangList != null ? Json.Serialize(Model.DoanhThuTheoThangList) : "[]");
+        var rawDataTuan = @Html.Raw(Model.DoanhThuTheoTuanList != null ? Json.Serialize(Model.DoanhThuTheoTuanList) : "[]");
 
-        if (rawData && rawData.length > 0) {
-            var dataCopy = [...rawData].reverse();
-            labelsThang = dataCopy.map(x => 'Tháng ' + (x.thang !== undefined ? x.thang : x.Thang));
+        var labelsThang = [], dataThucTeThang = [];
+        var labelsTuan = [], dataThucTeTuan = [];
 
-            // ✅ ĐÃ ĐỔI: Lấy chính xác số tiền thực tế thu được (Hóa đơn đã thanh toán) từ DB
-            dataThucTeThuTien = dataCopy.map(x => (x.daThu !== undefined ? x.daThu : (x.DaThu !== undefined ? x.DaThu : 0)));
+        // Xử lý dữ liệu Theo Tháng
+        if (rawDataThang && rawDataThang.length > 0) {
+            labelsThang = rawDataThang.map(x => x.tenThang || `Tháng ${x.thang || x.Thang}/${x.nam || x.Nam}`);
+            dataThucTeThang = rawDataThang.map(x => (x.doanhThu !== undefined ? x.doanhThu : (x.DoanhThu !== undefined ? x.DoanhThu : 0)));
         } else {
-            // Dữ liệu mẫu dự phòng nếu cơ sở dữ liệu trống
             labelsThang = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6'];
-            dataThucTeThuTien = [25000000, 34000000, 42000000, 58000000, 75000000, 92000000];
+            dataThucTeThang = [25000000, 34000000, 42000000, 58000000, 75000000, 92000000];
+        }
+
+        // Xử lý dữ liệu Theo Tuần
+        if (rawDataTuan && rawDataTuan.length > 0) {
+            labelsTuan = rawDataTuan.map(x => x.tuan || x.Tuan);
+            dataThucTeTuan = rawDataTuan.map(x => (x.doanhThu !== undefined ? x.doanhThu : (x.DoanhThu !== undefined ? x.DoanhThu : 0)));
+        } else {
+            labelsTuan = ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'];
+            dataThucTeTuan = [12000000, 15000000, 18000000, 22000000];
         }
 
         var ctxArea = document.getElementById('areaChart').getContext('2d');
@@ -380,30 +387,27 @@
         var areaChartInstance = new Chart(ctxArea, {
             type: 'line',
             data: {
-                labels: labelsThang,
-        datasets: [
-            {
-                label: 'Thực tế thu tiền', // ✅ Đổi nhãn thành Thực tế thu tiền
-                data: dataDaThuThang,      // ✅ Chỉ dùng 1 mảng dữ liệu duy nhất
-                borderColor: '#1890ff',
-                backgroundColor: gradientBlue,
-                borderWidth: 2,
-                fill: true,
-                tension: 0.1,
-                pointBackgroundColor: '#fff',
-                pointBorderColor: '#1890ff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }
-        ]            },
+                labels: labelsThang, // Mặc định hiển thị Tháng trước
+                datasets: [{
+                    label: 'Thực tế thu tiền',
+                    data: dataThucTeThang,
+                    borderColor: '#1890ff',
+                    backgroundColor: gradientBlue,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#1890ff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: { display: true } // Hiện nhãn "Thực tế thu tiền" ở phía trên biểu đồ
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#8c8c8c' } },
                     y: {
@@ -416,140 +420,208 @@
                 }
             }
         });
- 
-        // 🚀 HÀM GỬI KHẢO SÁT CHẠY AJAX BẤT ĐỒNG BỘ REALTIME
-        function executeSendSurvey(buttonElement, contractId) {
-        var btn = $(buttonElement);
 
-        // Khóa nút tạm thời để chống spam click chuột liên tục
-        btn.prop('disabled', true).addClass('opacity-50').html('<i class="fas fa-spinner fa-spin text-[10px]"></i> Đang gửi...');
+        // Hàm chuyển đổi Tab thời gian (Tháng / Tuần) trên đồ thị
+        function switchPeriod(period) {
+            const btnThang = document.getElementById('btnThang');
+            const btnTuan = document.getElementById('btnTuan');
 
-        // Lấy Token chống giả mạo request của ASP.NET Core có sẵn trên trang
-        var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (period === 'Thang') {
+                // Đổi UI nút bấm
+                btnThang.className = "px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all";
+                btnTuan.className = "px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all";
 
-        var params = new URLSearchParams();
-        params.append('id', contractId);
-        if (token) params.append('__RequestVerificationToken', token);
+                // Đổi dữ liệu đồ thị
+                areaChartInstance.data.labels = labelsThang;
+                areaChartInstance.data.datasets[0].data = dataThucTeThang;
+            } else if (period === 'Tuan') {
+                // Đổi UI nút bấm
+                btnTuan.className = "px-4 py-1 text-xs font-semibold bg-white text-blue-600 shadow-sm rounded border border-slate-200 transition-all";
+                btnThang.className = "px-4 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded transition-all";
 
-        fetch('/Dashboard/GuiKhaoSatGiaHan', {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: params.toString()
-        })
-        .then(res => res.json())
-        .then(response => {
-        if (response.success) {
-        // 1. Hiển thị dải màu xanh lá cây lên đầu trang
-        document.getElementById('surveySuccessMessage').innerText = response.message;
-        document.getElementById('surveySuccessBanner').classList.remove('hidden');
-
-        // 2. Cuộn nhẹ màn hình lên trên để người dùng nhìn thấy dải màu xanh lập tức
-        $('html, body').animate({ scrollTop: 0 }, 300);
-
-        // 3. Khôi phục trạng thái nút bấm ban đầu
-        btn.prop('disabled', false).removeClass('opacity-50').html('<i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát');
-
-        // 4. Tự động ẩn dải màu xanh sau 8 giây
-        setTimeout(function() {
-        document.getElementById('surveySuccessBanner').classList.add('hidden');
-        }, 8000);
-        } else {
-        alert("Lỗi: " + response.message);
-        btn.prop('disabled', false).removeClass('opacity-50').html('<i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát');
+                // Đổi dữ liệu đồ thị
+                areaChartInstance.data.labels = labelsTuan;
+                areaChartInstance.data.datasets[0].data = dataThucTeTuan;
+            }
+            areaChartInstance.update();
         }
-        })
-        .catch(err => {
-        alert("Lỗi kết nối máy chủ, không thể kích hoạt lệnh gửi khảo sát!");
-        btn.prop('disabled', false).removeClass('opacity-50').html('<i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát');
+
+        // ==========================================
+        // 2. KHỞI TẠO BIỂU ĐỒ CỘT TOP 5 PHÒNG (BAR CHART)
+        // ==========================================
+        var rawDataTopPhong = @Html.Raw(Model.Top5PhongDoanhThuList != null ? Json.Serialize(Model.Top5PhongDoanhThuList) : "[]");
+        var labelsTopPhong = [], dataTopPhong = [], maxRevenue = 0;
+
+        if (rawDataTopPhong && rawDataTopPhong.length > 0) {
+            labelsTopPhong = rawDataTopPhong.map(x => x.tenPhong || x.TenPhong);
+            dataTopPhong = rawDataTopPhong.map(x => (x.tongDoanhThu !== undefined ? x.tongDoanhThu : (x.TongDoanhThu !== undefined ? x.TongDoanhThu : 0)));
+            maxRevenue = Math.max(...dataTopPhong);
+        } else {
+            labelsTopPhong = ['Phòng 101', 'Phòng 202', 'Phòng 301', 'Phòng 105', 'Phòng 403'];
+            dataTopPhong = [15000000, 12500000, 11000000, 9500000, 8000000];
+            maxRevenue = 15000000;
+        }
+
+        // Cập nhật số tiền cao nhất hiển thị lên Text Header của thẻ Card
+        document.getElementById('topRevenueText').innerText = maxRevenue.toLocaleString('vi-VN');
+
+        var ctxBar = document.getElementById('barChart').getContext('2d');
+        var barChartInstance = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: labelsTopPhong,
+                datasets: [{
+                    label: 'Doanh thu phòng',
+                    data: dataTopPhong,
+                    backgroundColor: '#722ed1', // Màu tím đồng bộ giao diện Mantis Theme
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    barThickness: 16
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#8c8c8c' } },
+                    y: {
+                        grid: { color: '#f5f5f5' },
+                        ticks: {
+                            color: '#8c8c8c',
+                            callback: function(v) { return v >= 1000000 ? (v/1000000)+'Tr' : v; }
+                        }
+                    }
+                }
+            }
         });
+
+        // ==========================================
+        // 3. XỬ LÝ QUY TRÌNH REALTIME AJAX & MODAL WINDOWS
+        // ==========================================
+        function executeSendSurvey(buttonElement, contractId) {
+            var btn = $(buttonElement);
+            btn.prop('disabled', true).addClass('opacity-50').html('<i class="fas fa-spinner fa-spin text-[10px]"></i> Đang gửi...');
+
+            var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            var params = new URLSearchParams();
+            params.append('id', contractId);
+            if (token) params.append('__RequestVerificationToken', token);
+
+            fetch('/Dashboard/GuiKhaoSatGiaHan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: params.toString()
+            })
+            .then(res => res.json())
+            .then(response => {
+                if (response.success) {
+                    document.getElementById('surveySuccessMessage').innerText = response.message;
+                    document.getElementById('surveySuccessBanner').classList.remove('hidden');
+                    $('html, body').animate({ scrollTop: 0 }, 300);
+                    btn.prop('disabled', false).removeClass('opacity-50').html('<i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát');
+                    setTimeout(function() {
+                        document.getElementById('surveySuccessBanner').classList.add('hidden');
+                    }, 8000);
+                } else {
+                    alert("Lỗi: " + response.message);
+                    btn.prop('disabled', false).removeClass('opacity-50').html('<i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát');
+                }
+            })
+            .catch(err => {
+                alert("Lỗi kết nối máy chủ, không thể kích hoạt lệnh gửi khảo sát!");
+                btn.prop('disabled', false).removeClass('opacity-50').html('<i class="fas fa-paper-plane text-[10px]"></i> Gửi khảo sát');
+            });
         }
 
         function showInvoiceDetails(id) {
-        fetch('/Dashboard/GetInvoiceDetails?id=' + id)
-        .then(res => { if (!res.ok) throw new Error("Lỗi tải hóa đơn"); return res.json(); })
-        .then(data => {
-        document.getElementById('modalTitle').innerText = 'Chi tiết hóa đơn quyết toán số #HD-' + data.maHoaDon;
-        document.getElementById('lblRoom').innerText = data.tenPhong;
-        document.getElementById('lblCustomer').innerText = data.tenKhachHang;
-        document.getElementById('lblPeriod').innerText = 'Kỳ tháng ' + data.thang + ' / năm ' + data.nam;
-        document.getElementById('lblPayDate').innerText = data.ngayThanhToan;
-        document.getElementById('lblTotal').innerText = data.tongTien.toLocaleString('vi-VN') + ' đ';
+            fetch('/Dashboard/GetInvoiceDetails?id=' + id)
+            .then(res => { if (!res.ok) throw new Error("Lỗi tải hóa đơn"); return res.json(); })
+            .then(data => {
+                document.getElementById('modalTitle').innerText = 'Chi tiết hóa đơn quyết toán số #HD-' + data.maHoaDon;
+                document.getElementById('lblRoom').innerText = data.tenPhong;
+                document.getElementById('lblCustomer').innerText = data.tenKhachHang;
+                document.getElementById('lblPeriod').innerText = 'Kỳ tháng ' + data.thang + ' / năm ' + data.nam;
+                document.getElementById('lblPayDate').innerText = data.ngayThanhToan;
+                document.getElementById('lblTotal').innerText = data.tongTien.toLocaleString('vi-VN') + ' đ';
 
-        const tbody = document.querySelector('#tblInvoiceItems tbody');
-        if (data.chiTietList && data.chiTietList.length > 0) {
-        tbody.innerHTML = data.chiTietList.map(item => `
-        <tr class="border-b border-slate-100">
-        <td class="py-2.5 font-medium text-slate-700">${item.loaiKhoanThu || 'Khoản phát sinh'}</td>
-        <td class="py-2.5 text-center">${item.soLuong ?? 1}</td>
-        <td class="py-2.5 text-right">${item.donGia.toLocaleString('vi-VN')}</td>
-        <td class="py-2.5 text-right font-bold text-slate-800">${item.thanhTien.toLocaleString('vi-VN')} đ</td>
-        </tr>
-        `).join('');
-        } else {
-        tbody.innerHTML = `
-        <tr class="border-b border-slate-100">
-        <td class="py-2.5 font-medium text-slate-700">Tiền nhà cố định</td>
-        <td class="py-2.5 text-center">1</td>
-        <td class="py-2.5 text-right">${data.tongTien.toLocaleString('vi-VN')}</td>
-        <td class="py-2.5 text-right font-bold text-slate-800">${data.tongTien.toLocaleString('vi-VN')} đ</td>
-        </tr>
-        `;
-        }
+                const tbody = document.querySelector('#tblInvoiceItems tbody');
+                if (data.chiTietList && data.chiTietList.length > 0) {
+                    tbody.innerHTML = data.chiTietList.map(item => `
+                        <tr class="border-b border-slate-100">
+                            <td class="py-2.5 font-medium text-slate-700">${item.loaiKhoanThu || 'Khoản phát sinh'}</td>
+                            <td class="py-2.5 text-center">${item.soLuong ?? 1}</td>
+                            <td class="py-2.5 text-right">${item.donGia.toLocaleString('vi-VN')}</td>
+                            <td class="py-2.5 text-right font-bold text-slate-800">${item.thanhTien.toLocaleString('vi-VN')} đ</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr class="border-b border-slate-100">
+                            <td class="py-2.5 font-medium text-slate-700">Tiền nhà cố định</td>
+                            <td class="py-2.5 text-center">1</td>
+                            <td class="py-2.5 text-right">${data.tongTien.toLocaleString('vi-VN')}</td>
+                            <td class="py-2.5 text-right font-bold text-slate-800">${data.tongTien.toLocaleString('vi-VN')} đ</td>
+                        </tr>
+                    `;
+                }
 
-        const modal = document.getElementById('invoiceModal');
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-        modal.classList.remove('opacity-0');
-        modal.querySelector('.transform').classList.remove('scale-95');
-        }, 10);
-        })
-        .catch(err => { console.error(err); alert("Không thể liên kết dữ liệu với hóa đơn này!"); });
+                const modal = document.getElementById('invoiceModal');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.querySelector('.transform').classList.remove('scale-95');
+                }, 10);
+            })
+            .catch(err => { console.error(err); alert("Không thể liên kết dữ liệu với hóa đơn này!"); });
         }
 
         function closeInvoiceModal() {
-        const modal = document.getElementById('invoiceModal');
-        modal.classList.add('opacity-0');
-        modal.querySelector('.transform').classList.add('scale-95');
-        setTimeout(() => modal.classList.add('hidden'), 300);
+            const modal = document.getElementById('invoiceModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
         function showContractDetails(id) {
-        fetch('/Dashboard/GetContractDetails?id=' + id)
-        .then(res => { if (!res.ok) throw new Error("Lỗi tải thông tin hồ sơ"); return res.json(); })
-        .then(data => {
-        document.getElementById('contractModalTitle').innerText = 'Chi tiết văn bản liên kết hợp đồng';
-        document.getElementById('lblConId').innerText = 'HĐ-' + data.maHopDong;
-        document.getElementById('lblConRoom').innerText = data.tenPhong;
-        document.getElementById('lblConCustomer').innerText = data.tenKhachHang;
-        document.getElementById('lblConPhone').innerText = data.sdtKhachHang;
-        document.getElementById('lblConStartDate').innerText = data.ngayBatDau;
-        document.getElementById('lblConEndDate').innerText = data.ngayKetThuc;
-        document.getElementById('lblConDaysLeft').innerText = data.soNgayConLai + ' ngày';
-        document.getElementById('lblConPrice').innerText = data.giaThue.toLocaleString('vi-VN') + ' đ';
-        document.getElementById('lblConDeposit').innerText = data.tienCoc.toLocaleString('vi-VN') + ' đ';
+            fetch('/Dashboard/GetContractDetails?id=' + id)
+            .then(res => { if (!res.ok) throw new Error("Lỗi tải thông tin hồ sơ"); return res.json(); })
+            .then(data => {
+                document.getElementById('contractModalTitle').innerText = 'Chi tiết văn bản liên kết hợp đồng';
+                document.getElementById('lblConId').innerText = 'HĐ-' + data.maHopDong;
+                document.getElementById('lblConRoom').innerText = data.tenPhong;
+                document.getElementById('lblConCustomer').innerText = data.tenKhachHang;
+                document.getElementById('lblConPhone').innerText = data.sdtKhachHang;
+                document.getElementById('lblConStartDate').innerText = data.ngayBatDau;
+                document.getElementById('lblConEndDate').innerText = data.ngayKetThuc;
+                document.getElementById('lblConDaysLeft').innerText = data.soNgayConLai + ' ngày';
+                document.getElementById('lblConPrice').innerText = data.giaThue.toLocaleString('vi-VN') + ' đ';
+                document.getElementById('lblConDeposit').innerText = data.tienCoc.toLocaleString('vi-VN') + ' đ';
 
-        const statusLbl = document.getElementById('lblConStatus');
-        statusLbl.innerText = data.trangThai;
-        statusLbl.className = "text-right font-bold text-orange-500 animate-pulse";
+                const statusLbl = document.getElementById('lblConStatus');
+                statusLbl.innerText = data.trangThai;
+                statusLbl.className = "text-right font-bold text-orange-500 animate-pulse";
 
-        const modal = document.getElementById('contractModal');
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-        modal.classList.remove('opacity-0');
-        modal.querySelector('.transform').classList.remove('scale-95');
-        }, 10);
-        })
-        .catch(err => { console.error(err); alert("Không thể liên kết dữ liệu hợp đồng!"); });
+                const modal = document.getElementById('contractModal');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.querySelector('.transform').classList.remove('scale-95');
+                }, 10);
+            })
+            .catch(err => { console.error(err); alert("Không thể liên kết dữ liệu hợp đồng!"); });
         }
 
+        // ✅ HOÀN THIỆN HÀM ĐÓNG MODAL HỢP ĐỒNG ĐÃ BỊ THIẾU
         function closeContractModal() {
-        const modal = document.getElementById('contractModal');
-        modal.classList.add('opacity-0');
-        modal.querySelector('.transform').classList.add('scale-95');
-        setTimeout(() => modal.classList.add('hidden'), 300);
+            const modal = document.getElementById('contractModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
         }
     </script>
+}
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace HeThongQuanLyPhongTro.Controllers
 {
@@ -28,11 +29,11 @@ namespace HeThongQuanLyPhongTro.Controllers
             ViewBag.SearchString = searchString;
 
             var phongs = _context.Phong
-                .Include(p => p.ToaNha)
-                    .ThenInclude(t => t.CoSo)
-                .Include(p => p.ChuTro)
-                .Where(p => p.TrangThai == "Trống")
-                .AsQueryable();
+            .Include(p => p.ToaNha)
+            .ThenInclude(t => t.CoSo)
+            .Include(p => p.ChuTro)
+            .Where(p => p.TrangThai == "Trống" && _context.BaiDang.Any(b => b.MaPhong == p.MaPhong && b.TrangThai == "Hiển thị"))
+            .AsQueryable();
 
             if (maKhuVuc.HasValue && maKhuVuc.Value > 0)
                 phongs = phongs.Where(p => p.ToaNha.CoSo.MaCoSo == maKhuVuc.Value);
@@ -61,11 +62,26 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             var danhSachPhong = await phongs.ToListAsync();
 
+            // SỬA TẠI ĐÂY: Thay vì chỉ lấy trong bảng PhongImage, dictAnh sẽ quét lấy ảnh từ bài đăng của phòng trước
+            var danhSachBaiDang = await _context.BaiDang.Where(b => b.TrangThai == "Hiển thị").ToListAsync();
             var phongImages = await _context.PhongImage.ToListAsync();
-            var dictAnh = phongImages
-                .Where(i => i != null)
-                .GroupBy(i => i.MaPhong)
-                .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.ImagePath ?? "/images/default-room.jpg");
+
+            var dictAnh = new Dictionary<int, string>();
+            foreach (var phong in danhSachPhong)
+            {
+                // Tìm ảnh của bài đăng tương ứng với phòng trước
+                var anhBaiDang = danhSachBaiDang.FirstOrDefault(b => b.MaPhong == phong.MaPhong)?.HinhAnh;
+                if (!string.IsNullOrEmpty(anhBaiDang))
+                {
+                    dictAnh[phong.MaPhong] = anhBaiDang;
+                }
+                else
+                {
+                    // Nếu bài đăng không có ảnh thì mới tìm trong PhongImage hoặc dùng ảnh mặc định
+                    var anhPhongGoc = phongImages.FirstOrDefault(i => i.MaPhong == phong.MaPhong)?.ImagePath;
+                    dictAnh[phong.MaPhong] = !string.IsNullOrEmpty(anhPhongGoc) ? anhPhongGoc : "/images/default-room.jpg";
+                }
+            }
 
             ViewBag.TongSo = danhSachPhong.Count;
             ViewBag.PhongNoiBat = danhSachPhong;
@@ -77,8 +93,6 @@ namespace HeThongQuanLyPhongTro.Controllers
         // ==================== CHI TIẾT PHÒNG (Cho khách vãng lai) ====================
         public async Task<IActionResult> ChiTietPhong(int id)
         {
-            // THẢ CỬA 100%: Khách vãng lai vào xem thoải mái không đòi đăng nhập!
-
             var phong = await _context.Phong
                 .Include(p => p.ToaNha)
                     .ThenInclude(t => t.CoSo)

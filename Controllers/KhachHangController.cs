@@ -344,6 +344,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             ViewBag.GiaNuoc = giaNuoc;
             ViewBag.TienPhatSinh = tienPhatSinh;
             ViewBag.TongTien = hoaDon.TongTien;
+            ViewBag.NgayTao = hoaDon.NgayTao;
 
             // ✅ Lấy thông tin ngân hàng
             string tenNganHang = "Techcombank";

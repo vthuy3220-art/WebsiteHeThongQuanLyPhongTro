@@ -45,7 +45,7 @@
     string chuTaiKhoan = ViewBag.ChuTaiKhoan ?? "Vu Thi Thanh Thuy";
     string qrUrl = ViewBag.QRUrl ?? "";
 
-    // ✅ KIỂM TRA ĐÃ CÓ CHỈ SỐ ĐIỆN NƯỚC CHƯA (KHÔNG CẦN @{})
+    // ✅ KIỂM TRA ĐÃ CÓ CHỈ SỐ ĐIỆN NƯỚC CHƯA
     bool hasChiSo = false;
     if (chiTietHoaDons != null && chiTietHoaDons.Any())
     {
@@ -56,6 +56,11 @@
             c.LoaiKhoanThu == "Tiền nước"
         );
     }
+
+    // ✅ NGÀY LẬP PHIẾU VÀ HẠN THANH TOÁN
+    var ngayLapPhieu = Model.NgayTao ?? DateTime.Now;
+    // Hạn thanh toán: ngày 10 của tháng sau
+    var hanThanhToan = new DateTime(ngayLapPhieu.Year, ngayLapPhieu.Month, 1).AddMonths(1).AddDays(9);
 }
 
 <div class="max-w-4xl mx-auto p-2">
@@ -104,14 +109,11 @@
             <p class="text-xs text-gray-400 mt-2">* Mở app ngân hàng, chọn "Quét mã QR" để thanh toán</p>
         </div>
 
-        <!-- =========================================================== -->
-        <!-- NÚT KHÁCH XÁC NHẬN - CHỈ HIỂN THỊ KHI ĐÃ CÓ CHỈ SỐ -->
-        <!-- =========================================================== -->
+        <!-- NÚT KHÁCH XÁC NHẬN -->
         @if (Model.TrangThai == "Chưa thanh toán" && Model.KhachXacNhan != true)
         {
             if (hasChiSo)
             {
-                <!-- ĐÃ CÓ CHỈ SỐ -> HIỂN THỊ NÚT XÁC NHẬN -->
                 <div class="bg-yellow-50 rounded-lg p-4 mb-4 border border-yellow-100">
                     <p class="text-yellow-800 mb-2 text-sm">⚠️ Sau khi chuyển khoản thành công, bấm nút bên dưới để xác nhận!</p>
                     <form method="post" asp-action="KhachXacNhan" asp-controller="HoaDon">
@@ -125,7 +127,6 @@
             }
             else
             {
-                <!-- CHƯA CÓ CHỈ SỐ -> HIỂN THỊ THÔNG BÁO CHỜ -->
                 <div class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200 text-center">
                     <p class="text-gray-500 text-sm">
                         <i class="fas fa-clock mr-2"></i>
@@ -172,8 +173,14 @@
                 <tr class="h-8"><td class="text-slate-400">Khách hàng:</td><td class="text-slate-800 font-bold">@(khachHang?.HoTen ?? "Chưa có thông tin")</td></tr>
                 <tr class="h-8"><td class="text-slate-400">Email:</td><td class="text-slate-700">@(khachHang?.Email ?? "Chưa có thông tin")</td></tr>
                 <tr class="h-8"><td class="text-slate-400">Số điện thoại:</td><td class="text-slate-700 font-mono">@(khachHang?.SoDienThoai ?? "Chưa có thông tin")</td></tr>
-                <tr class="h-8"><td class="text-slate-400">Ngày lập:</td><td class="text-slate-700 font-mono">@(Model.NgayTao?.ToString("dd/MM/yyyy") ?? DateTime.Now.ToString("dd/MM/yyyy"))</td></tr>
-                <tr class="h-8"><td class="text-slate-400">Hạn thanh toán:</td><td class="text-red-500 font-bold font-mono">@(Model.NgayTao?.AddDays(7).ToString("dd/MM/yyyy") ?? DateTime.Now.AddDays(7).ToString("dd/MM/yyyy"))</td></tr>
+                <tr class="h-8">
+                    <td class="w-32 text-slate-400">Ngày lập:</td>
+                    <td class="text-slate-700 font-mono">@ngayLapPhieu.ToString("dd/MM/yyyy")</td>
+                </tr>
+                <tr class="h-8">
+                    <td class="text-slate-400">Hạn thanh toán:</td>
+                    <td class="text-red-500 font-bold font-mono">@hanThanhToan.ToString("dd/MM/yyyy")</td>
+                </tr>
             </table>
         </div>
 

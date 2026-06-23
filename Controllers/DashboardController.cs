@@ -44,36 +44,24 @@ namespace HeThongQuanLyPhongTro.Controllers
                 var queryHoaDon = _context.HoaDon.AsQueryable();
                 var queryBaiDang = _context.BaiDang.AsQueryable();
 
-                // Lọc cho Chủ trọ
+                // Lọc phạm vi dữ liệu dựa theo Chủ trọ (Lấy từ tư duy tối ưu File 1)
                 if (!isSuperAdmin && role == "ChuTro")
                 {
-                    var toaNhaIds = await _context.ToaNha
+                    var toaNhaIds = _context.ToaNha
                         .Where(t => t.MaChuTro == userId)
-                        .Select(t => t.MaToaNha)
-                        .ToListAsync();
+                        .Select(t => t.MaToaNha);
 
                     queryPhong = queryPhong.Where(p => toaNhaIds.Contains(p.MaToaNha));
-                    var phongIds = await queryPhong.Select(p => p.MaPhong).ToListAsync();
-
-                    queryHopDong = queryHopDong.Where(h => phongIds.Contains(h.MaPhong));
-                    var hopDongIds = await queryHopDong.Select(h => h.MaHopDong).ToListAsync();
-
-                    queryHoaDon = queryHoaDon.Where(hd => hopDongIds.Contains(hd.MaHopDong));
-                    queryBaiDang = queryBaiDang.Where(b => phongIds.Contains(b.MaPhong));
+                    queryHopDong = queryHopDong.Where(h => queryPhong.Select(p => p.MaPhong).Contains(h.MaPhong));
+                    queryHoaDon = queryHoaDon.Where(hd => queryHopDong.Select(h => h.MaHopDong).Contains(hd.MaHopDong));
+                    queryBaiDang = queryBaiDang.Where(b => queryPhong.Select(p => p.MaPhong).Contains(b.MaPhong));
                 }
 
-                // Lấy dữ liệu (dùng ToListAsync trước khi tính toán)
-                var danhSachPhong = await queryPhong.ToListAsync();
-                var danhSachHopDong = await queryHopDong.ToListAsync();
-                var danhSachHoaDon = await queryHoaDon.ToListAsync();
-                var danhSachBaiDang = await queryBaiDang.ToListAsync();
-
-                // ========== THỐNG KÊ BIẾN ĐỘNG THEO THỰC TẾ CHỦ TRỌ ==========
-                int tongSoPhong = danhSachPhong.Count;
-                int soPhongDaThue = danhSachPhong.Count(p => p.TrangThai == "Đã thuê");
+                // ========== TÍNH TOÁN CÁC CHỈ SỐ TRỰC TIẾP TỪ DATABASE (Tối ưu RAM File 1) ==========
+                int tongSoPhong = await queryPhong.CountAsync();
+                int soPhongDaThue = await queryPhong.CountAsync(p => p.TrangThai == "Đã thuê");
                 int soPhongTrong = tongSoPhong - soPhongDaThue;
 
-                // FIX DỨT ĐIỂM: Đếm số lượng khách hàng thực tế ĐANG THUÊ dựa trên hợp đồng HIỆU LỰC của chủ trọ này
                 int tongSoKhachHang = 0;
                 if (isSuperAdmin)
                 {
@@ -81,95 +69,98 @@ namespace HeThongQuanLyPhongTro.Controllers
                 }
                 else
                 {
-                    // Chỉ đếm các mã khách hàng duy nhất xuất hiện trong danh sách hợp đồng hiệu lực của chủ trọ này
-                    tongSoKhachHang = danhSachHopDong
+                    tongSoKhachHang = await queryHopDong
                         .Where(h => h.TrangThai == "Hiệu lực" && h.MaKhachHang != null)
                         .Select(h => h.MaKhachHang)
                         .Distinct()
-                        .Count();
+                        .CountAsync();
                 }
 
-                int soHopDongHieuLuc = danhSachHopDong.Count(h => h.TrangThai == "Hiệu lực");
-                int soHopDongHetHan = danhSachHopDong.Count(h => h.TrangThai != "Hiệu lực");
+                int soHopDongHieuLuc = await queryHopDong.CountAsync(h => h.TrangThai == "Hiệu lực");
+                int soHopDongHetHan = await queryHopDong.CountAsync(h => h.TrangThai != "Hiệu lực");
 
-                decimal doanhThuThangNay = danhSachHoaDon
-                    .Where(h => h.TrangThai == "Đã thanh toán" && h.Nam == DateTime.Now.Year && h.Thang == DateTime.Now.Month)
-                    .Sum(h => h.TongTien ?? 0);
+                decimal doanhThuThangNay = await queryHoaDon
+                    .Where(h => h.TrangThai != null && h.TrangThai.Trim() == "Đã thanh toán" && h.Nam == DateTime.Now.Year && h.Thang == DateTime.Now.Month)
+                    .SumAsync(h => h.TongTien ?? 0);
 
-                var hoaDonChuaThanhToanList = danhSachHoaDon
-                    .Where(h => h.TrangThai == "Chưa thanh toán")
-                    .ToList();
-                decimal tongNoHienTai = hoaDonChuaThanhToanList.Sum(h => h.TongTien ?? 0);
-                int soHoaDonChuaThanhToan = hoaDonChuaThanhToanList.Count;
+                var queryHoaDonChuaThanhToan = queryHoaDon.Where(h => h.TrangThai != null && h.TrangThai.Trim() == "Chưa thanh toán");
+                decimal tongNoHienTai = await queryHoaDonChuaThanhToan.SumAsync(h => h.TongTien ?? 0);
+                int soHoaDonChuaThanhToan = await queryHoaDonChuaThanhToan.CountAsync();
 
-                // 🔥 TÍNH TOÁN % CHÍNH XÁC TUYỆT ĐỐI (Khử lỗi chia cho 0 nếu chủ trọ chưa lập phòng)
                 double tyLeLapDay = tongSoPhong > 0 ? Math.Round(((double)soPhongDaThue / tongSoPhong) * 100, 1) : 0;
                 double tyLeTrong = tongSoPhong > 0 ? Math.Round(((double)soPhongTrong / tongSoPhong) * 100, 1) : 0;
 
-                // Đẩy các giá trị % thực tế này ra ViewBag để file View lấy ra hiển thị động công thức
                 ViewBag.TyLeLapDay = tyLeLapDay;
                 ViewBag.TyLeTrong = tyLeTrong;
 
-                // Hợp đồng sắp hết hạn
-                var hopDongSapHetHanList = danhSachHopDong
+                // BÙ ĐẮP TỪ FILE 2: Tính toán dữ liệu doanh thu theo 4 tuần phục vụ vẽ biểu đồ
+                var hoaDonThangNayChoBieuDo = await queryHoaDon
+                    .Where(h => h.Thang == DateTime.Now.Month && h.Nam == DateTime.Now.Year && h.TrangThai != null && h.TrangThai.Trim() == "Đã thanh toán" && h.NgayChuXacNhan.HasValue)
+                    .ToListAsync();
+
+                decimal tuan1 = hoaDonThangNayChoBieuDo.Where(h => h.NgayChuXacNhan.Value.Day >= 1 && h.NgayChuXacNhan.Value.Day <= 7).Sum(h => h.TongTien ?? 0);
+                decimal tuan2 = hoaDonThangNayChoBieuDo.Where(h => h.NgayChuXacNhan.Value.Day >= 8 && h.NgayChuXacNhan.Value.Day <= 14).Sum(h => h.TongTien ?? 0);
+                decimal tuan3 = hoaDonThangNayChoBieuDo.Where(h => h.NgayChuXacNhan.Value.Day >= 15 && h.NgayChuXacNhan.Value.Day <= 21).Sum(h => h.TongTien ?? 0);
+                decimal tuan4 = hoaDonThangNayChoBieuDo.Where(h => h.NgayChuXacNhan.Value.Day >= 22).Sum(h => h.TongTien ?? 0);
+                ViewBag.DoanhThuTuanData = new List<decimal> { tuan1, tuan2, tuan3, tuan4 };
+
+                // Lấy danh sách giới hạn phục vụ UI
+                var hopDongSapHetHanList = await queryHopDong
                     .Where(h => h.TrangThai == "Hiệu lực" && h.NgayKetThuc.HasValue
                         && h.NgayKetThuc.Value <= DateTime.Now.AddDays(30)
                         && h.NgayKetThuc.Value >= DateTime.Now)
                     .Select(h => new HopDongSapHetHan
                     {
                         MaHopDong = h.MaHopDong,
-                        TenPhong = h.PhongNavigation?.TenPhong ?? "N/A",
-                        TenKhachHang = h.KhachHangNavigation?.HoTen ?? "N/A",
-                        NgayKetThuc = h.NgayKetThuc ?? DateTime.Now,
-                        SoNgayConLai = (int)(h.NgayKetThuc.Value - DateTime.Now).TotalDays
+                        TenPhong = h.PhongNavigation != null ? h.PhongNavigation.TenPhong : "N/A",
+                        TenKhachHang = h.KhachHangNavigation != null ? h.KhachHangNavigation.HoTen : "N/A",
+                        NgayKetThuc = h.NgayKetThuc.Value,
+                        SoNgayConLai = (int)EF.Functions.DateDiffDay(DateTime.Now, h.NgayKetThuc.Value)
                     })
                     .OrderBy(h => h.SoNgayConLai)
-                    .ToList();
+                    .ToListAsync();
 
-                // Hóa đơn gần đây
-                var hoaDonGanDayList = danhSachHoaDon
-                    .Where(h => h.TrangThai == "Đã thanh toán")
+                var hoaDonGanDayList = await queryHoaDon
+                    .Where(h => h.TrangThai != null && h.TrangThai.Trim() == "Đã thanh toán")
                     .OrderByDescending(h => h.NgayChuXacNhan)
                     .Take(5)
                     .Select(h => new HoaDonGanDay
                     {
                         MaHoaDon = h.MaHoaDon,
-                        TenPhong = h.HopDongNavigation?.PhongNavigation?.TenPhong ?? "N/A",
+                        TenPhong = h.HopDongNavigation != null && h.HopDongNavigation.PhongNavigation != null ? h.HopDongNavigation.PhongNavigation.TenPhong : "N/A",
                         TongTien = h.TongTien ?? 0,
-                        TrangThai = h.TrangThai ?? "N/A"
+                        TrangThai = h.TrangThai
                     })
-                    .ToList();
+                    .ToListAsync();
 
-                // Bài đăng
-                int tongSoBaiDang = danhSachBaiDang.Count;
-                int soBaiDangHienThi = danhSachBaiDang.Count(b => b.TrangThai == "Hiển thị" || b.TrangThai == "Hoạt động");
+                int tongSoBaiDang = await queryBaiDang.CountAsync();
+                int soBaiDangHienThi = await queryBaiDang.CountAsync(b => b.TrangThai == "Hiển thị" || b.TrangThai == "Hoạt động");
                 int soBaiDangAn = tongSoBaiDang - soBaiDangHienThi;
-                int soBaiDangThangNay = danhSachBaiDang.Count(b => b.NgayDang.HasValue && b.NgayDang.Value.Month == DateTime.Now.Month);
+                int soBaiDangThangNay = await queryBaiDang.CountAsync(b => b.NgayDang.HasValue && b.NgayDang.Value.Month == DateTime.Now.Month && b.NgayDang.Value.Year == DateTime.Now.Year);
 
-                var baiDangGanDayList = danhSachBaiDang
+                var baiDangGanDayList = await queryBaiDang
                     .OrderByDescending(b => b.NgayDang)
                     .Take(5)
                     .Select(b => new BaiDangGanDay
                     {
                         MaBaiDang = b.MaBaiDang,
                         TieuDe = b.TieuDe ?? "Không có tiêu đề",
-                        TenPhong = b.PhongNavigation?.TenPhong ?? "N/A",
+                        TenPhong = b.PhongNavigation != null ? b.PhongNavigation.TenPhong : "N/A",
                         NgayDang = b.NgayDang ?? DateTime.Now,
                         TrangThai = b.TrangThai ?? "Ẩn"
                     })
-                    .ToList();
+                    .ToListAsync();
 
-                // Doanh thu theo tháng
-                var doanhThuTheoThang = new List<HeThongQuanLyPhongTro.Models.DoanhThuTheoThang>();
-                var resultDoanhThuThang = new List<HeThongQuanLyPhongTro.Models.DoanhThuTheoThang>();
+                // Doanh thu 6 tháng
+                var resultDoanhThuThang = new List<DoanhThuTheoThang>();
                 for (int i = 5; i >= 0; i--)
                 {
                     var mThang = DateTime.Now.AddMonths(-i);
-                    var tienHoaDon = danhSachHoaDon
-                        .Where(h => h.Thang == mThang.Month && h.Nam == mThang.Year && h.TrangThai == "Đã thanh toán")
-                        .Sum(h => h.TongTien ?? 0);
+                    var tienHoaDon = await queryHoaDon
+                        .Where(h => h.Thang == mThang.Month && h.Nam == mThang.Year && h.TrangThai != null && h.TrangThai.Trim() == "Đã thanh toán")
+                        .SumAsync(h => h.TongTien ?? 0);
 
-                    resultDoanhThuThang.Add(new HeThongQuanLyPhongTro.Models.DoanhThuTheoThang
+                    resultDoanhThuThang.Add(new DoanhThuTheoThang
                     {
                         Thang = mThang.Month,
                         Nam = mThang.Year,
@@ -177,36 +168,33 @@ namespace HeThongQuanLyPhongTro.Controllers
                     });
                 }
 
-                // Top phòng
+                // Top 5 phòng doanh thu cao nhất tháng
                 var thangHienTai = DateTime.Now.Month;
                 var namHienTai = DateTime.Now.Year;
-                var hoaDonThangNay = danhSachHoaDon
-                    .Where(x => x.Thang == thangHienTai && x.Nam == namHienTai && x.TrangThai == "Đã thanh toán")
-                    .ToList();
 
-                var topPhongList = (from p in danhSachPhong
-                                    join hd in danhSachHopDong on p.MaPhong equals hd.MaPhong into hdGroup
-                                    from hd in hdGroup.DefaultIfEmpty()
-                                    join h in hoaDonThangNay on (hd != null ? hd.MaHopDong : -1) equals h.MaHopDong into hGroup
-                                    from h in hGroup.DefaultIfEmpty()
-                                    group h by new { p.MaPhong, p.TenPhong } into g
-                                    select new TopPhongSuDung
-                                    {
-                                        MaPhong = g.Key.MaPhong,
-                                        TenPhong = g.Key.TenPhong,
-                                        TongDoanhThu = g.Sum(x => x != null ? (x.TongTien ?? 0) : 0),
-                                        SoHoaDon = g.Count(x => x != null)
-                                    })
-                                    .OrderByDescending(x => x.TongDoanhThu)
-                                    .Take(5)
-                                    .ToList();
+                var topPhongList = await queryPhong
+                    .Select(p => new TopPhongSuDung
+                    {
+                        MaPhong = p.MaPhong,
+                        TenPhong = p.TenPhong,
+                        TongDoanhThu = _context.HoaDon.Where(h => h.HopDongNavigation.MaPhong == p.MaPhong
+                                            && h.Thang == thangHienTai && h.Nam == namHienTai
+                                            && h.TrangThai != null && h.TrangThai.Trim() == "Đã thanh toán")
+                                            .Sum(h => h.TongTien ?? 0),
+                        SoHoaDon = _context.HoaDon.Count(h => h.HopDongNavigation.MaPhong == p.MaPhong
+                                            && h.Thang == thangHienTai && h.Nam == namHienTai
+                                            && h.TrangThai != null && h.TrangThai.Trim() == "Đã thanh toán")
+                    })
+                    .OrderByDescending(x => x.TongDoanhThu)
+                    .Take(5)
+                    .ToListAsync();
 
                 var model = new DashboardViewModel
                 {
                     TongSoPhong = tongSoPhong,
                     SoPhongDaThue = soPhongDaThue,
                     SoPhongTrong = soPhongTrong,
-                    TongSoKhachHang = tongSoKhachHang, // Trả về số thực chuẩn của chủ trọ
+                    TongSoKhachHang = tongSoKhachHang,
                     DoanhThuThangNay = doanhThuThangNay,
                     TongNoHienTai = tongNoHienTai,
                     SoHoaDonChuaThanhToan = soHoaDonChuaThanhToan,
@@ -224,20 +212,16 @@ namespace HeThongQuanLyPhongTro.Controllers
                     TopPhongList = topPhongList
                 };
 
-                if (isSuperAdmin)
-                {
-                    return RedirectToAction("Index", "Admin");
-                }
-                else
-                {
-                    return View("ChuTroDashboard", model);
-                }
+                if (isSuperAdmin) return RedirectToAction("Index", "Admin");
+                return View("ChuTroDashboard", model);
             }
             else if (role == "Khach")
             {
                 var khachHang = await _context.KhachHang.FirstOrDefaultAsync(k => k.MaTaiKhoan == userId);
                 if (khachHang == null)
                     khachHang = await _context.KhachHang.FirstOrDefaultAsync(k => k.Email == username || k.SoDienThoai == username);
+
+                if (khachHang == null) return RedirectToAction("Index", "Login");
 
                 var hopDong = await _context.HopDong
                     .Include(h => h.PhongNavigation)
@@ -270,7 +254,181 @@ namespace HeThongQuanLyPhongTro.Controllers
             return RedirectToAction("Index", "Login");
         }
 
-        // ==================== CÁC HÀM QUẢN LÝ NGƯỜI Ở / ĐIỀU HƯỚNG GIỮ NGUYÊN BẢN GỐC ====================
+        // ==================== VÁ LỖI BẢO MẬT IDOR TẠI CÁC API CHI TIẾT (Lấy từ File 1) ====================
+        [HttpGet]
+        public async Task<IActionResult> GetInvoiceDetails(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro") return Forbid();
+
+            var query = _context.HoaDon.AsQueryable();
+            if (role == "ChuTro")
+            {
+                query = query.Where(h => h.HopDongNavigation.MaChuTro == userId);
+            }
+
+            var hoaDon = await query
+                .Include(h => h.HopDongNavigation).ThenInclude(hd => hd.KhachHangNavigation)
+                .Include(h => h.HopDongNavigation).ThenInclude(hd => hd.PhongNavigation)
+                .FirstOrDefaultAsync(h => h.MaHoaDon == id);
+
+            if (hoaDon == null) return NotFound("Hóa đơn không tồn tại hoặc bạn không có quyền xem.");
+            var chiTiet = await _context.ChiTietHoaDon.Where(ct => ct.MaHoaDon == id).ToListAsync();
+
+            return Json(new
+            {
+                maHoaDon = hoaDon.MaHoaDon,
+                tenPhong = hoaDon.HopDongNavigation?.PhongNavigation?.TenPhong ?? "N/A",
+                tenKhachHang = hoaDon.HopDongNavigation?.KhachHangNavigation?.HoTen ?? "N/A",
+                thang = hoaDon.Thang,
+                nam = hoaDon.Nam,
+                tongTien = hoaDon.TongTien ?? 0,
+                ngayThanhToan = hoaDon.NgayChuXacNhan?.ToString("dd/MM/yyyy HH:mm") ?? "N/A",
+                chiTietList = chiTiet.Select(ct => new { ct.LoaiKhoanThu, ct.SoLuong, donGia = ct.DonGia ?? 0, thanhTien = ct.ThanhTien ?? 0 })
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetContractDetails(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro") return Forbid();
+
+            var query = _context.HopDong.AsQueryable();
+            if (role == "ChuTro")
+            {
+                query = query.Where(h => h.MaChuTro == userId);
+            }
+
+            var hopDong = await query
+                .Include(h => h.PhongNavigation)
+                .Include(h => h.KhachHangNavigation)
+                .FirstOrDefaultAsync(h => h.MaHopDong == id);
+
+            if (hopDong == null) return NotFound("Hợp đồng không tồn tại hoặc bạn không có quyền xem.");
+
+            return Json(new
+            {
+                maHopDong = hopDong.MaHopDong,
+                tenPhong = hopDong.PhongNavigation?.TenPhong ?? "N/A",
+                tenKhachHang = hopDong.KhachHangNavigation?.HoTen ?? "N/A",
+                sdtKhachHang = hopDong.KhachHangNavigation?.SoDienThoai ?? "N/A",
+                ngayBatDau = hopDong.NgayBatDau?.ToString("dd/MM/yyyy") ?? "N/A",
+                ngayKetThuc = hopDong.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "N/A",
+                tienCoc = hopDong.TienCoc ?? 0,
+                giaThue = hopDong.PhongNavigation?.GiaPhong ?? 0,
+                trangThai = hopDong.TrangThai ?? "N/A",
+                soNgayConLai = hopDong.NgayKetThuc.HasValue ? (int)(hopDong.NgayKetThuc.Value.Date - DateTime.Now.Date).TotalDays : 0
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ThongKe(int? maToaNha)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (role != "ChuTro" || userId == null) return RedirectToAction("Index", "Login");
+
+            var danhSachToaNha = await _context.ToaNha.Where(t => t.MaChuTro == userId.Value).ToListAsync();
+            ViewBag.DanhSachToaNha = danhSachToaNha;
+            ViewBag.SelectedToaNha = maToaNha;
+
+            var targetToaNhaIds = maToaNha.HasValue ? new List<int> { maToaNha.Value } : danhSachToaNha.Select(t => t.MaToaNha).ToList();
+            var phongs = await _context.Phong.Where(p => targetToaNhaIds.Contains(p.MaToaNha)).ToListAsync();
+            var phongIds = phongs.Select(p => p.MaPhong).ToList();
+
+            var hoaDonsDaThanhToan = await _context.HoaDon
+                .Where(hd => hd.HopDongNavigation != null && phongIds.Contains(hd.HopDongNavigation.MaPhong) && hd.TrangThai != null && hd.TrangThai.Trim() == "Đã thanh toán")
+                .Select(hd => new { hd.TongTien, MaPhong = hd.HopDongNavigation.MaPhong, MaToaNha = hd.HopDongNavigation.PhongNavigation != null ? hd.HopDongNavigation.PhongNavigation.MaToaNha : 0 })
+                .ToListAsync();
+
+            decimal tongDoanhThuTatCa = hoaDonsDaThanhToan.Sum(h => h.TongTien ?? 0);
+
+            var thongKeToaNha = danhSachToaNha.Select(t => {
+                decimal doanhThuToa = hoaDonsDaThanhToan.Where(hd => hd.MaToaNha == t.MaToaNha).Sum(hd => hd.TongTien ?? 0);
+                return new { TenToaNha = t.TenToaNha, DoanhThu = doanhThuToa, PhanTram = tongDoanhThuTatCa > 0 ? Math.Round((double)doanhThuToa / (double)tongDoanhThuTatCa * 100, 1) : 0 };
+            }).OrderByDescending(x => x.DoanhThu).ToList();
+            ViewBag.ThongKeToaNha = thongKeToaNha;
+
+            var thongKePhong = phongs.Select(p => {
+                decimal doanhThuPhong = hoaDonsDaThanhToan.Where(hd => hd.MaPhong == p.MaPhong).Sum(hd => hd.TongTien ?? 0);
+                return new { TenPhong = p.TenPhong, DoanhThu = doanhThuPhong, PhanTram = tongDoanhThuTatCa > 0 ? Math.Round((double)doanhThuPhong / (double)tongDoanhThuTatCa * 100, 1) : 0 };
+            }).Where(x => x.DoanhThu > 0).OrderByDescending(x => x.DoanhThu).Take(10).ToList();
+            ViewBag.ThongKePhong = thongKePhong;
+
+            ViewBag.TongDoanhThuMụcTieu = tongDoanhThuTatCa;
+            ViewBag.TongSoPhongMụcTieu = phongs.Count;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuiThongBaoNhacNo()
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro") return RedirectToAction("Index", "Login");
+
+            var userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var isSuperAdmin = (role == "Admin" || role == "SuperAdmin");
+            var ngayHienTai = DateTime.Now;
+
+            var queryHoaDon = _context.HoaDon
+                .Include(h => h.HopDongNavigation).ThenInclude(hd => hd.KhachHangNavigation)
+                .Include(h => h.HopDongNavigation).ThenInclude(hd => hd.PhongNavigation)
+                .Where(h => h.TrangThai != null && h.TrangThai.Trim() == "Chưa thanh toán" && (h.Nam < ngayHienTai.Year || (h.Nam == ngayHienTai.Year && h.Thang <= ngayHienTai.Month)));
+
+            if (!isSuperAdmin && role == "ChuTro")
+            {
+                var toaNhaIds = await _context.ToaNha.Where(t => t.MaChuTro == userId).Select(t => t.MaToaNha).ToListAsync();
+                var phongIds = await _context.Phong.Where(p => toaNhaIds.Contains(p.MaToaNha)).Select(p => p.MaPhong).ToListAsync();
+                var hopDongIds = await _context.HopDong.Where(p => phongIds.Contains(p.MaPhong)).Select(h => h.MaHopDong).ToListAsync();
+                queryHoaDon = queryHoaDon.Where(h => hopDongIds.Contains(h.MaHopDong));
+            }
+
+            var hoaDonChuaThanhToan = await queryHoaDon.ToListAsync();
+            if (!hoaDonChuaThanhToan.Any()) return RedirectToAction("Index");
+
+            var smtpServer = _configuration["EmailSettings:SmtpServer"];
+            var smtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587");
+            var senderEmail = _configuration["EmailSettings:SenderEmail"];
+            var senderPassword = _configuration["EmailSettings:SenderPassword"];
+
+            foreach (var hoaDon in hoaDonChuaThanhToan)
+            {
+                var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
+                var tenPhong = hoaDon.HopDongNavigation?.PhongNavigation?.TenPhong ?? "N/A";
+                if (khachHang == null) continue;
+
+                _context.ThongBao.Add(new ThongBao
+                {
+                    TieuDe = "Nhắc nhở thanh toán hóa đơn",
+                    NoiDung = $"Bạn có hóa đơn tháng {hoaDon.Thang}/{hoaDon.Nam} phòng {tenPhong} trị giá {hoaDon.TongTien?.ToString("N0")} đ chưa thanh toán.",
+                    Loai = "warning",
+                    DuongDan = $"/HoaDon/Details/{hoaDon.MaHoaDon}",
+                    NgayTao = DateTime.Now,
+                    NguoiNhan = khachHang.MaKhachHang
+                });
+
+                if (!string.IsNullOrWhiteSpace(khachHang.Email) && !string.IsNullOrEmpty(smtpServer))
+                {
+                    try
+                    {
+                        using var smtpClient = new SmtpClient(smtpServer) { Port = smtpPort, Credentials = new NetworkCredential(senderEmail, senderPassword), EnableSsl = true };
+                        var mailMessage = new MailMessage { From = new MailAddress(senderEmail, "Phòng Trọ Xinh"), Subject = $"[Nhắc nhở] Hóa đơn tháng {hoaDon.Thang}/{hoaDon.Nam} chưa thanh toán", IsBodyHtml = true };
+                        mailMessage.Body = $"Xin chào {khachHang.HoTen}, hóa đơn phòng {tenPhong} tháng {hoaDon.Thang}/{hoaDon.Nam} trị giá {hoaDon.TongTien?.ToString("N0")} đ đang quá hạn.";
+                        mailMessage.To.Add(khachHang.Email);
+                        await smtpClient.SendMailAsync(mailMessage);
+                    }
+                    catch { }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+
         [HttpGet]
         public async Task<IActionResult> QuanLyNguoiO()
         {
@@ -303,178 +461,22 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View("~/Views/NguoiOhopDongs/Index.cshtml", danhSachNguoiO);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetInvoiceDetails(int id)
-        {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro") return Forbid();
-
-            var hoaDon = await _context.HoaDon
-                .Include(h => h.HopDongNavigation).ThenInclude(hd => hd.KhachHangNavigation)
-                .Include(h => h.HopDongNavigation).ThenInclude(hd => hd.PhongNavigation)
-                .FirstOrDefaultAsync(h => h.MaHoaDon == id);
-
-            if (hoaDon == null) return NotFound();
-            var chiTiet = await _context.ChiTietHoaDon.Where(ct => ct.MaHoaDon == id).ToListAsync();
-
-            return Json(new
-            {
-                maHoaDon = hoaDon.MaHoaDon,
-                tenPhong = hoaDon.HopDongNavigation?.PhongNavigation?.TenPhong ?? "N/A",
-                tenKhachHang = hoaDon.HopDongNavigation?.KhachHangNavigation?.HoTen ?? "N/A",
-                thang = hoaDon.Thang,
-                nam = hoaDon.Nam,
-                tongTien = hoaDon.TongTien ?? 0,
-                ngayThanhToan = hoaDon.NgayChuXacNhan?.ToString("dd/MM/yyyy HH:mm") ?? "N/A",
-                chiTietList = chiTiet.Select(ct => new { ct.LoaiKhoanThu, ct.SoLuong, donGia = ct.DonGia ?? 0, thanhTien = ct.ThanhTien ?? 0 })
-            });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetContractDetails(int id)
-        {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro") return Forbid();
-
-            var hopDong = await _context.HopDong
-                .Include(h => h.PhongNavigation)
-                .Include(h => h.KhachHangNavigation)
-                .FirstOrDefaultAsync(h => h.MaHopDong == id);
-
-            if (hopDong == null) return NotFound();
-
-            return Json(new
-            {
-                maHopDong = hopDong.MaHopDong,
-                tenPhong = hopDong.PhongNavigation?.TenPhong ?? "N/A",
-                tenKhachHang = hopDong.KhachHangNavigation?.HoTen ?? "N/A",
-                sdtKhachHang = hopDong.KhachHangNavigation?.SoDienThoai ?? "N/A",
-                ngayBatDau = hopDong.NgayBatDau?.ToString("dd/MM/yyyy") ?? "N/A",
-                ngayKetThuc = hopDong.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "N/A",
-                tienCoc = hopDong.TienCoc ?? 0,
-                giaThue = hopDong.PhongNavigation?.GiaPhong ?? 0,
-                trangThai = hopDong.TrangThai ?? "N/A",
-                soNgayConLai = hopDong.NgayKetThuc.HasValue ? (int)(hopDong.NgayKetThuc.Value.Date - DateTime.Now.Date).TotalDays : 0
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> GuiThongBaoNhacNo()
-        {
-            var role = HttpContext.Session.GetString("Role");
-            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro") return RedirectToAction("Index", "Login");
-
-            var userId = HttpContext.Session.GetInt32("UserId") ?? 0;
-            var isSuperAdmin = (role == "Admin" || role == "SuperAdmin");
-            var ngayHienTai = DateTime.Now;
-
-            var queryHoaDon = _context.HoaDon
-                .Include(h => h.HopDongNavigation).ThenInclude(hd => hd.KhachHangNavigation)
-                .Include(h => h.HopDongNavigation).ThenInclude(hd => hd.PhongNavigation)
-                .Where(h => h.TrangThai == "Chưa thanh toán" && (h.Nam < ngayHienTai.Year || (h.Nam == ngayHienTai.Year && h.Thang <= ngayHienTai.Month)));
-
-            if (!isSuperAdmin && role == "ChuTro")
-            {
-                var toaNhaIds = await _context.ToaNha.Where(t => t.MaChuTro == userId).Select(t => t.MaToaNha).ToListAsync();
-                var phongIds = await _context.Phong.Where(p => toaNhaIds.Contains(p.MaToaNha)).Select(p => p.MaPhong).ToListAsync();
-                var hopDongIds = await _context.HopDong.Where(p => phongIds.Contains(p.MaPhong)).Select(h => h.MaHopDong).ToListAsync();
-                queryHoaDon = queryHoaDon.Where(h => hopDongIds.Contains(h.MaHopDong));
-            }
-
-            var hoaDonChuaThanhToan = await queryHoaDon.ToListAsync();
-            if (!hoaDonChuaThanhToan.Any()) return RedirectToAction("Index");
-
-            var smtpServer = _configuration["EmailSettings:SmtpServer"];
-            var smtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"]);
-            var senderEmail = _configuration["EmailSettings:SenderEmail"];
-            var senderPassword = _configuration["EmailSettings:SenderPassword"];
-
-            int soGuiThanhCong = 0, soGuiThatBai = 0;
-
-            foreach (var hoaDon in hoaDonChuaThanhToan)
-            {
-                var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
-                var tenPhong = hoaDon.HopDongNavigation?.PhongNavigation?.TenPhong ?? "N/A";
-                if (khachHang == null) continue;
-
-                _context.ThongBao.Add(new ThongBao
-                {
-                    TieuDe = "Nhắc nhở thanh toán hóa đơn",
-                    NoiDung = $"Bạn có hóa đơn tháng {hoaDon.Thang}/{hoaDon.Nam} phòng {tenPhong} trị giá {hoaDon.TongTien?.ToString("N0")} đ chưa thanh toán.",
-                    Loai = "warning",
-                    DuongDan = $"/HoaDon/Details/{hoaDon.MaHoaDon}",
-                    NgayTao = DateTime.Now,
-                    NguoiNhan = khachHang.MaKhachHang
-                });
-
-                if (!string.IsNullOrWhiteSpace(khachHang.Email))
-                {
-                    try
-                    {
-                        using var smtpClient = new SmtpClient(smtpServer) { Port = smtpPort, Credentials = new NetworkCredential(senderEmail, senderPassword), EnableSsl = true };
-                        var mailMessage = new MailMessage { From = new MailAddress(senderEmail, "Phòng Trọ Xinh"), Subject = $"[Nhắc nhở] Hóa đơn tháng {hoaDon.Thang}/{hoaDon.Nam} chưa thanh toán", IsBodyHtml = true };
-                        mailMessage.Body = $"Xin chào {khachHang.HoTen}, hóa đơn phòng {tenPhong} tháng {hoaDon.Thang}/{hoaDon.Nam} trị giá {hoaDon.TongTien?.ToString("N0")} đ đang quá hạn.";
-                        mailMessage.To.Add(khachHang.Email);
-                        await smtpClient.SendMailAsync(mailMessage);
-                        soGuiThanhCong++;
-                    }
-                    catch { soGuiThatBai++; }
-                }
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction("Index");
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ThongKe(int? maToaNha)
-        {
-            var role = HttpContext.Session.GetString("Role");
-            var userId = HttpContext.Session.GetInt32("UserId");
-            if (role != "ChuTro" || userId == null) return RedirectToAction("Index", "Login");
-
-            var danhSachToaNha = await _context.ToaNha.Where(t => t.MaChuTro == userId.Value).ToListAsync();
-            ViewBag.DanhSachToaNha = danhSachToaNha;
-            ViewBag.SelectedToaNha = maToaNha;
-
-            var targetToaNhaIds = maToaNha.HasValue ? new List<int> { maToaNha.Value } : danhSachToaNha.Select(t => t.MaToaNha).ToList();
-            var phongs = await _context.Phong.Where(p => targetToaNhaIds.Contains(p.MaToaNha)).ToListAsync();
-            var phongIds = phongs.Select(p => p.MaPhong).ToList();
-            var hopDongs = await _context.HopDong.Where(h => phongIds.Contains(h.MaPhong)).ToListAsync();
-            var hopDongIds = hopDongs.Select(h => h.MaHopDong).ToList();
-            var hoaDons = await _context.HoaDon.Where(hd => hopDongIds.Contains(hd.MaHopDong) && hd.TrangThai == "Đã thanh toán").ToListAsync();
-
-            decimal tongDoanhThuTatCa = hoaDons.Sum(h => h.TongTien ?? 0);
-            var thongKeToaNha = danhSachToaNha.Select(t => {
-                var pIds = _context.Phong.Where(p => p.MaToaNha == t.MaToaNha).Select(p => p.MaPhong).ToList();
-                var hIds = _context.HopDong.Where(h => pIds.Contains(h.MaPhong)).Select(h => h.MaHopDong).ToList();
-                decimal doanhThuToa = hoaDons.Where(hd => hIds.Contains(hd.MaHopDong)).Sum(hd => hd.TongTien ?? 0);
-                return new { TenToaNha = t.TenToaNha, DoanhThu = doanhThuToa, PhanTrach = tongDoanhThuTatCa > 0 ? Math.Round((double)doanhThuToa / (double)tongDoanhThuTatCa * 100, 1) : 0 };
-            }).OrderByDescending(x => x.DoanhThu).ToList();
-            ViewBag.ThongKeToaNha = thongKeToaNha;
-
-            var thongKePhong = phongs.Select(p => {
-                var hIds = hopDongs.Where(h => h.MaPhong == p.MaPhong).Select(h => h.MaHopDong).ToList();
-                decimal doanhThuPhong = hoaDons.Where(hd => hIds.Contains(hd.MaHopDong)).Sum(hd => hd.TongTien ?? 0);
-                return new { TenPhong = p.TenPhong, DoanhThu = doanhThuPhong, PhanTram = tongDoanhThuTatCa > 0 ? Math.Round((double)doanhThuPhong / (double)tongDoanhThuTatCa * 100, 1) : 0 };
-            }).Where(x => x.DoanhThu > 0).OrderByDescending(x => x.DoanhThu).Take(10).ToList();
-            ViewBag.ThongKePhong = thongKePhong;
-
-            ViewBag.TongDoanhThuMụcTieu = tongDoanhThuTatCa;
-            ViewBag.TongSoPhongMụcTieu = phongs.Count;
-            return View();
-        }
-
+        // ==================== 🎯 ĐÃ SỬA: HÀM GỬI KHẢO SÁT CHUẨN JSON + GỬI MAIL (Từ File 2) ====================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuiKhaoSatGiaHan(int id)
         {
             var role = HttpContext.Session.GetString("Role");
-            if (role != "ChuTro") return Forbid();
+            if (role != "ChuTro")
+                return Json(new { success = false, message = "Bạn không có quyền thực hiện hành động này!" });
 
-            var hopDong = await _context.HopDong.Include(h => h.KhachHangNavigation).Include(h => h.PhongNavigation).FirstOrDefaultAsync(h => h.MaHopDong == id);
-            if (hopDong == null || hopDong.KhachHangNavigation == null) return RedirectToAction("Index");
+            var hopDong = await _context.HopDong
+                .Include(h => h.KhachHangNavigation)
+                .Include(h => h.PhongNavigation)
+                .FirstOrDefaultAsync(h => h.MaHopDong == id);
+
+            if (hopDong == null || hopDong.KhachHangNavigation == null)
+                return Json(new { success = false, message = "Không tìm thấy dữ liệu hợp đồng!" });
 
             var khachHang = hopDong.KhachHangNavigation;
             var tenPhong = hopDong.PhongNavigation?.TenPhong ?? "N/A";
@@ -489,7 +491,43 @@ namespace HeThongQuanLyPhongTro.Controllers
                 NguoiNhan = khachHang.MaKhachHang
             });
             await _context.SaveChangesAsync();
-            return RedirectToAction("Index");
+
+            if (!string.IsNullOrWhiteSpace(khachHang.Email))
+            {
+                try
+                {
+                    var smtpServer = _configuration["EmailSettings:SmtpServer"];
+                    var smtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587");
+                    var senderEmail = _configuration["EmailSettings:SenderEmail"];
+                    var senderPassword = _configuration["EmailSettings:SenderPassword"];
+
+                    using var smtpClient = new SmtpClient(smtpServer) { Port = smtpPort, Credentials = new NetworkCredential(senderEmail, senderPassword), EnableSsl = true };
+                    var mailMessage = new MailMessage { From = new MailAddress(senderEmail, "Hệ Thống Quản Lý"), Subject = $"[Khảo Sát] Nhu cầu gia hạn thuê phòng {tenPhong}", IsBodyHtml = true };
+                    mailMessage.Body = $@"
+                        <div style='max-width: 500px; margin: 0 auto; font-family: sans-serif; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;'>
+                            <div style='background-color: #f97316; padding: 24px; text-align: center;'>
+                                <h2 style='color: white; margin: 0; font-size: 22px;'>🏠 Hệ thống Quản Lý Phòng Trọ</h2>
+                                <p style='color: #ffedd5; margin: 4px 0 0 0; font-size: 14px;'>Khảo sát gia hạn hợp đồng</p>
+                            </div>
+                            <div style='padding: 24px; color: #334155; line-height: 1.6;'>
+                                <p>Xin chào <b>{khachHang.HoTen}</b>,</p>
+                                <p>Hợp đồng thuê phòng <b>{tenPhong}</b> của bạn sắp hết hạn hiệu lực vào ngày <b>{hopDong.NgayKetThuc?.ToString("dd/MM/yyyy")}</b>.</p>
+                                <p>Vui lòng đăng nhập ứng dụng để phản hồi lại nhu cầu cho chủ nhà nhé.</p>
+                                <hr style='border: none; border-top: 1px solid #f1f5f9; margin: 20px 0;'>
+                                <p style='font-size: 12px; color: #94a3b8; text-align: center; margin: 0;'>Trân trọng,<br>Ban quản lý hệ thống</p>
+                            </div>
+                        </div>";
+
+                    mailMessage.To.Add(khachHang.Email);
+                    await smtpClient.SendMailAsync(mailMessage);
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = true, message = "Đã lưu khảo sát lên hệ thống, nhưng gửi mail lỗi: " + ex.Message });
+                }
+            }
+
+            return Json(new { success = true, message = "Đã gửi khảo sát đến khách hàng thành công!" });
         }
 
         [HttpPost]
@@ -503,13 +541,12 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (hopDong == null) return RedirectToAction("Index");
 
             string tenPhong = hopDong.PhongNavigation?.TenPhong ?? "N/A";
-            string tenKhach = hopDong.KhachHangNavigation?.HoTen ?? "Khách thuê";
             string textPhanHoi = luaChon == "GiaHan" ? "SẼ GIA HẠN TIẾP" : "SẼ TRẢ PHÒNG";
 
             _context.ThongBao.Add(new ThongBao
             {
                 TieuDe = $"Phản hồi khảo sát phòng {tenPhong}",
-                NoiDung = $"Khách hàng {tenKhach} ở phòng {tenPhong} đã phản hồi khảo sát: {textPhanHoi}.",
+                NoiDung = $"Khách hàng {hopDong.KhachHangNavigation?.HoTen ?? "Khách thuê"} ở phòng {tenPhong} đã phản hồi khảo sát: {textPhanHoi}.",
                 Loai = luaChon == "GiaHan" ? "success" : "danger",
                 DuongDan = $"/Dashboard/Index?tab=Dashboard",
                 NgayTao = DateTime.Now,

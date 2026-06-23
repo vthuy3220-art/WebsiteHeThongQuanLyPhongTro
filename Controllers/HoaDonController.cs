@@ -30,9 +30,8 @@ namespace HeThongQuanLyPhongTro.Controllers
         {
             return HttpContext.Session.GetString("Role") ?? "";
         }
-
-        // ==================== DANH SÁCH HÓA ĐƠN ====================
-        public async Task<IActionResult> Index(string searchString, int? thang, int? nam, string trangThai)
+        // ==================== DANH SÁCH HÓA ĐƠN (CÓ PHÂN TRANG) ====================
+        public async Task<IActionResult> Index(string searchString, int? thang, int? nam, string trangThai, int? pageNumber)
         {
             if (HttpContext.Session.GetInt32("UserId") == null)
                 return RedirectToAction("Index", "Login");
@@ -92,68 +91,43 @@ namespace HeThongQuanLyPhongTro.Controllers
             if (!string.IsNullOrEmpty(trangThai) && trangThai != "Tất cả")
                 hoaDons = hoaDons.Where(h => h.TrangThai == trangThai);
 
+            // Sắp xếp theo tháng/năm giảm dần (mới nhất lên đầu)
+            hoaDons = hoaDons.OrderByDescending(h => h.Nam).ThenByDescending(h => h.Thang);
+
             ViewBag.SearchString = searchString;
             ViewBag.Thang = thang;
             ViewBag.Nam = nam;
             ViewBag.TrangThai = trangThai;
-            ViewBag.TrangThaiList = new List<string> { "Tất cả", "Chưa thanh toán", "Đã thanh toán" };
+            ViewBag.TrangThaiList = new List<string> { "Tất cả", "Chưa thanh toán", "Đã thanh toán", "Chờ" };
 
-            var namList = await hoaDons
+            // Sửa lại điều kiện Where
+            var namList = await _context.HoaDon
+                .Where(h => h.MaChuTro == userId)
                 .Select(h => h.Nam)
                 .Distinct()
                 .OrderByDescending(n => n)
                 .ToListAsync();
             ViewBag.NamList = namList;
+            // ✅ PHÂN TRANG: 10 hóa đơn mỗi trang
+            int pageSize = 10;
+            var totalItems = await hoaDons.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            return View(await hoaDons.ToListAsync());
-        }
+            pageNumber ??= 1;
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageNumber > totalPages && totalPages > 0) pageNumber = totalPages;
 
-        // ==================== DANH SÁCH TẤT CẢ HÓA ĐƠN (ADMIN) ====================
-        public async Task<IActionResult> TatCaHoaDon(string searchString, int? thang, int? nam, string trangThai)
-        {
-            if (HttpContext.Session.GetInt32("UserId") == null)
-                return RedirectToAction("Index", "Login");
+            var items = await hoaDons
+                .Skip((pageNumber.Value - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            var role = GetCurrentRole();
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
 
-            if (role != "Admin")
-            {
-                TempData["Error"] = "Bạn không có quyền truy cập!";
-                return RedirectToAction("Index", "Home");
-            }
-
-            var hoaDons = _context.HoaDon
-                .Include(h => h.HopDongNavigation)
-                    .ThenInclude(h => h.PhongNavigation)
-                .Include(h => h.HopDongNavigation)
-                    .ThenInclude(h => h.KhachHangNavigation)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                hoaDons = hoaDons.Where(h =>
-                    (h.HopDongNavigation != null && h.HopDongNavigation.KhachHangNavigation != null &&
-                     h.HopDongNavigation.KhachHangNavigation.HoTen.Contains(searchString)) ||
-                    (h.HopDongNavigation != null && h.HopDongNavigation.PhongNavigation != null &&
-                     h.HopDongNavigation.PhongNavigation.TenPhong.Contains(searchString)));
-            }
-
-            if (thang.HasValue) hoaDons = hoaDons.Where(h => h.Thang == thang.Value);
-            if (nam.HasValue) hoaDons = hoaDons.Where(h => h.Nam == nam.Value);
-            if (!string.IsNullOrEmpty(trangThai) && trangThai != "Tất cả")
-                hoaDons = hoaDons.Where(h => h.TrangThai == trangThai);
-
-            ViewBag.SearchString = searchString;
-            ViewBag.Thang = thang;
-            ViewBag.Nam = nam;
-            ViewBag.TrangThai = trangThai;
-            ViewBag.TrangThaiList = new List<string> { "Tất cả", "Chưa thanh toán", "Đã thanh toán" };
-            ViewBag.NamList = await _context.HoaDon.Select(h => h.Nam).Distinct().OrderByDescending(n => n).ToListAsync();
-
-            return View(await hoaDons.ToListAsync());
-        }
-
-        // ==================== CHI TIẾT HÓA ĐƠN ====================
+            return View(items);
+        }        // ==================== CHI TIẾT HÓA ĐƠN ====================
         public async Task<IActionResult> Details(int? id)
         {
             if (HttpContext.Session.GetInt32("UserId") == null)
@@ -289,6 +263,7 @@ namespace HeThongQuanLyPhongTro.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CapNhatChiTietHoaDon(
+               DateTime ngayLapPhieu,
             int maHoaDon, int soNguoi,
             decimal chiSoDienMoi, decimal chiSoNuocMoi,
             decimal giaDien, decimal giaNuoc,
@@ -321,7 +296,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                 TempData["Error"] = "Hóa đơn đã thanh toán, không thể cập nhật!";
                 return RedirectToAction(nameof(Details), new { id = maHoaDon });
             }
-
+            hoaDon.NgayTao = ngayLapPhieu;
             // ========== CODE GỐC - KHÔNG THAY ĐỔI ==========
             var hopDong = await _context.HopDong
                 .Include(h => h.PhongNavigation)
@@ -425,9 +400,10 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context.Update(hoaDon);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"Cập nhật thành công! Điện cũ: {chiSoDienCu}, Nước cũ: {chiSoNuocCu}";
+            TempData["Success"] = $"Cập nhật thành công! Điện cũ: {chiSoDienCu}, Nước cũ: {chiSoNuocCu} ,Cập nhật thành công! Ngày lập: {ngayLapPhieu:dd/MM/yyyy}";
             return RedirectToAction(nameof(Details), new { id = maHoaDon });
-        }        // ==================== KHÁCH XÁC NHẬN ĐÃ CHUYỂN KHOẢN ====================
+        }
+        // ==================== KHÁCH XÁC NHẬN ĐÃ CHUYỂN KHOẢN ====================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> KhachXacNhan(int id)
@@ -469,19 +445,21 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Details", new { id });
             }
 
-            // ========== CODE GỐC - KHÔNG THAY ĐỔI ==========
+            // ========== CẬP NHẬT HÓA ĐƠN ==========
             hoaDon.KhachXacNhan = true;
             hoaDon.NgayKhachXacNhan = DateTime.Now;
             _context.Update(hoaDon);
             await _context.SaveChangesAsync();
 
-            // Gửi thông báo cho Admin
+            // ✅ GỬI THÔNG BÁO CHO CHỦ TRỌ (KHÔNG PHẢI ADMIN)
             var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
             var phong = hoaDon.HopDongNavigation?.PhongNavigation;
 
             if (_thongBaoService != null && khachHang != null)
             {
-                await _thongBaoService.GuiAdmin(
+                // ✅ SỬA: Gửi cho Chủ trọ thay vì Admin
+                await _thongBaoService.GuiChuTro(
+                    hoaDon.MaChuTro,  // Chủ trọ của hóa đơn
                     "💰 Khách hàng xác nhận thanh toán",
                     $"Khách {khachHang.HoTen} - Phòng {phong?.TenPhong} đã xác nhận chuyển khoản cho hóa đơn tháng {hoaDon.Thang}/{hoaDon.Nam}. Vui lòng kiểm tra và xác nhận!",
                     "warning",
@@ -492,7 +470,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             TempData["Success"] = "Đã gửi xác nhận! Chủ trọ sẽ kiểm tra và xác nhận thanh toán.";
             return RedirectToAction("HoaDonChiTiet", "KhachHang", new { id });
         }
-
         // ==================== CHỦ TRỌ XÁC NHẬN ĐÃ NHẬN TIỀN ====================
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -537,7 +514,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction("Details", new { id });
             }
 
-            // ========== CODE GỐC - KHÔNG THAY ĐỔI ==========
+            // ========== CẬP NHẬT HÓA ĐƠN ==========
             hoaDon.ChuXacNhan = true;
             hoaDon.NgayChuXacNhan = DateTime.Now;
             hoaDon.TrangThai = "Đã thanh toán";
@@ -556,10 +533,24 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             TempData["Success"] = "✅ Đã xác nhận thanh toán thành công!";
 
-            // Gửi email
+            // ✅ LẤY KHÁCH HÀNG TỪ HÓA ĐƠN
+            var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
+
+            // ✅ GỬI THÔNG BÁO CHO KHÁCH HÀNG
+            if (khachHang != null && _thongBaoService != null)
+            {
+                await _thongBaoService.GuiKhach(
+                    khachHang.MaKhachHang,
+                    "✅ Thanh toán thành công",
+                    $"Hóa đơn tháng {hoaDon.Thang}/{hoaDon.Nam} đã được thanh toán {hoaDon.TongTien?.ToString("N0")} đ",
+                    "success",
+                    $"/KhachHang/HoaDonChiTiet/{hoaDon.MaHoaDon}"
+                );
+            }
+
+            // ✅ GỬI EMAIL HÓA ĐƠN
             try
             {
-                var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
                 if (khachHang != null && !string.IsNullOrEmpty(khachHang.Email))
                 {
                     var pdfBytes = await TaoPdfHoaDon(id);
@@ -613,6 +604,8 @@ namespace HeThongQuanLyPhongTro.Controllers
             var hoaDon = await _context.HoaDon
                 .Include(h => h.HopDongNavigation)
                     .ThenInclude(h => h.KhachHangNavigation)
+                .Include(h => h.HopDongNavigation)
+                    .ThenInclude(h => h.PhongNavigation)
                 .FirstOrDefaultAsync(h => h.MaHoaDon == id);
 
             if (hoaDon == null) return NotFound();
@@ -630,7 +623,7 @@ namespace HeThongQuanLyPhongTro.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            // ========== CODE GỐC - KHÔNG THAY ĐỔI ==========
+            // ========== CẬP NHẬT HÓA ĐƠN ==========
             var thanhToan = new ThanhToan
             {
                 MaHoaDon = id,
@@ -648,7 +641,10 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context.Update(hoaDon);
             await _context.SaveChangesAsync();
 
+            // ✅ LẤY KHÁCH HÀNG TỪ HÓA ĐƠN
             var khachHang = hoaDon.HopDongNavigation?.KhachHangNavigation;
+
+            // ✅ GỬI THÔNG BÁO CHO KHÁCH HÀNG
             if (khachHang != null && _thongBaoService != null)
             {
                 await _thongBaoService.GuiKhach(
@@ -660,70 +656,41 @@ namespace HeThongQuanLyPhongTro.Controllers
                 );
             }
 
-            TempData["Success"] = $"Thanh toán thành công {soTien:N0} đ!";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        // ==================== TẠO HÓA ĐƠN HÀNG LOẠT ====================
-        public async Task<IActionResult> TaoHangLoat()
-        {
-            var userId = GetCurrentUserId();
-            var role = GetCurrentRole();
-
-            if (userId == 0)
-                return RedirectToAction("Index", "Login");
-
-            // ✅ PHÂN QUYỀN: Chỉ Chủ trọ mới tạo hóa đơn
-            if (role != "ChuTro")
+            // ✅ GỬI EMAIL HÓA ĐƠN
+            try
             {
-                TempData["Error"] = "Bạn không có quyền tạo hóa đơn hàng loạt!";
-                return RedirectToAction("Index", "Home");
-            }
-
-            // ========== CODE GỐC - KHÔNG THAY ĐỔI ==========
-            var thangHienTai = DateTime.Now.Month;
-            var namHienTai = DateTime.Now.Year;
-
-            // ✅ Chỉ lấy phòng của chủ trọ đang đăng nhập
-            var phongIds = await _context.Phong
-                .Where(p => p.MaChuTro == userId && p.TrangThai == "Đã thuê")
-                .Select(p => p.MaPhong)
-                .ToListAsync();
-
-            var listHopDong = await _context.HopDong
-                .Include(h => h.PhongNavigation)
-                .Where(h => phongIds.Contains(h.MaPhong) && h.TrangThai == "Hiệu lực")
-                .ToListAsync();
-
-            int dem = 0;
-            foreach (var hopDongItem in listHopDong)
-            {
-                var exists = await _context.HoaDon
-                    .AnyAsync(h => h.MaHopDong == hopDongItem.MaHopDong && h.Thang == thangHienTai && h.Nam == namHienTai);
-
-                if (!exists && hopDongItem.PhongNavigation != null)
+                if (khachHang != null && !string.IsNullOrEmpty(khachHang.Email))
                 {
-                    var hoaDon = new HoaDon
+                    var pdfBytes = await TaoPdfHoaDon(id);
+                    if (pdfBytes != null && pdfBytes.Length > 0)
                     {
-                        MaHopDong = hopDongItem.MaHopDong,
-                        MaChuTro = userId,
-                        Thang = thangHienTai,
-                        Nam = namHienTai,
-                        TongTien = hopDongItem.PhongNavigation.GiaPhong,
-                        TrangThai = "Chưa thanh toán",
-                        NgayTao = DateTime.Now
-                    };
-                    _context.HoaDon.Add(hoaDon);
-                    dem++;
+                        var emailService = HttpContext.RequestServices.GetRequiredService<EmailService>();
+                        var result = await emailService.GuiEmailHoaDon(
+                            khachHang.Email,
+                            khachHang.HoTen,
+                            hoaDon.MaHoaDon.ToString("00000"),
+                            pdfBytes
+                        );
+
+                        if (result)
+                        {
+                            TempData["EmailSent"] = $"Đã gửi hóa đơn qua email {khachHang.Email}";
+                        }
+                        else
+                        {
+                            TempData["Warning"] = "Thanh toán thành công nhưng gửi email thất bại!";
+                        }
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                TempData["Warning"] = $"Lỗi gửi email: {ex.Message}";
+            }
 
-            await _context.SaveChangesAsync();
-            TempData["Success"] = $"Đã tạo {dem} hóa đơn cho tháng {thangHienTai}/{namHienTai}!";
-            return RedirectToAction(nameof(Index));
-        }
-
-        // ==================== XÓA HÓA ĐƠN ====================
+            TempData["Success"] = $"Thanh toán thành công {soTien:N0} đ!";
+            return RedirectToAction(nameof(Details), new { id });
+        }        // ==================== XÓA HÓA ĐƠN ====================
         public async Task<IActionResult> Delete(int? id)
         {
             var userId = GetCurrentUserId();
@@ -803,49 +770,148 @@ namespace HeThongQuanLyPhongTro.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+        // ==================== TẠO HÓA ĐƠN HÀNG LOẠT (ĐỒNG BỘ NGÀY 25) ====================
+        // ==================== TẠO HÓA ĐƠN HÀNG LOẠT ====================
+        public async Task<IActionResult> TaoHangLoat()
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentRole();
+
+            if (userId == 0 || role != "ChuTro")
+            {
+                TempData["Error"] = "Bạn không có quyền tạo hóa đơn!";
+                return RedirectToAction("Index", "Home");
+            }
+
+            int ngayChot = 25;
+            int dem = 0;
+            int demSkipped = 0;
+
+            var hopDongs = await _context.HopDong
+                .Include(h => h.PhongNavigation)
+                .Where(h => h.TrangThai == "Hiệu lực" && h.MaChuTro == userId)
+                .ToListAsync();
+
+            foreach (var hopDong in hopDongs)
+            {
+                DateTime ngayBatDau = hopDong.NgayBatDau ?? DateTime.Now;
+                DateTime ngayKetThuc = hopDong.NgayKetThuc ?? DateTime.Now.AddMonths(6);
+
+                for (int nam = ngayBatDau.Year; nam <= ngayKetThuc.Year; nam++)
+                {
+                    int thangTu = (nam == ngayBatDau.Year) ? ngayBatDau.Month : 1;
+                    int thangDen = (nam == ngayKetThuc.Year) ? ngayKetThuc.Month : 12;
+
+                    for (int thang = thangTu; thang <= thangDen; thang++)
+                    {
+                        bool exists = await _context.HoaDon
+                            .AnyAsync(h => h.MaHopDong == hopDong.MaHopDong &&
+                                           h.Thang == thang &&
+                                           h.Nam == nam);
+
+                        if (!exists && hopDong.PhongNavigation != null)
+                        {
+                            DateTime ngayLap;
+                            try
+                            {
+                                ngayLap = new DateTime(nam, thang, ngayChot);
+                            }
+                            catch
+                            {
+                                ngayLap = new DateTime(nam, thang, 1).AddMonths(1).AddDays(-1);
+                            }
+
+                            if (ngayLap > ngayKetThuc)
+                            {
+                                ngayLap = ngayKetThuc;
+                            }
+
+                            // ✅ SỬA: Tất cả hóa đơn đều là "Chưa thanh toán", không có "Chờ"
+                            var hoaDonMoi = new HoaDon
+                            {
+                                MaHopDong = hopDong.MaHopDong,
+                                MaChuTro = userId,
+                                Thang = thang,
+                                Nam = nam,
+                                NgayTao = ngayLap,
+                                TongTien = hopDong.PhongNavigation.GiaPhong,
+                                TrangThai = "Chưa thanh toán"  // ✅ Tất cả đều là Chưa thanh toán
+                            };
+
+                            _context.HoaDon.Add(hoaDonMoi);
+                            dem++;
+                        }
+                        else
+                        {
+                            demSkipped++;
+                        }
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"✅ Đã tạo {dem} hóa đơn mới! (Bỏ qua {demSkipped} tháng đã có)";
+            return RedirectToAction(nameof(Index));
+        }
         // ==================== TẠO HÓA ĐƠN THÁNG ĐỒNG BỘ NGÀY ====================
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> TaoHoaDonThang(int thang, int nam, int ngayChotCoDinh = 25)
         {
             var userId = GetCurrentUserId();
             var role = GetCurrentRole();
 
             if (userId == 0 || role != "ChuTro")
+            {
+                TempData["Error"] = "Bạn không có quyền thực hiện chức năng này!";
                 return RedirectToAction("Index", "Login");
+            }
 
-            // Lấy danh sách các hợp đồng còn hiệu lực của riêng chủ trọ này
+            // Lấy hợp đồng đang hiệu lực của chủ trọ
             var hopDongs = await _context.HopDong
-                .Where(h => h.TrangThai == "DangHieuLuc" && h.MaChuTro == userId)
+                .Include(h => h.PhongNavigation)
+                .Where(h => h.TrangThai == "Hiệu lực" && h.MaChuTro == userId)
                 .ToListAsync();
 
+            int dem = 0;
             foreach (var hd in hopDongs)
             {
-                // Kiểm tra xem tháng đó phòng này đã có hóa đơn chưa để tránh tạo trùng
+                // Kiểm tra trùng hóa đơn trong tháng/năm đó
                 bool daCoHoaDon = await _context.HoaDon
                     .AnyAsync(h => h.MaHopDong == hd.MaHopDong && h.Thang == thang && h.Nam == nam);
 
                 if (daCoHoaDon) continue;
 
-                // Ép ngày lập phiếu đồng bộ về ngày chốt cố định của tháng/năm đó (Ví dụ: ngày 25)
+                // Ngày lập hóa đơn là ngày chốt cố định (mặc định 25)
                 DateTime ngayLapMoi = new DateTime(nam, thang, ngayChotCoDinh);
+
+                // Kiểm tra nếu ngày chốt vượt quá ngày kết thúc hợp đồng
+                if (ngayLapMoi > hd.NgayKetThuc)
+                {
+                    ngayLapMoi = hd.NgayKetThuc.Value;
+                }
 
                 var hoaDonMoi = new HoaDon
                 {
                     MaHopDong = hd.MaHopDong,
+                    MaChuTro = userId,
                     Thang = thang,
                     Nam = nam,
-                    NgayTao = ngayLapMoi,         // Sử dụng duy nhất trường NgayTao theo đúng DB của bạn
-                    TongTien = 0,                // Khởi tạo ban đầu tổng tiền = 0
-                    TrangThai = "Chưa thanh toán"  // Trạng thái mặc định ban đầu
+                    NgayTao = ngayLapMoi, // Ngày 25 của tháng đó
+                    TongTien = hd.PhongNavigation?.GiaPhong ?? 0,
+                    TrangThai = "Chờ thanh toán"
                 };
 
                 _context.HoaDon.Add(hoaDonMoi);
+                dem++;
             }
 
             await _context.SaveChangesAsync();
-            TempData["Success"] = $"Đã khởi tạo loạt hóa đơn đồng bộ ngày {ngayChotCoDinh} cho tháng {thang}/{nam}!";
+            TempData["Success"] = $"Đã khởi tạo {dem} hóa đơn đồng bộ ngày {ngayChotCoDinh} cho tháng {thang}/{nam}!";
             return RedirectToAction(nameof(Index));
-                }        // ==================== XUẤT PDF HÓA ĐƠN ====================
+        }
+        // ==================== XUẤT PDF HÓA ĐƠN ====================
         public async Task<IActionResult> XuatPdf(int id)
         {
             var userId = GetCurrentUserId();
@@ -1021,8 +1087,8 @@ namespace HeThongQuanLyPhongTro.Controllers
         <div class='info-box'>
             <div class='info-row'>
                 <span><span class='info-label'>Mã hóa đơn:</span> {hoaDon.MaHoaDon:D5}</span>
-                <span><span class='info-label'>Ngày lập:</span> {DateTime.Now:dd/MM/yyyy}</span>
-            </div>
+                <span>Ngày lập: {(hoaDon.NgayTao ?? DateTime.Now):dd/MM/yyyy}</span>
+</div>
             <div class='info-row'>
                 <span><span class='info-label'>Phòng:</span> {phong?.TenPhong ?? "N/A"}</span>
                 <span><span class='info-label'>Hạn thanh toán:</span> {ngayThanhToan:dd/MM/yyyy}</span>

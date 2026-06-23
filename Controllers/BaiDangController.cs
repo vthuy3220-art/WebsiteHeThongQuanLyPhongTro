@@ -51,20 +51,27 @@ namespace HeThongQuanLyPhongTro.Controllers
                     .ThenInclude(p => p.ToaNha)
                 .AsQueryable();
 
-            // Phân quyền: Chủ trọ chỉ thấy bài đăng của phòng mình
+            // PHÂN QUYỀN TUYỆT ĐỐI: Chủ trọ nào chỉ thấy bài đăng của chủ trọ đó
             if (role == "ChuTro")
             {
                 var maChuTro = GetCurrentMaChuTro();
-                query = query.Where(b => b.PhongNavigation.ToaNha.MaChuTro == maChuTro);
+                query = query.Where(b => b.MaChuTro == maChuTro);
             }
 
+            // Bộ lọc tìm kiếm theo tiêu đề hoặc tên phòng
             if (!string.IsNullOrEmpty(searchString))
+            {
                 query = query.Where(b => b.TieuDe.Contains(searchString) || b.PhongNavigation.TenPhong.Contains(searchString));
+            }
 
+            // Bộ lọc trạng thái bài đăng
             if (!string.IsNullOrEmpty(trangThai) && trangThai != "Tất cả")
+            {
                 query = query.Where(b => b.TrangThai == trangThai);
+            }
 
-            ViewBag.TrangThaiList = new List<string> { "Tất cả", "Hiển thị", "Ẩn" };
+            // Cập nhật lại danh sách trạng thái hiển thị ở bộ lọc của Chủ trọ bao gồm cả "Chờ duyệt"
+            ViewBag.TrangThaiList = new List<string> { "Tất cả", "Chờ duyệt", "Hiển thị", "Ẩn", "Từ chối" };
             ViewBag.SearchString = searchString;
             ViewBag.TrangThai = trangThai;
             ViewBag.Role = role;
@@ -135,7 +142,6 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View();
         }
 
-        // POST: BaiDang/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(BaiDang baiDang, IFormFile? fileAnh)
@@ -185,12 +191,13 @@ namespace HeThongQuanLyPhongTro.Controllers
                 }
 
                 baiDang.NgayDang = DateTime.Now;
-                if (string.IsNullOrEmpty(baiDang.TrangThai))
-                    baiDang.TrangThai = "Pending";
+
+                // SỬA TẠI ĐÂY: Gán trạng thái Tiếng Việt chuẩn để đẩy vào hàng đợi của Admin kiểm duyệt
+                baiDang.TrangThai = "Chờ duyệt";
 
                 _context.Add(baiDang);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = "Thêm bài đăng thành công!";
+                TempData["Success"] = "Gửi bài đăng thành công! Vui lòng chờ Ban quản trị phê duyệt.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -331,19 +338,17 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // GET: BaiDang/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+
+        [HttpPost]
+        public async Task<IActionResult> XoaBaiDangApi(int id)
         {
             var userId = GetCurrentUserId();
             var role = GetCurrentRole();
 
-            if (userId == 0) return RedirectToAction("Index", "Login");
-            if (id == null) return NotFound();
+            if (userId == 0) return Json(new { success = false, message = "Chưa đăng nhập" });
 
-            var baiDang = await _context.BaiDang
-                .Include(b => b.PhongNavigation)
-                .FirstOrDefaultAsync(b => b.MaBaiDang == id);
-
-            if (baiDang == null) return NotFound();
+            var baiDang = await _context.BaiDang.FindAsync(id);
+            if (baiDang == null) return Json(new { success = false, message = "Không tìm thấy bài đăng" });
 
             // Kiểm tra quyền
             if (role == "ChuTro")
@@ -351,52 +356,23 @@ namespace HeThongQuanLyPhongTro.Controllers
                 var maChuTro = GetCurrentMaChuTro();
                 if (baiDang.MaChuTro != maChuTro)
                 {
-                    TempData["Error"] = "Bạn không có quyền xóa bài đăng này!";
-                    return RedirectToAction(nameof(Index));
+                    return Json(new { success = false, message = "Bạn không có quyền xóa bài đăng này!" });
                 }
             }
 
-            return View(baiDang);
-        }
-
-        // POST: BaiDang/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var userId = GetCurrentUserId();
-            var role = GetCurrentRole();
-
-            if (userId == 0) return RedirectToAction("Index", "Login");
-
-            var baiDang = await _context.BaiDang.FindAsync(id);
-            if (baiDang != null)
+            // Xóa file ảnh vật lý trong thư mục (nếu có)
+            if (!string.IsNullOrEmpty(baiDang.HinhAnh))
             {
-                // Kiểm tra quyền
-                if (role == "ChuTro")
-                {
-                    var maChuTro = GetCurrentMaChuTro();
-                    if (baiDang.MaChuTro != maChuTro)
-                    {
-                        TempData["Error"] = "Bạn không có quyền xóa bài đăng này!";
-                        return RedirectToAction(nameof(Index));
-                    }
-                }
-
-                // Xóa file ảnh
-                if (!string.IsNullOrEmpty(baiDang.HinhAnh))
-                {
-                    string filePath = Path.Combine(_webHostEnvironment.WebRootPath, baiDang.HinhAnh.TrimStart('/'));
-                    if (System.IO.File.Exists(filePath))
-                        System.IO.File.Delete(filePath);
-                }
-
-                _context.BaiDang.Remove(baiDang);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "Xóa bài đăng thành công!";
+                string filePath = Path.Combine(_webHostEnvironment.WebRootPath, baiDang.HinhAnh.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
             }
 
-            return RedirectToAction(nameof(Index));
+            // Xóa dữ liệu trong DB
+            _context.BaiDang.Remove(baiDang);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
         }
 
         // POST: BaiDang/ToggleTrangThai
@@ -440,13 +416,14 @@ namespace HeThongQuanLyPhongTro.Controllers
             var baiDang = await _context.BaiDang.FindAsync(id);
             if (baiDang == null) return Json(new { success = false, message = "Không tìm thấy bài đăng" });
 
+            // ĐỒNG BỘ CHUỖI TRẠNG THÁI TIẾNG VIỆT ĐỂ NGOÀI TRANG CHỦ HIỂN THỊ ĐƯỢC NGAY
             if (actionType == "Approve")
             {
-                baiDang.TrangThai = "Approved";
+                baiDang.TrangThai = "Hiển thị"; // Sửa từ "Approved" -> "Hiển thị"
             }
             else if (actionType == "Reject")
             {
-                baiDang.TrangThai = "Rejected";
+                baiDang.TrangThai = "Từ chối"; // Sửa từ "Rejected" -> "Từ chối"
             }
             else
             {

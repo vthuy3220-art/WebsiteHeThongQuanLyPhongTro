@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace HeThongQuanLyPhongTro.Models
 {
-    // ==================== DASHBOARD ADMIN ====================
     public class DashboardViewModel
     {
         // Thống kê phòng
+
         public int TongSoPhong { get; set; }
         public int SoPhongDaThue { get; set; }
         public int SoPhongTrong { get; set; }
@@ -33,6 +33,11 @@ namespace HeThongQuanLyPhongTro.Models
         public List<DoanhThuTheoThang> DoanhThuTheoThangList { get; set; } = new();
         public List<TrangThaiPhong> TrangThaiPhongList { get; set; } = new();
 
+        // ✅ THÊM MỚI: Doanh thu theo tuần (Giải quyết lỗi DoanhThuTheoTuanList)
+        public List<DoanhThuTheoTuan> DoanhThuTheoTuanList { get; set; } = new();
+        // ✅ THÊM MỚI: Top 5 phòng doanh thu (Giải quyết lỗi Top5PhongDoanhThuList)
+        public List<Top5PhongDoanhThu> Top5PhongDoanhThuList { get; set; } = new();
+
         // Top khách hàng
         public List<TopKhachHang> TopKhachHangList { get; set; } = new();
 
@@ -46,7 +51,7 @@ namespace HeThongQuanLyPhongTro.Models
         public List<TopPhongSuDung> TopPhongList { get; set; } = new();
         public List<ThongBao> ThongBaoGanDayList { get; set; } = new();
 
-        // ✅ MỚI: Hóa đơn gần đây thực tế
+        // Hóa đơn gần đây thực tế
         public List<HoaDonGanDay> HoaDonGanDayList { get; set; } = new();
     }
 
@@ -76,6 +81,21 @@ namespace HeThongQuanLyPhongTro.Models
         public int Nam { get; set; }
         public decimal DoanhThu { get; set; }
         public string TenThang => $"Tháng {Thang}/{Nam}";
+    }
+
+    // ✅ THÊM MỚI: CLASS DOANH THU THEO TUẦN
+    public class DoanhThuTheoTuan
+    {
+        public string Tuan { get; set; } = string.Empty; // Ví dụ: "Tuần 1", "Tuần 2" hoặc "15/06 - 21/06"
+        public decimal DoanhThu { get; set; }
+    }
+
+    // ✅ THÊM MỚI: CLASS TOP 5 PHÒNG DOANH THU
+    public class Top5PhongDoanhThu
+    {
+        public int MaPhong { get; set; }
+        public string TenPhong { get; set; } = string.Empty;
+        public decimal TongDoanhThu { get; set; }
     }
 
     // ==================== TRẠNG THÁI PHÒNG ====================
@@ -124,4 +144,6 @@ namespace HeThongQuanLyPhongTro.Models
         public int Nam { get; set; }
         public double TyLeLapDay { get; set; }
     }
+
+    // Đảm bảo có thêm class ThongBao nếu dự án của bạn chưa khai báo ở file khác
 }

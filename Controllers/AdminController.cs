@@ -16,20 +16,34 @@ namespace HeThongQuanLyPhongTro.Controllers
             _context = context;
         }
 
+        // Đã thêm các tham số: searchToaNha, statusToaNha, và pageToaNha
         public async Task<IActionResult> Index(string tab = "Dashboard")
         {
             ViewBag.CurrentTab = tab;
 
             ViewBag.TotalToaNha = await _context.ToaNha.CountAsync();
             ViewBag.TotalPhong = await _context.Phong.CountAsync();
-            ViewBag.PendingBaiDang = await _context.BaiDang.CountAsync(b => b.TrangThai == "Pending" || b.TrangThai == "Chờ duyệt");
+            ViewBag.PendingBaiDang = await _context.BaiDang.CountAsync(b => b.TrangThai == "Chờ duyệt");
 
+            // Khai báo danh sách bài đăng chuẩn
             var danhSachBaiDang = await _context.BaiDang
                 .Include(b => b.PhongNavigation)
+                .ThenInclude(p => p.ToaNha)
+                .Include(b => b.PhongNavigation)
+                .ThenInclude(p => p.ChuTro)
                 .OrderByDescending(b => b.MaBaiDang)
                 .ToListAsync();
             ViewBag.DanhSachBaiDang = danhSachBaiDang;
 
+            // Tạo Dictionary map ảnh theo MaPhong
+            var phongImages = await _context.PhongImage.ToListAsync();
+            var dictAnhAdmin = phongImages
+                .Where(i => i != null)
+                .GroupBy(i => i.MaPhong)
+                .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.ImagePath ?? "/images/default-room.jpg");
+            ViewBag.DictAnhAdmin = dictAnhAdmin;
+
+            // NẠP TOÀN BỘ DANH SÁCH ĐỂ JAVASCRIPT TỰ ĐỘNG LỌC TRÊN GIAO DIỆN
             var danhSachToaNha = await _context.ToaNha
                 .Include(t => t.CoSo)
                 .OrderByDescending(t => t.MaToaNha)
@@ -41,7 +55,6 @@ namespace HeThongQuanLyPhongTro.Controllers
                 .ToListAsync();
             ViewBag.DanhSachCoSo = danhSachCoSo;
 
-            // Danh sách chủ trọ cho tab NguoiDung
             var danhSachChuTro = await _context.TaiKhoan
                 .Where(t => t.VaiTro == "ChuTro")
                 .OrderByDescending(t => t.MaTaiKhoan)
@@ -58,9 +71,22 @@ namespace HeThongQuanLyPhongTro.Controllers
             var baiDang = await _context.BaiDang.FindAsync(id);
             if (baiDang == null) return NotFound();
 
-            baiDang.TrangThai = trangThai;
-            await _context.SaveChangesAsync();
+            // Sửa lại chữ so sánh ở đây cho khớp 100% với value từ Form gửi lên
+            if (trangThai == "Hiển thị" || trangThai == "Hoạt động")
+            {
+                baiDang.TrangThai = "Hiển thị";
+            }
+            else if (trangThai == "Chờ duyệt" || trangThai == "Pending")
+            {
+                baiDang.TrangThai = "Chờ duyệt";
+            }
+            else
+            {
+                baiDang.TrangThai = "Từ chối";
+            }
 
+            await _context.SaveChangesAsync();
+            // Sau khi lưu xong, ép chuyển hướng về lại tab BaiDang để reload lại số liệu trên đầu
             return RedirectToAction(nameof(Index), new { tab = "BaiDang" });
         }
 
@@ -313,6 +339,29 @@ namespace HeThongQuanLyPhongTro.Controllers
             var taiKhoan = await _context.TaiKhoan.FindAsync(id);
             if (taiKhoan == null) return NotFound();
             return View(taiKhoan);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MoKhoaChuTro(int id)
+        {
+            var taiKhoan = await _context.TaiKhoan.FindAsync(id);
+            if (taiKhoan == null) return NotFound();
+            return View(taiKhoan);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken] // Thêm bảo mật chống giả mạo
+        public async Task<IActionResult> XacNhanMoKhoaTaiKhoan(int id)
+        {
+            var tk = await _context.TaiKhoan.FindAsync(id);
+            if (tk != null)
+            {
+                tk.TrangThai = "Hoạt động";
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"Đã mở khóa tài khoản {tk.TenDangNhap} thành công!";
+            }
+            // Mở khóa xong đẩy lại về tab Người dùng
+            return RedirectToAction(nameof(Index), new { tab = "NguoiDung" });
         }
 
         [HttpGet]
