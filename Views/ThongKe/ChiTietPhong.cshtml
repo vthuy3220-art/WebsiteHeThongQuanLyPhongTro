@@ -1,18 +1,38 @@
 ﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.ThongKeCoSoViewModel>
 @{
-    ViewData["Title"] = "Chi tiết Phòng theo Cơ sở";
+    ViewData["Title"] = "Chi tiết Phòng theo Tòa nhà";
     Layout = "_Layout";
     int tongPhong = ViewBag.TongPhong ?? 0;
     int tongDaThue = ViewBag.TongDaThue ?? 0;
     int tongTrong = ViewBag.TongTrong ?? 0;
+
+    var danhSachToaNha = ViewBag.DanhSachToaNha as IEnumerable<HeThongQuanLyPhongTro.Models.ToaNha>;
+    int? selectedMaToaNha = ViewBag.SelectedMaToaNha as int?;
 }
 
 <div class="bg-slate-50 min-h-screen p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Tình trạng lấp đầy phòng theo cơ sở</h1>
-        <div>
-            <a href="@Url.Action("XuatPDFChiTietPhong", "ThongKe")" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition mr-2" style="text-decoration:none;">Xuất PDF</a>
-            <a asp-action="Index" asp-controller="ThongKe" class="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 transition" style="text-decoration:none;">Quay lại Dashboard</a>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 class="text-2xl font-bold text-gray-800">Tình trạng lấp đầy phòng theo Tòa nhà</h1>
+
+        <div class="flex gap-2 flex-wrap items-center">
+            <form method="get" asp-action="ChiTietPhong" asp-controller="ThongKe" class="flex gap-2 items-center">
+                <select name="maToaNha" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm font-medium text-gray-700">
+                    <option value="">-- Tất cả tòa nhà --</option>
+                    @if (danhSachToaNha != null)
+                    {
+                        foreach (var t in danhSachToaNha)
+                        {
+                            <option value="@t.MaToaNha" selected="@(selectedMaToaNha == t.MaToaNha ? "selected" : null)">
+                                @t.TenToaNha
+                            </option>
+                        }
+                    }
+                </select>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">Lọc</button>
+            </form>
+
+            <a href="@Url.Action("XuatPDFChiTietPhong", "ThongKe", new { maToaNha = selectedMaToaNha })" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition" style="text-decoration:none;">Xuất PDF</a>
+            <a asp-action="Index" asp-controller="ThongKe" class="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 transition" style="text-decoration:none;">Trở về</a>
         </div>
     </div>
 
@@ -28,22 +48,22 @@
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow col-span-2 border border-gray-100">
-            <h3 class="font-bold text-gray-700 mb-4">Biểu đồ lấp đầy từng cơ sở</h3>
+            <h3 class="font-bold text-gray-700 mb-4">Biểu đồ lấp đầy từng tòa nhà</h3>
             <div style="height: 280px;">
-                <canvas id="coSoChart"></canvas>
+                <canvas id="toaNhaChart"></canvas>
             </div>
         </div>
     </div>
 
     <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-100">
         <div class="p-4 bg-slate-100 border-b">
-            <h3 class="font-bold text-gray-700">Chi tiết số liệu từng khu vực / cơ sở</h3>
+            <h3 class="font-bold text-gray-700">Chi tiết số liệu từng tòa nhà</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-50 text-gray-600">
                     <tr>
-                        <th class="p-4 border-b">Tên Cơ Sở / Khu Vực</th>
+                        <th class="p-4 border-b">Tên Tòa nhà</th>
                         <th class="p-4 border-b text-center">Tổng phòng</th>
                         <th class="p-4 border-b text-center text-teal-600">Đã thuê</th>
                         <th class="p-4 border-b text-center text-rose-500">Phòng trống</th>
@@ -69,9 +89,9 @@
                             </td>
                             <td class="p-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <span class="text-sm font-bold">@item.TyLeLapDay%</span>
+                                    <span class="text-sm font-bold">@item.TyLeSuDung%</span>
                                     <div class="w-24 bg-gray-200 rounded-full h-2.5">
-                                        <div class="bg-teal-500 h-2.5 rounded-full" style="width: @(item.TyLeLapDay)%"></div>
+                                        <div class="bg-teal-500 h-2.5 rounded-full" style="width: @(item.TyLeSuDung)%"></div>
                                     </div>
                                 </div>
                             </td>
@@ -86,48 +106,57 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // 1. Biểu đồ tròn (Tổng quan)
         var ctxTong = document.getElementById('tongQuanChart').getContext('2d');
         new Chart(ctxTong, {
-            type: 'doughnut',
-            data: {
-                labels: ['Đã thuê', 'Trống'],
-                datasets: [{
-                    data: [@tongDaThue, @tongTrong],
-                    backgroundColor: ['#0d9488', '#f43f5e'],
-                    borderWidth: 0
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
+        type: 'doughnut',
+        data: {
+        labels: ['Đã thuê', 'Trống'],
+        datasets: [{
+        data: [@tongDaThue, @tongTrong],
+        backgroundColor: ['#0d9488', '#f43f5e'],
+        borderWidth: 0
+        }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
         });
 
-        var coSoLabels = [];
+        // 2. Biểu đồ cột (Từng Tòa nhà)
+        var toaNhaLabels = [];
         var daThueData = [];
         var trongData = [];
 
         @foreach (var item in Model)
         {
                 <text>
-                coSoLabels.push('@Html.Raw(item.TenCoSo)');
-                daThueData.push(@item.SoPhongDaThue);
-                trongData.push(@item.SoPhongTrong);
+                    toaNhaLabels.push('@Html.Raw(item.TenCoSo)');
+                    daThueData.push(@item.SoPhongDaThue);
+                    trongData.push(@item.SoPhongTrong);
                 </text>
         }
 
-        var ctxCoSo = document.getElementById('coSoChart').getContext('2d');
-        new Chart(ctxCoSo, {
-            type: 'bar',
-            data: {
-                labels: coSoLabels,
-                datasets: [
-                    { label: 'Đã thuê', data: daThueData, backgroundColor: '#0d9488', borderRadius: 4 },
-                    { label: 'Phòng trống', data: trongData, backgroundColor: '#f43f5e', borderRadius: 4 }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
-            }
+        var ctxToaNha = document.getElementById('toaNhaChart').getContext('2d');
+        new Chart(ctxToaNha, {
+        type: 'bar',
+        data: {
+        labels: toaNhaLabels,
+        datasets: [
+        { label: 'Đã thuê', data: daThueData, backgroundColor: '#0d9488', borderRadius: 4, maxBarThickness: 80 },
+        { label: 'Phòng trống', data: trongData, backgroundColor: '#f43f5e', borderRadius: 4, maxBarThickness: 80 }
+        ]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+        x: { stacked: true },
+        y: {
+        stacked: true,
+        beginAtZero: true,
+        ticks: { stepSize: 1 } // Hiển thị số nguyên cho số phòng
+        }
+        }
+        }
         });
     </script>
 }

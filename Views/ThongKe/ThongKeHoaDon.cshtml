@@ -2,18 +2,38 @@
 @{
     ViewData["Title"] = "Thống Kê Hóa Đơn";
     Layout = "_Layout";
+
+    // Tự động lấy Tháng/Năm hiện tại (Vd: 6/2026)
     int thang = ViewBag.Thang ?? DateTime.Now.Month;
     int nam = ViewBag.Nam ?? DateTime.Now.Year;
+
     int tongSoHD = ViewBag.TongSoHD ?? 0;
     decimal daThu = ViewBag.DaThu ?? 0;
     decimal chuaThu = ViewBag.ChuaThu ?? 0;
+
+    var danhSachToaNha = ViewBag.DanhSachToaNha as IEnumerable<HeThongQuanLyPhongTro.Models.ToaNha>;
+    int? selectedMaToaNha = ViewBag.SelectedMaToaNha as int?;
 }
+
 <div class="bg-slate-50 min-h-screen p-6">
-    <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <h1 class="text-2xl font-bold text-gray-800">Thống Kê Hóa Đơn - Tháng @thang/@nam</h1>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 class="text-2xl font-bold text-gray-800">Tháng @thang/@nam</h1>
 
         <div class="flex gap-2 flex-wrap items-center">
-            <form method="get" asp-action="ThongKeHoaDon" asp-controller="ThongKe" class="flex gap-2">
+            <form method="get" asp-action="ThongKeHoaDon" asp-controller="ThongKe" class="flex gap-2 items-center">
+                <select name="maToaNha" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm font-medium text-gray-700">
+                    <option value="">-- Tất cả tòa nhà --</option>
+                    @if (danhSachToaNha != null)
+                    {
+                        foreach (var t in danhSachToaNha)
+                        {
+                            <option value="@t.MaToaNha" selected="@(selectedMaToaNha == t.MaToaNha ? "selected" : null)">
+                                @t.TenToaNha
+                            </option>
+                        }
+                    }
+                </select>
+
                 <select name="thang" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm">
                     @for (int i = 1; i <= 12; i++)
                     {
@@ -28,7 +48,8 @@
                 </select>
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">Lọc Dữ Liệu</button>
             </form>
-            <a href="@Url.Action("XuatPDFThongKeHoaDon", "ThongKe", new { thang = thang, nam = nam })" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition" style="text-decoration:none;">Xuất PDF</a>
+
+            <a href="@Url.Action("XuatPDFThongKeHoaDon", "ThongKe", new { thang = thang, nam = nam, maToaNha = selectedMaToaNha })" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition" style="text-decoration:none;">Xuất PDF</a>
             <a asp-action="Index" asp-controller="ThongKe" class="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 transition" style="text-decoration:none;">Trở về</a>
         </div>
     </div>
@@ -88,7 +109,6 @@
                                 <td class="p-4 text-center text-sm text-gray-500">@(item.NgayTao?.ToString("dd/MM/yyyy") ?? "")</td>
                                 <td class="p-4 text-right font-bold text-gray-800">@item.TongTien.ToString("N0") đ</td>
                                 <td class="p-4 text-center">
-                                    <!-- ĐÃ SỬA: Ép chữ về so sánh chữ thường đầu để không bị lỗi cách viết hoa/thường từ DB -->
                                     @if (item.TrangThai.Trim().Equals("Đã thanh toán", StringComparison.OrdinalIgnoreCase))
                                     {
                                         <span class="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-bold">Đã thanh toán</span>
@@ -123,7 +143,6 @@
         for (var i = 0; i < rawData.length; i++) {
         var item = rawData[i];
 
-        // ĐÃ SỬA: Gọi đúng thuộc tính chữ Hoa đầu của Object C# khi Serialize sang JSON
         var amt = parseFloat(item.TongTien || item.tongTien || 0);
         var statusStr = item.TrangThai || item.trangThai || "";
         var isPaid = statusStr.trim().toLowerCase() === "đã thanh toán";

@@ -183,7 +183,7 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // ======================= MODULE HÓA ĐƠN =======================
-        public async Task<IActionResult> ThongKeHoaDon(int? thang, int? nam)
+        public async Task<IActionResult> ThongKeHoaDon(int? thang, int? nam, int? maToaNha) // <-- Thêm tham số lọc
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -193,8 +193,30 @@ namespace HeThongQuanLyPhongTro.Controllers
             int y = nam ?? DateTime.Now.Year;
             bool isAdmin = (role == "Admin");
 
-            var pIds = await GetPhongIdsByChuTro(userId ?? 0, isAdmin);
+            // 1. LẤY DANH SÁCH TÒA NHÀ LÀM DROPDOWN
+            var queryToaNha = _context.ToaNha.AsQueryable();
+            if (!isAdmin)
+            {
+                queryToaNha = queryToaNha.Where(t => t.MaChuTro == userId);
+            }
+            ViewBag.DanhSachToaNha = await queryToaNha.ToListAsync();
+            ViewBag.SelectedMaToaNha = maToaNha;
 
+            // 2. LỌC DANH SÁCH PHÒNG THEO TÒA NHÀ
+            var queryPhongIds = _context.Phong.AsQueryable();
+            if (maToaNha.HasValue)
+            {
+                queryPhongIds = queryPhongIds.Where(p => p.MaToaNha == maToaNha.Value);
+                if (!isAdmin) queryPhongIds = queryPhongIds.Where(p => p.ToaNha.MaChuTro == userId);
+            }
+            else if (!isAdmin)
+            {
+                var toaNhaIds = await queryToaNha.Select(t => t.MaToaNha).ToListAsync();
+                queryPhongIds = queryPhongIds.Where(p => toaNhaIds.Contains(p.MaToaNha));
+            }
+            var pIds = await queryPhongIds.Select(p => p.MaPhong).ToListAsync();
+
+            // 3. TRUY VẤN HÓA ĐƠN
             var query = from h in _context.HoaDon
                         join hd in _context.HopDong on h.MaHopDong equals hd.MaHopDong
                         join p in _context.Phong on hd.MaPhong equals p.MaPhong
@@ -222,14 +244,27 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(data);
         }
 
-        public async Task<IActionResult> XuatPDFThongKeHoaDon(int thang, int nam)
+        public async Task<IActionResult> XuatPDFThongKeHoaDon(int thang, int nam, int? maToaNha) // <-- Thêm tham số lọc
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
             if (role != "Admin" && role != "ChuTro") return RedirectToAction("Index", "Login");
 
             bool isAdmin = (role == "Admin");
-            var pIds = await GetPhongIdsByChuTro(userId ?? 0, isAdmin);
+
+            // LỌC DANH SÁCH PHÒNG TƯƠNG TỰ
+            var queryPhongIds = _context.Phong.AsQueryable();
+            if (maToaNha.HasValue)
+            {
+                queryPhongIds = queryPhongIds.Where(p => p.MaToaNha == maToaNha.Value);
+                if (!isAdmin) queryPhongIds = queryPhongIds.Where(p => p.ToaNha.MaChuTro == userId);
+            }
+            else if (!isAdmin)
+            {
+                var toaNhaIds = await _context.ToaNha.Where(t => t.MaChuTro == userId).Select(t => t.MaToaNha).ToListAsync();
+                queryPhongIds = queryPhongIds.Where(p => toaNhaIds.Contains(p.MaToaNha));
+            }
+            var pIds = await queryPhongIds.Select(p => p.MaPhong).ToListAsync();
 
             var query = from h in _context.HoaDon
                         join hd in _context.HopDong on h.MaHopDong equals hd.MaHopDong
@@ -266,15 +301,38 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // ======================= MODULE HỢP ĐỒNG =======================
-        public async Task<IActionResult> ChiTietHopDong()
+        public async Task<IActionResult> ChiTietHopDong(int? maToaNha) // <-- Thêm tham số lọc
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
             if (role != "Admin" && role != "ChuTro") return RedirectToAction("Index", "Login");
 
             bool isAdmin = (role == "Admin");
-            var pIds = await GetPhongIdsByChuTro(userId ?? 0, isAdmin);
 
+            // 1. LẤY DANH SÁCH TÒA NHÀ ĐỂ LÀM DROPDOWN
+            var queryToaNha = _context.ToaNha.AsQueryable();
+            if (!isAdmin)
+            {
+                queryToaNha = queryToaNha.Where(t => t.MaChuTro == userId);
+            }
+            ViewBag.DanhSachToaNha = await queryToaNha.ToListAsync();
+            ViewBag.SelectedMaToaNha = maToaNha;
+
+            // 2. LỌC DANH SÁCH PHÒNG THEO TÒA NHÀ ĐƯỢC CHỌN
+            var queryPhongIds = _context.Phong.AsQueryable();
+            if (maToaNha.HasValue)
+            {
+                queryPhongIds = queryPhongIds.Where(p => p.MaToaNha == maToaNha.Value);
+                if (!isAdmin) queryPhongIds = queryPhongIds.Where(p => p.ToaNha.MaChuTro == userId);
+            }
+            else if (!isAdmin)
+            {
+                var toaNhaIds = await queryToaNha.Select(t => t.MaToaNha).ToListAsync();
+                queryPhongIds = queryPhongIds.Where(p => toaNhaIds.Contains(p.MaToaNha));
+            }
+            var pIds = await queryPhongIds.Select(p => p.MaPhong).ToListAsync();
+
+            // 3. TRUY VẤN HỢP ĐỒNG
             var query = from h in _context.HopDong
                         join p in _context.Phong on h.MaPhong equals p.MaPhong
                         join k in _context.KhachHang on h.MaKhachHang equals k.MaKhachHang
@@ -300,14 +358,27 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(data);
         }
 
-        public async Task<IActionResult> XuatPDFChiTietHopDong()
+        public async Task<IActionResult> XuatPDFChiTietHopDong(int? maToaNha) // <-- Thêm tham số lọc
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
             if (role != "Admin" && role != "ChuTro") return RedirectToAction("Index", "Login");
 
             bool isAdmin = (role == "Admin");
-            var pIds = await GetPhongIdsByChuTro(userId ?? 0, isAdmin);
+
+            // LỌC DANH SÁCH PHÒNG TƯƠNG TỰ
+            var queryPhongIds = _context.Phong.AsQueryable();
+            if (maToaNha.HasValue)
+            {
+                queryPhongIds = queryPhongIds.Where(p => p.MaToaNha == maToaNha.Value);
+                if (!isAdmin) queryPhongIds = queryPhongIds.Where(p => p.ToaNha.MaChuTro == userId);
+            }
+            else if (!isAdmin)
+            {
+                var toaNhaIds = await _context.ToaNha.Where(t => t.MaChuTro == userId).Select(t => t.MaToaNha).ToListAsync();
+                queryPhongIds = queryPhongIds.Where(p => toaNhaIds.Contains(p.MaToaNha));
+            }
+            var pIds = await queryPhongIds.Select(p => p.MaPhong).ToListAsync();
 
             var query = from h in _context.HopDong
                         join p in _context.Phong on h.MaPhong equals p.MaPhong
@@ -342,23 +413,40 @@ namespace HeThongQuanLyPhongTro.Controllers
         }
 
         // ======================= MODULE PHÒNG =======================
-        public async Task<IActionResult> ChiTietPhong()
+        public async Task<IActionResult> ChiTietPhong(int? maToaNha) // <-- Thêm tham số lọc
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
             if (role != "Admin" && role != "ChuTro") return RedirectToAction("Index", "Login");
 
+            bool isAdmin = (role == "Admin");
+
+            // 1. LẤY DANH SÁCH TÒA NHÀ ĐỂ LÀM DROPDOWN
+            var queryToaNha = _context.ToaNha.AsQueryable();
+            if (!isAdmin)
+            {
+                queryToaNha = queryToaNha.Where(t => t.MaChuTro == userId);
+            }
+            ViewBag.DanhSachToaNha = await queryToaNha.ToListAsync();
+            ViewBag.SelectedMaToaNha = maToaNha;
+
+            // 2. TRUY VẤN VÀ LỌC PHÒNG THEO TÒA NHÀ
             var queryPhong = _context.Phong.Include(p => p.ToaNha).AsQueryable();
-            if (role == "ChuTro")
+            if (!isAdmin)
             {
                 queryPhong = queryPhong.Where(p => p.ToaNha.MaChuTro == userId);
+            }
+
+            if (maToaNha.HasValue)
+            {
+                queryPhong = queryPhong.Where(p => p.MaToaNha == maToaNha.Value);
             }
 
             var data = await queryPhong
                 .GroupBy(p => p.ToaNha.TenToaNha)
                 .Select(g => new ThongKeCoSoViewModel
                 {
-                    TenCoSo = g.Key ?? "Cơ sở chính",
+                    TenCoSo = g.Key ?? "Tòa nhà chính",
                     TongSoPhong = g.Count(),
                     SoPhongDaThue = g.Count(x => x.TrangThai == "Đã thuê"),
                     SoPhongTrong = g.Count(x => x.TrangThai != "Đã thuê"),
@@ -372,23 +460,30 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(data);
         }
 
-        public async Task<IActionResult> XuatPDFChiTietPhong()
+        public async Task<IActionResult> XuatPDFChiTietPhong(int? maToaNha) // <-- Thêm tham số lọc
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
             if (role != "Admin" && role != "ChuTro") return RedirectToAction("Index", "Login");
 
+            bool isAdmin = (role == "Admin");
+
             var queryPhong = _context.Phong.Include(p => p.ToaNha).AsQueryable();
-            if (role == "ChuTro")
+            if (!isAdmin)
             {
                 queryPhong = queryPhong.Where(p => p.ToaNha.MaChuTro == userId);
+            }
+
+            if (maToaNha.HasValue)
+            {
+                queryPhong = queryPhong.Where(p => p.MaToaNha == maToaNha.Value);
             }
 
             var data = await queryPhong
                 .GroupBy(p => p.ToaNha.TenToaNha)
                 .Select(g => new ThongKeCoSoViewModel
                 {
-                    TenCoSo = g.Key ?? "Cơ sở chính",
+                    TenCoSo = g.Key ?? "Tòa nhà chính",
                     TongSoPhong = g.Count(),
                     SoPhongDaThue = g.Count(x => x.TrangThai == "Đã thuê"),
                     SoPhongTrong = g.Count(x => x.TrangThai != "Đã thuê"),
@@ -404,13 +499,13 @@ namespace HeThongQuanLyPhongTro.Controllers
             {
                 FileName = $"BaoCao_LapDayPhong_{DateTime.Now:ddMMyyyy}.pdf",
                 PageSize = Rotativa.AspNetCore.Options.Size.A4,
-                PageOrientation = Rotativa.AspNetCore.Options.Orientation.Portrait,
+                PageOrientation = Rotativa.AspNetCore.Options.Orientation.Landscape, // Đổi sang khổ ngang cho bảng nhiều cột
                 PageMargins = { Left = 15, Right = 15, Top = 15, Bottom = 15 }
             };
         }
 
         // ======================= MODULE DOANH THU =======================
-        public async Task<IActionResult> ChiTietDoanhThu(int? thang, int? nam)
+        public async Task<IActionResult> ChiTietDoanhThu(int? thang, int? nam, int? maToaNha) // <--- Thêm tham số maToaNha
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -420,8 +515,40 @@ namespace HeThongQuanLyPhongTro.Controllers
             int y = nam ?? DateTime.Now.Year;
             bool isAdmin = (role == "Admin");
 
-            var pIds = await GetPhongIdsByChuTro(userId ?? 0, isAdmin);
+            // 1. LẤY DANH SÁCH TÒA NHÀ ĐỂ HIỂN THỊ LÊN GIAO DIỆN DROPDOWN
+            var queryToaNha = _context.ToaNha.AsQueryable();
+            if (!isAdmin)
+            {
+                queryToaNha = queryToaNha.Where(t => t.MaChuTro == userId);
+            }
+            ViewBag.DanhSachToaNha = await queryToaNha.ToListAsync();
+            ViewBag.SelectedMaToaNha = maToaNha; // Lưu lại trạng thái vừa chọn
 
+            // 2. LẤY DANH SÁCH PHÒNG THEO CHỦ TRỌ HOẶC THEO TÒA NHÀ ĐƯỢC CHỌN
+            var queryPhongIds = _context.Phong.AsQueryable();
+
+            if (maToaNha.HasValue)
+            {
+                // Nếu người dùng chọn Tòa nhà cụ thể
+                queryPhongIds = queryPhongIds.Where(p => p.MaToaNha == maToaNha.Value);
+                // Bảo mật: Nếu là chủ trọ, đảm bảo tòa nhà đó đúng là của họ
+                if (!isAdmin)
+                {
+                    queryPhongIds = queryPhongIds.Where(p => p.ToaNha.MaChuTro == userId);
+                }
+            }
+            else
+            {
+                // Nếu lấy tất cả
+                if (!isAdmin)
+                {
+                    var toaNhaIds = await queryToaNha.Select(t => t.MaToaNha).ToListAsync();
+                    queryPhongIds = queryPhongIds.Where(p => toaNhaIds.Contains(p.MaToaNha));
+                }
+            }
+            var pIds = await queryPhongIds.Select(p => p.MaPhong).ToListAsync();
+
+            // 3. TRUY VẤN DOANH THU
             var query = from hd in _context.HoaDon
                         join hopDong in _context.HopDong on hd.MaHopDong equals hopDong.MaHopDong
                         join p in _context.Phong on hopDong.MaPhong equals p.MaPhong
@@ -450,14 +577,27 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(data);
         }
 
-        public async Task<IActionResult> XuatPDFBaoCao(int thang, int nam)
+        public async Task<IActionResult> XuatPDFBaoCao(int thang, int nam, int? maToaNha) // <--- Thêm tham số maToaNha
         {
             var role = HttpContext.Session.GetString("Role");
             var userId = HttpContext.Session.GetInt32("UserId");
             if (role != "Admin" && role != "ChuTro") return RedirectToAction("Index", "Login");
 
             bool isAdmin = (role == "Admin");
-            var pIds = await GetPhongIdsByChuTro(userId ?? 0, isAdmin);
+
+            // XỬ LÝ LỌC ID PHÒNG TƯƠNG TỰ NHƯ HÀM CHITIETDOANHTHU
+            var queryPhongIds = _context.Phong.AsQueryable();
+            if (maToaNha.HasValue)
+            {
+                queryPhongIds = queryPhongIds.Where(p => p.MaToaNha == maToaNha.Value);
+                if (!isAdmin) queryPhongIds = queryPhongIds.Where(p => p.ToaNha.MaChuTro == userId);
+            }
+            else if (!isAdmin)
+            {
+                var toaNhaIds = await _context.ToaNha.Where(t => t.MaChuTro == userId).Select(t => t.MaToaNha).ToListAsync();
+                queryPhongIds = queryPhongIds.Where(p => toaNhaIds.Contains(p.MaToaNha));
+            }
+            var pIds = await queryPhongIds.Select(p => p.MaPhong).ToListAsync();
 
             var query = from hd in _context.HoaDon
                         join hopDong in _context.HopDong on hd.MaHopDong equals hopDong.MaHopDong

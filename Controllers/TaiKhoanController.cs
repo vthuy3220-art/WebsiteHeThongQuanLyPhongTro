@@ -64,7 +64,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             return taiKhoanIds;
         }
 
-        // ==================== DANH SÁCH KHÁCH HÀNG (CHỦ TRỌ) ====================
+        /// ==================== DANH SÁCH KHÁCH HÀNG (CHỦ TRỌ) ====================
         public async Task<IActionResult> DanhSachKhachHang()
         {
             var userId = GetCurrentUserId();
@@ -81,6 +81,21 @@ namespace HeThongQuanLyPhongTro.Controllers
             var taiKhoans = await _context.TaiKhoan
                 .Where(t => t.VaiTro == "Khach" && taiKhoanIds.Contains(t.MaTaiKhoan))
                 .ToListAsync();
+
+            // --- BỔ SUNG ĐOẠN NÀY ĐỂ ĐỒNG BỘ EMAIL TỪ BẢNG KHACHHANG ---
+            var khachHangs = await _context.KhachHang
+                .Where(k => k.MaTaiKhoan != null && taiKhoanIds.Contains(k.MaTaiKhoan.Value))
+                .ToListAsync();
+
+            foreach (var tk in taiKhoans)
+            {
+                var kh = khachHangs.FirstOrDefault(k => k.MaTaiKhoan == tk.MaTaiKhoan);
+                if (kh != null && !string.IsNullOrEmpty(kh.Email))
+                {
+                    tk.Email = kh.Email; // Đè dữ liệu hiển thị bằng Email chính xác từ hồ sơ khách hàng
+                }
+            }
+            // --- KẾT THÚC BỔ SUNG ---
 
             ViewBag.Title = "Danh sách tài khoản khách hàng";
             return View(taiKhoans);
@@ -283,7 +298,23 @@ namespace HeThongQuanLyPhongTro.Controllers
                         return View(taiKhoan);
                     }
 
-                    _context.Update(taiKhoan);
+                    // --- THAY ĐỔI LẠI LOGIC CẬP NHẬT Ở ĐÂY ---
+                    // Tìm tài khoản gốc trong DB
+                    var existingTaiKhoan = await _context.TaiKhoan.FindAsync(id);
+                    if (existingTaiKhoan == null) return NotFound();
+
+                    // Chỉ cập nhật các trường được phép thay đổi từ form edit tài khoản khách
+                    existingTaiKhoan.TenDangNhap = taiKhoan.TenDangNhap;
+                    existingTaiKhoan.TrangThai = taiKhoan.TrangThai;
+
+                    // Nếu người dùng có nhập mật khẩu mới thì mới cập nhật mật khẩu
+                    if (!string.IsNullOrEmpty(taiKhoan.MatKhau))
+                    {
+                        existingTaiKhoan.MatKhau = taiKhoan.MatKhau;
+                    }
+
+                    // Các trường khác như Email, Ngân hàng, SĐT... giữ nguyên không đụng vào
+                    _context.Update(existingTaiKhoan);
                     await _context.SaveChangesAsync();
                     TempData["Success"] = "Cập nhật tài khoản thành công!";
                 }

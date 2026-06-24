@@ -2,32 +2,17 @@
 @{
     Layout = null;
 
-    // 1. TÍNH TỔNG TRỰC TIẾP (Khắc phục hoàn toàn lỗi ra số 0)
+    // 1. TÍNH TỔNG TRỰC TIẾP
     int tongPhong = Model != null ? Model.Sum(x => x.TongSoPhong) : 0;
     int tongDaThue = Model != null ? Model.Sum(x => x.SoPhongDaThue) : 0;
     int tongTrong = Model != null ? Model.Sum(x => x.SoPhongTrong) : 0;
-    // Kiểm tra đa tầng: Lấy từ ViewBag -> Lấy từ User hệ thống -> Lấy từ Session tài khoản
-    string tenNguoiXuat = "Admin";
-
-    if (ViewBag.Username != null && !string.IsNullOrWhiteSpace(ViewBag.Username.ToString()))
-    {
-        tenNguoiXuat = ViewBag.Username.ToString();
-    }
-    else if (User.Identity != null && !string.IsNullOrWhiteSpace(User.Identity.Name))
-    {
-        tenNguoiXuat = User.Identity.Name;
-    }
-    else if (Context.Session.GetString("UserName") != null)
-    {
-        tenNguoiXuat = Context.Session.GetString("UserName");
-    }
 
     // 2. MÃ HÓA URL (Khắc phục lỗi biểu đồ khi có tiếng Việt)
     var labels = string.Join(",", Model.Select(m => "'" + m.TenCoSo + "'"));
     var daThueData = string.Join(",", Model.Select(m => m.SoPhongDaThue));
     var trongData = string.Join(",", Model.Select(m => m.SoPhongTrong));
 
-    string chartJson = $"{{type:'bar',data:{{labels:[{labels}],datasets:[{{label:'Đã thuê',data:[{daThueData}],backgroundColor:'#0d9488'}},{{label:'Trống',data:[{trongData}],backgroundColor:'#f43f5e'}}]}},options:{{scales:{{xAxes:[{{stacked:true}}],yAxes:[{{stacked:true}}]}}}}}}";
+    string chartJson = $"{{type:'bar',data:{{labels:[{labels}],datasets:[{{label:'Đã thuê',data:[{daThueData}],backgroundColor:'#0d9488',maxBarThickness: 60}},{{label:'Trống',data:[{trongData}],backgroundColor:'#f43f5e',maxBarThickness: 60}}]}},options:{{scales:{{xAxes:[{{stacked:true}}],yAxes:[{{stacked:true}}]}}}}}}";
 
     // Ép API mã hóa tiếng Việt chuẩn xác
     string chartUrl = "https://quickchart.io/chart?w=600&h=280&c=" + Uri.EscapeDataString(chartJson);
@@ -94,7 +79,7 @@
     <table style="border: none; margin-bottom: 20px;">
         <tr style="border: none;">
             <td style="border: none; text-align: left; width: 40%; vertical-align: top;">
-                <b>HỆ THỐNG QUẢN LÝ TRỌ</b><br />Người lập:
+                <b>HỆ THỐNG QUẢN LÝ TRỌ</b><br />Người lập: ...................................
             </td>
             <td style="border: none; text-align: center; width: 60%;">
                 <b style="font-size: 16px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br />
@@ -158,7 +143,8 @@
             <td style="border: none; width: 55%;"></td>
             <td style="border: none; width: 45%; text-align: center;">
                 <i>Ngày @DateTime.Now.Day tháng @DateTime.Now.Month năm @DateTime.Now.Year</i><br />
-                <b style="font-size: 15px;">Người lập biểu</b><br /><br /><br /><br />
+                <b style="font-size: 15px;">Người lập biểu</b><br />
+                <i style="font-size: 12px; color: #555;">(Ký, ghi rõ họ tên)</i><br /><br /><br /><br />
                 <b></b>
             </td>
         </tr>

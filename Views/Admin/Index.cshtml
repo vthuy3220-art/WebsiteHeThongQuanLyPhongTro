@@ -109,9 +109,9 @@
                             </h2>
                             <p class="text-gray-400 text-sm mt-1">Báo cáo vĩ mô về lưu lượng bài đăng, hàng đợi phê duyệt và hiệu năng vận hành hệ thống sàn.</p>
                         </div>
-                        <div class="bg-gray-50 border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-inner self-start sm:self-auto">
-                            <i class="far fa-calendar-alt text-blue-500"></i>
-                            <span>16/06/2026</span>
+                        <div class="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-semibold text-sm border border-blue-100">
+                            <i class="far fa-calendar-alt"></i>
+                            <span id="realtimeClock">@DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")</span>
                         </div>
                     </div>
                 </div>
@@ -123,9 +123,7 @@
                             <p class="text-2xl sm:text-3xl font-extrabold text-gray-800">@(ViewBag.PendingBaiDang ?? 8) bài đăng</p>
                             <p class="text-xs text-orange-500 font-medium"><i class="fas fa-info-circle mr-1"></i>Yêu cầu duyệt mới từ các cơ sở</p>
                         </div>
-                        <div class="w-12 h-12 sm:w-14 sm:h-14 bg-orange-50 group-hover:bg-orange-500 text-orange-500 group-hover:text-white rounded-2xl flex items-center justify-center text-xl sm:text-2xl transition-all shadow-sm flex-shrink-0">
-                            <i class="fas fa-file-invoice"></i>
-                        </div>
+
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all">
@@ -134,27 +132,44 @@
                             <p class="text-2xl sm:text-3xl font-extrabold text-gray-800">@(ViewBag.TotalToaNha ?? 3) tòa nhà</p>
                             <p class="text-xs text-blue-500 font-medium"><i class="fas fa-balance-scale mr-1"></i>Cần xác thực thông tin pháp lý</p>
                         </div>
-                        <div class="w-12 h-12 sm:w-14 sm:h-14 bg-blue-50 group-hover:bg-blue-500 text-blue-500 group-hover:text-white rounded-2xl flex items-center justify-center text-xl sm:text-2xl transition-all shadow-sm flex-shrink-0">
-                            <i class="fas fa-building"></i>
-                        </div>
+
                     </div>
 
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all sm:col-span-2 lg:col-span-1">
-                        <div class="space-y-1">
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Trạng thái hệ thống sàn</p>
-                            <p class="text-2xl sm:text-3xl font-extrabold text-green-600 flex items-center gap-2 flex-wrap">
-                                Ổn định <span class="text-xs font-semibold bg-green-50 text-green-700 px-2 py-0.5 rounded-lg border border-green-200">99.9%</span>
+                    <!-- THẺ THỐNG KÊ TỔNG SỐ CƠ SỞ -->
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 font-mono">Tổng số cơ sở</p>
+                            <div class="flex items-baseline gap-2 mb-1">
+                                <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-800 tracking-tight">
+                                    @{
+                                        var soLuongCoSo = 0;
+                                        if (ViewBag.DanhSachCoSo != null)
+                                        {
+                                            var listCoSo = ViewBag.DanhSachCoSo as IEnumerable<dynamic>;
+                                            if (listCoSo != null)
+                                            {
+                                                soLuongCoSo = listCoSo.Count();
+                                            }
+                                        }
+                                    }
+                                    @soLuongCoSo
+                                </h2>
+                                <span class="text-sm font-semibold text-gray-500">cơ sở</span>
+                            </div>
+                            <p class="text-xs text-emerald-600 font-medium flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Phân bố quản lý tập trung
                             </p>
-                            <p class="text-xs text-green-500 font-medium"><i class="fas fa-wifi mr-1"></i>Băng thông hệ thống an toàn</p>
                         </div>
-                        <div class="w-12 h-12 sm:w-14 sm:h-14 bg-green-50 group-hover:bg-green-500 text-green-500 group-hover:text-white rounded-2xl flex items-center justify-center text-xl sm:text-2xl transition-all shadow-sm flex-shrink-0">
-                            <i class="fas fa-server"></i>
-                        </div>
+
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-2 flex flex-col justify-between overflow-x-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-1 flex flex-col justify-between overflow-x-auto">
                         <div class="mb-4">
                             <h3 class="text-sm sm:text-base font-bold text-gray-800">
                                 Biểu đồ lưu lượng bài đăng đẩy lên Sàn (6 tháng qua)
@@ -162,52 +177,57 @@
                             <p class="text-xs text-gray-400 mt-0.5">Tần suất đăng bài cập nhật theo chu kỳ tháng của các cụm cơ sở</p>
                         </div>
 
+                        @{
+                            var dataThongKe = ViewBag.ThongKeBaiDang as IEnumerable<dynamic>;
+                            int maxTin = 1;
+                            if (dataThongKe != null)
+                            {
+                                foreach (var item in dataThongKe)
+                                {
+                                    if (item.soLuong > maxTin) maxTin = item.soLuong;
+                                }
+                            }
+                        }
+
                         <div class="flex items-end justify-between h-48 pt-6 px-2 sm:px-4 border-b border-l border-gray-200 relative min-w-[300px]">
                             <div class="absolute w-full border-t border-dashed border-gray-100 top-1/4 left-0"></div>
                             <div class="absolute w-full border-t border-dashed border-gray-100 top-2/4 left-0"></div>
                             <div class="absolute w-full border-t border-dashed border-gray-100 top-3/4 left-0"></div>
 
-                            <div class="flex flex-col items-center w-10 sm:w-12 group z-10">
-                                <div class="bg-gray-200 group-hover:bg-gray-300 w-6 sm:w-8 h-1 rounded-t-md transition-all relative flex justify-center">
-                                    <span class="absolute -top-7 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-mono shadow-sm">0 tin</span>
-                                </div>
-                                <span class="text-xs font-bold text-gray-400 mt-2">T1</span>
-                            </div>
+                            @if (dataThongKe != null)
+                            {
+                                var listData = dataThongKe.ToList();
+                                for (int i = 0; i < listData.Count; i++)
+                                {
+                                    var item = listData[i];
 
-                            <div class="flex flex-col items-center w-10 sm:w-12 group z-10">
-                                <div class="bg-gray-200 group-hover:bg-gray-300 w-6 sm:w-8 h-1 rounded-t-md transition-all relative flex justify-center">
-                                    <span class="absolute -top-7 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-mono shadow-sm">0 tin</span>
-                                </div>
-                                <span class="text-xs font-bold text-gray-400 mt-2">T2</span>
-                            </div>
+                                    int ptHeight = (int)Math.Round(((double)item.soLuong / maxTin) * 100);
+                                    if (item.soLuong == 0) ptHeight = 2;
 
-                            <div class="flex flex-col items-center w-10 sm:w-12 group z-10">
-                                <div class="bg-gray-200 group-hover:bg-gray-300 w-6 sm:w-8 h-1 rounded-t-md transition-all relative flex justify-center">
-                                    <span class="absolute -top-7 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-mono shadow-sm">0 tin</span>
-                                </div>
-                                <span class="text-xs font-bold text-gray-400 mt-2">T3</span>
-                            </div>
+                                    string barColor = (item.soLuong == 0)
+                                    ? "bg-gray-200 group-hover:bg-gray-300"
+                                    : (i == listData.Count - 1)
+                                    ? "bg-gradient-to-t from-blue-500 to-indigo-600 group-hover:from-blue-600 group-hover:to-indigo-700 shadow-md shadow-indigo-500/20"
+                                    : "bg-blue-500 group-hover:bg-blue-600 shadow-md shadow-blue-500/10";
 
-                            <div class="flex flex-col items-center w-10 sm:w-12 group z-10">
-                                <div class="bg-blue-500 group-hover:bg-blue-600 w-6 sm:w-8 h-16 rounded-t-md transition-all relative flex justify-center shadow-md shadow-blue-500/10">
-                                    <span class="absolute -top-7 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-mono shadow-sm">35 tin</span>
-                                </div>
-                                <span class="text-xs font-bold text-gray-500 mt-2">T4</span>
-                            </div>
+                                    string textColor = (item.soLuong == 0) ? "text-gray-400" : (i == listData.Count - 1 ? "text-blue-600" : "text-gray-500");
 
-                            <div class="flex flex-col items-center w-10 sm:w-12 group z-10">
-                                <div class="bg-blue-500 group-hover:bg-blue-600 w-6 sm:w-8 h-32 rounded-t-md transition-all relative flex justify-center shadow-md shadow-blue-500/10">
-                                    <span class="absolute -top-7 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-mono shadow-sm">82 tin</span>
-                                </div>
-                                <span class="text-xs font-bold text-gray-500 mt-2">T5</span>
-                            </div>
-
-                            <div class="flex flex-col items-center w-10 sm:w-12 group z-10">
-                                <div class="bg-gradient-to-t from-blue-500 to-indigo-600 group-hover:from-blue-600 group-hover:to-indigo-700 w-6 sm:w-8 h-44 rounded-t-md transition-all relative flex justify-center shadow-md shadow-indigo-500/20">
-                                    <span class="absolute -top-7 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-mono shadow-sm">148 tin</span>
-                                </div>
-                                <span class="text-xs font-bold text-blue-600 mt-2">T6</span>
-                            </div>
+                                    <div class="flex flex-col items-center justify-end w-10 sm:w-12 group z-10 h-full">
+                                        <div class="@barColor w-6 sm:w-8 rounded-t-md transition-all duration-500 relative flex justify-center" style="height: @(ptHeight)%;">
+                                            <span class="absolute -top-7 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-mono shadow-sm whitespace-nowrap z-50">
+                                                @item.soLuong tin
+                                            </span>
+                                        </div>
+                                        <span class="text-xs font-bold @textColor mt-2 shrink-0">@item.nhan</span>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-gray-400 text-sm italic absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                    Hệ thống chưa có dữ liệu thống kê
+                                </span>
+                            }
                         </div>
                     </div>
 
@@ -243,28 +263,45 @@
                                     }
 
                                     var logsChoDuyet = new List<dynamic>();
+                                    var dictAnhAdmin = ViewBag.DictAnhAdmin as Dictionary<int, string>;
 
                                     if (danhSachBaiDang != null)
                                     {
                                         var bais = danhSachBaiDang.Where(b => b.TrangThai == "Pending" || b.TrangThai == "Chờ duyệt").Take(3);
                                         int index = 1;
-                                        foreach (var b in bais)
+                                        if (danhSachBaiDang != null)
                                         {
-                                            int phutGiaLap = (b.MaBaiDang % 10) * 12 + (index * 5);
-                                            logsChoDuyet.Add(new { Ma = b.MaBaiDang, TieuDe = b.TieuDe, Loai = "BaiDang", Phut = phutGiaLap });
-                                            index++;
-                                        }
-                                    }
+                                            var bai = danhSachBaiDang.Where(b => b.TrangThai == "Pending" || b.TrangThai == "Chờ duyệt").Take(3);
+                                            foreach (var b in bai)
+                                            {
+                                                // LẤY THỜI GIAN THỰC TẾ: Hiện tại trừ đi lúc đăng
+                                                int phutThucTe = 0;
+                                                if (b.NgayDang.HasValue)
+                                                {
+                                                    phutThucTe = (int)(DateTime.Now - b.NgayDang.Value).TotalMinutes;
+                                                    phutThucTe = Math.Max(0, phutThucTe); // Đảm bảo không bị số âm do chênh lệch múi giờ server
+                                                }
 
-                                    if (danhSachToaNha != null)
-                                    {
-                                        var toas = danhSachToaNha.Where(t => t.TrangThai != "Approved" && t.TrangThai != "Hoạt động").Take(2);
-                                        int index = 1;
-                                        foreach (var t in toas)
-                                        {
-                                            int phutGiaLap = (t.MaToaNha % 10) * 15 + (index * 8) + 10;
-                                            logsChoDuyet.Add(new { Ma = t.MaToaNha, TieuDe = t.TenToaNha, Loai = "ToaNha", Phut = phutGiaLap });
-                                            index++;
+                                                string hinhAnh = !string.IsNullOrEmpty(b.HinhAnh)
+                                                ? b.HinhAnh
+                                                : (dictAnhAdmin != null && dictAnhAdmin.ContainsKey(b.MaPhong))
+                                                ? dictAnhAdmin[b.MaPhong]
+                                                : "/images/default-room.jpg";
+
+                                                logsChoDuyet.Add(new
+                                                {
+                                                    Ma = b.MaBaiDang,
+                                                    TieuDe = b.TieuDe ?? "Chưa có tiêu đề",
+                                                    Loai = "BaiDang",
+                                                    Phut = phutThucTe, // <-- Dùng phút thật
+                                                    Gia = b.PhongNavigation != null ? b.PhongNavigation.GiaPhong.ToString("N0") + " đ" : "0 đ",
+                                                    DienTich = b.PhongNavigation != null ? b.PhongNavigation.DienTich.ToString() : "0",
+                                                    NguoiDang = (b.PhongNavigation != null && b.PhongNavigation.ChuTro != null) ? b.PhongNavigation.ChuTro.TenDangNhap : "Admin",
+                                                    DiaChi = (b.PhongNavigation != null && b.PhongNavigation.ToaNha != null) ? b.PhongNavigation.ToaNha.DiaChi : "Chưa cập nhật",
+                                                    MoTa = b.MoTa ?? "Chưa có mô tả chi tiết.",
+                                                    HinhAnh = hinhAnh
+                                                });
+                                            }
                                         }
                                     }
 
@@ -275,13 +312,25 @@
                                 {
                                     foreach (var log in danhSachLogSapXep)
                                     {
-                                        <div class="relative group cursor-pointer hover:bg-gray-50/80 p-1.5 -ml-1.5 rounded-lg transition-all">
-                                            @if (log.Loai == "BaiDang")
+                                        <div class="relative group cursor-pointer hover:bg-blue-50/50 p-1.5 -ml-1.5 rounded-lg transition-all"
+                                             onclick='openPreviewModal(event, @Html.Raw(Json.Serialize(new
+                                             {
+                                                 id = log.Ma,
+                                                 tieuDe = log.TieuDe,
+                                                 gia = log.Gia,
+                                                 dienTich = log.DienTich,
+                                                 nguoiDang = log.NguoiDang,
+                                                 diaChi = log.DiaChi,
+                                                 moTa = log.MoTa,
+                                                 hinhAnh = log.HinhAnh
+                                             })))'>
+
+                                @if (log.Loai == "BaiDang")
                                             {
-                                                <div class="absolute -left-[22px] top-2.5 bg-orange-500 w-2.5 h-2.5 rounded-full border-2 border-white group-hover:scale-125 transition-all"></div>
+                                                <div class="absolute -left-[22px] top-2.5 bg-orange-500 w-2.5 h-2.5 rounded-full border-2 border-white group-hover:scale-125 transition-all shadow-sm"></div>
                                                 <div class="text-xs space-y-0.5">
                                                     <div class="flex justify-between items-center gap-2">
-                                                        <span class="font-bold text-gray-800 truncate">Bài đăng mới chờ duyệt</span>
+                                                        <span class="font-bold text-gray-800 truncate group-hover:text-blue-600 transition-colors">Bài đăng mới chờ duyệt</span>
                                                         <span class="text-[10px] text-gray-400 font-mono whitespace-nowrap">@TinhThoiGianHienThi(log.Phut)</span>
                                                     </div>
                                                     <p class="text-gray-500 truncate max-w-[180px] sm:max-w-[240px]">Mã #@log.Ma: @log.TieuDe</p>
@@ -289,10 +338,10 @@
                                             }
                                             else
                                             {
-                                                <div class="absolute -left-[22px] top-2.5 bg-blue-500 w-2.5 h-2.5 rounded-full border-2 border-white group-hover:scale-125 transition-all"></div>
+                                                <div class="absolute -left-[22px] top-2.5 bg-blue-500 w-2.5 h-2.5 rounded-full border-2 border-white group-hover:scale-125 transition-all shadow-sm"></div>
                                                 <div class="text-xs space-y-0.5">
                                                     <div class="flex justify-between items-center gap-2">
-                                                        <span class="font-bold text-gray-800 truncate">Yêu cầu duyệt Tòa nhà</span>
+                                                        <span class="font-bold text-gray-800 truncate group-hover:text-blue-600 transition-colors">Yêu cầu duyệt Tòa nhà</span>
                                                         <span class="text-[10px] text-gray-400 font-mono whitespace-nowrap">@TinhThoiGianHienThi(log.Phut)</span>
                                                     </div>
                                                     <p class="text-gray-500 truncate max-w-[180px] sm:max-w-[240px]">Mã #@log.Ma: @log.TieuDe</p>
@@ -584,51 +633,62 @@
 
                                             <td class="p-4">
                                                 <div class="flex justify-center items-center gap-2.5 whitespace-nowrap">
-                                                    @if (statusGroup == "PENDING")
+                                                    @* THÊM ĐIỀU KIỆN NÀY: Nếu phòng đã thuê thì báo chốt sổ, ẩn hết nút *@
+                                                    @if (bai.PhongNavigation?.TrangThai == "Đã thuê")
                                                     {
-                                                        <form asp-action="DuyetBaiDang" method="post" class="inline">
-                                                            <input type="hidden" name="id" value="@bai.MaBaiDang" />
-                                                            <input type="hidden" name="trangThai" value="Hiển thị" />
-                                                            <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
-                                                                Duyệt bài
-                                                            </button>
-                                                        </form>
-
-                                                        <form asp-action="DuyetBaiDang" method="post" class="inline">
-                                                            <input type="hidden" name="id" value="@bai.MaBaiDang" />
-                                                            <input type="hidden" name="trangThai" value="Từ chối" />
-                                                            <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
-                                                                Từ chối
-                                                            </button>
-                                                        </form>
-                                                    }
-                                                    else if (statusGroup == "APPROVED")
-                                                    {
-                                                        <form asp-action="DuyetBaiDang" method="post" class="inline">
-                                                            <input type="hidden" name="id" value="@bai.MaBaiDang" />
-                                                            <input type="hidden" name="trangThai" value="Từ chối" />
-                                                            <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
-                                                                Từ chối
-                                                            </button>
-                                                        </form>
+                                                        <span class="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-md text-[11px] font-bold border border-slate-200">
+                                                            <i class="fas fa-lock mr-1"></i> Đã chốt thuê
+                                                        </span>
                                                     }
                                                     else
                                                     {
-                                                        <form asp-action="DuyetBaiDang" method="post" class="inline">
-                                                            <input type="hidden" name="id" value="@bai.MaBaiDang" />
-                                                            <input type="hidden" name="trangThai" value="Hiển thị" />
-                                                            <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
-                                                                Duyệt bài
-                                                            </button>
-                                                        </form>
+                                                        @* NẾU PHÒNG CÒN TRỐNG THÌ MỚI HIỆN CÁC NÚT DUYỆT/TỪ CHỐI NHƯ CŨ *@
+                                                        @if (statusGroup == "PENDING")
+                                                        {
+                                                            <form asp-action="DuyetBaiDang" method="post" class="inline m-0 p-0" onclick="event.stopPropagation();">
+                                                                <input type="hidden" name="id" value="@bai.MaBaiDang" />
+                                                                <input type="hidden" name="trangThai" value="Hiển thị" />
+                                                                <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
+                                                                    Duyệt bài
+                                                                </button>
+                                                            </form>
 
-                                                        <form asp-action="DuyetBaiDang" method="post" class="inline">
-                                                            <input type="hidden" name="id" value="@bai.MaBaiDang" />
-                                                            <input type="hidden" name="trangThai" value="Từ chối" />
-                                                            <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
-                                                                Từ chối
-                                                            </button>
-                                                        </form>
+                                                            <form asp-action="DuyetBaiDang" method="post" class="inline m-0 p-0" onclick="event.stopPropagation();">
+                                                                <input type="hidden" name="id" value="@bai.MaBaiDang" />
+                                                                <input type="hidden" name="trangThai" value="Từ chối" />
+                                                                <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
+                                                                    Từ chối
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                        else if (statusGroup == "APPROVED")
+                                                        {
+                                                            <form asp-action="DuyetBaiDang" method="post" class="inline m-0 p-0" onclick="event.stopPropagation();">
+                                                                <input type="hidden" name="id" value="@bai.MaBaiDang" />
+                                                                <input type="hidden" name="trangThai" value="Từ chối" />
+                                                                <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
+                                                                    Từ chối
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                        else
+                                                        {
+                                                            <form asp-action="DuyetBaiDang" method="post" class="inline m-0 p-0" onclick="event.stopPropagation();">
+                                                                <input type="hidden" name="id" value="@bai.MaBaiDang" />
+                                                                <input type="hidden" name="trangThai" value="Hiển thị" />
+                                                                <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
+                                                                    Duyệt bài
+                                                                </button>
+                                                            </form>
+
+                                                            <form asp-action="DuyetBaiDang" method="post" class="inline m-0 p-0" onclick="event.stopPropagation();">
+                                                                <input type="hidden" name="id" value="@bai.MaBaiDang" />
+                                                                <input type="hidden" name="trangThai" value="Từ chối" />
+                                                                <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-colors shadow-sm focus:outline-none">
+                                                                    Từ chối
+                                                                </button>
+                                                            </form>
+                                                        }
                                                     }
                                                 </div>
                                             </td>
@@ -654,10 +714,13 @@
                 </div>
             }
 
+            <!-- ============================================== -->
             <!-- PREVIEW MODAL CHỈNH SỬA: RỘNG HƠN VÀ THÊM KHU VỰC HÌNH ẢNH CO GIÃN -->
+            <!-- ============================================== -->
             <div id="previewModal" class="fixed inset-0 z-50 hidden invisible opacity-0 transition-all duration-300 flex items-center justify-center p-2 sm:p-4 bg-slate-900/40 backdrop-blur-sm">
                 <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-xl border border-slate-100 transform scale-95 transition-all duration-300" id="modalContainer">
 
+                    <!-- Header -->
                     <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl flex-shrink-0">
                         <div class="min-w-0 pr-4">
                             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Mã bài đăng: <span id="modalMaBai"></span></span>
@@ -668,8 +731,9 @@
                         </button>
                     </div>
 
+                    <!-- Body -->
                     <div class="p-4 sm:p-6 overflow-y-auto flex flex-col lg:flex-row gap-6">
-
+                        <!-- Cột Trái: Ảnh -->
                         <div class="w-full lg:w-1/2 flex flex-col gap-2 flex-shrink-0">
                             <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Hình ảnh phòng trọ</p>
                             <div class="bg-slate-100 border border-slate-200 rounded-xl overflow-hidden aspect-[4/3] flex items-center justify-center relative">
@@ -677,6 +741,7 @@
                             </div>
                         </div>
 
+                        <!-- Cột Phải: Thông tin chi tiết -->
                         <div class="w-full lg:w-1/2 space-y-4 flex flex-col justify-between">
                             <div class="space-y-4">
                                 <div class="grid grid-cols-2 gap-3 sm:gap-4 bg-slate-50 p-4 rounded-xl">
@@ -706,27 +771,11 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
-                    <div class="flex flex-wrap justify-end items-center gap-2 sm:gap-3 p-4 border-t border-slate-100 bg-slate-50/50 flex-shrink-0">
-                        <form asp-action="DuyetBaiDang" method="post" class="inline">
-                            <input type="hidden" name="id" id="modalPostIdDuyet" value="" />
-                            <input type="hidden" name="trangThai" value="Hiển thị" />
-                            <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm">
-                                Duyệt bài
-                            </button>
-                        </form>
-
-                        <form asp-action="DuyetBaiDang" method="post" class="inline">
-                            <input type="hidden" name="id" id="modalPostIdChan" value="" />
-                            <input type="hidden" name="trangThai" value="Từ chối" />
-                            <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm">
-                                Từ chối
-                            </button>
-                        </form>
-
-                        <button type="button" onclick="closePreviewModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition-colors">
+                    <!-- Footer -->
+                    <div class="p-4 border-t border-slate-100 flex justify-end bg-slate-50/50 rounded-b-2xl">
+                        <button type="button" onclick="closePreviewModal()" class="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm font-bold transition-colors shadow-sm">
                             Đóng
                         </button>
                     </div>
@@ -735,58 +784,96 @@
 
             @if (currentTab == "ToaNha")
             {
+                var danhSachToaNhaHienThi = ViewBag.DanhSachToaNha as IEnumerable<HeThongQuanLyPhongTro.Models.ToaNha>;
+
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Danh sách hệ thống tòa nhà cho thuê</h2>
-                    <button onclick="openModal('modalThemToaNha')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition shadow-md flex items-center space-x-2 self-stretch sm:self-auto justify-center">
-                        <i class="fas fa-plus text-xs"></i>
-                        <span>Thêm tòa nhà mới</span>
-                    </button>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 space-y-3">
+                    <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
+
+                        <div class="flex flex-wrap bg-slate-100 p-1 rounded-xl w-full sm:w-auto" id="toaNhaStatusGroup">
+                            <button type="button" onclick="filterToaNhaByStatus('Tất cả', this)" class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm">
+                                Tất cả
+                            </button>
+                            <button type="button" onclick="filterToaNhaByStatus('Đang hoạt động', this)" class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800">
+                                Đang hoạt động
+                            </button>
+                            <button type="button" onclick="filterToaNhaByStatus('Ngừng hoạt động', this)" class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800">
+                                Ngừng hoạt động
+                            </button>
+                        </div>
+
+                        <div class="relative w-full sm:w-72">
+                            <input type="text" id="toaNhaSearchInput" onkeyup="searchToaNhas()"
+                                   placeholder="Tìm theo mã, tên hoặc địa chỉ..."
+                                   class="w-full pl-4 pr-4 py-2 bg-slate-50 border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:border-blue-400 focus:bg-white transition-all text-slate-700 placeholder-slate-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[700px]">
+                        <table class="w-full text-left border-collapse min-w-[800px]" id="toaNhaTable">
                             <thead class="bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th class="p-4 font-semibold text-sm text-gray-600 w-16">Mã</th>
                                     <th class="p-4 font-semibold text-sm text-gray-600">Tên tòa nhà</th>
-                                    <th class="p-4 font-semibold text-sm text-gray-600">Địa điểm / Khu vực</th>
-                                    <th class="p-4 font-semibold text-sm text-gray-600">Phê duyệt</th>
+                                    <th class="p-4 font-semibold text-sm text-gray-600">Khu vực</th>
+                                    <th class="p-4 font-semibold text-sm text-gray-600">Địa chỉ</th>
+                                    <th class="p-4 font-semibold text-sm text-gray-600">Trạng thái</th>
                                     <th class="p-4 font-semibold text-sm text-gray-600 text-center w-64">Hành động</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 text-sm">
-                                @if (danhSachToaNha != null && danhSachToaNha.Any())
+                                @if (danhSachToaNhaHienThi != null && danhSachToaNhaHienThi.Any())
                                 {
-                                    foreach (var tn in danhSachToaNha)
+                                    foreach (var tn in danhSachToaNhaHienThi)
                                     {
-                                        <tr class="hover:bg-gray-50 transition">
-                                            <td class="p-4 text-gray-500 font-mono">#@tn.MaToaNha</td>
-                                            <td class="p-4 text-gray-800 font-semibold break-words">@tn.TenToaNha</td>
-                                            <td class="p-4 text-gray-600 break-words"><i class="fas fa-map-marker-alt text-red-400 mr-1"></i> @tn.CoSo?.TenCoSo</td>
-                                            <td class="p-4">
-                                                @if (tn.TrangThai == "Approved" || tn.TrangThai == "Hoạt động")
+                                        string statusGrp = "Ngừng hoạt động";
+                                        if (tn.TrangThai == "Hoạt động" || tn.TrangThai == "Approved" || string.IsNullOrEmpty(tn.TrangThai))
+                                        {
+                                            statusGrp = "Đang hoạt động";
+                                        }
+
+                                        <tr class="hover:bg-gray-50 transition toa-nha-row" data-status="@statusGrp">
+                                            <td class="p-4 text-gray-500 font-mono tn-id">#@tn.MaToaNha</td>
+                                            <td class="p-4 text-gray-800 font-semibold break-words tn-name">@tn.TenToaNha</td>
+                                            <td class="p-4 text-gray-600 break-words tn-area"><i class="fas fa-map-marker-alt text-red-400 mr-1"></i> @tn.CoSo?.TenCoSo</td>
+                                            <td class="p-4 text-gray-600 break-words tn-address">@tn.DiaChi</td>
+                                            <td class="p-4 tn-status-badge">
+                                                @if (statusGrp == "Đang hoạt động")
                                                 {
-                                                    <span class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">Hợp lệ</span>
+                                                    <span class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">Đang hoạt động</span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="text-xs bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">Chờ kiểm tra</span>
+                                                    <span class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">Ngừng hoạt động</span>
                                                 }
                                             </td>
                                             <td class="p-4 text-center">
                                                 <div class="flex justify-center items-center space-x-2 whitespace-nowrap">
-                                                    <form asp-controller="Admin" asp-action="XacNhanDuyetToaNha" method="post" class="inline">
-                                                        <input type="hidden" name="id" value="@tn.MaToaNha" />
-                                                        <input type="hidden" name="trangThai" value="Hoạt động" />
-                                                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm">
-                                                            Kích hoạt
-                                                        </button>
-                                                    </form>
-
-                                                    <a href="@Url.Action("NgungHoatDongToaNha", "Admin", new { id = tn.MaToaNha })" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm flex items-center">
-                                                        Ngừng hoạt động
-                                                    </a>
+                                                    @if (statusGrp == "Ngừng hoạt động")
+                                                    {
+                                                        <form asp-controller="Admin" asp-action="XacNhanDuyetToaNha" method="post" class="inline m-0 p-0">
+                                                            <input type="hidden" name="id" value="@tn.MaToaNha" />
+                                                            <input type="hidden" name="trangThai" value="Hoạt động" />
+                                                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm">
+                                                                Kích hoạt lại
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                    else
+                                                    {
+                                                        <form asp-controller="Admin" asp-action="XacNhanDuyetToaNha" method="post" class="inline m-0 p-0">
+                                                            <input type="hidden" name="id" value="@tn.MaToaNha" />
+                                                            <input type="hidden" name="trangThai" value="Ngừng hoạt động" />
+                                                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm flex items-center">
+                                                                Ngừng hoạt động
+                                                            </button>
+                                                        </form>
+                                                    }
                                                 </div>
                                             </td>
                                         </tr>
@@ -795,9 +882,12 @@
                                 else
                                 {
                                     <tr>
-                                        <td colspan="5" class="p-8 text-center text-gray-400">Không tìm thấy tòa nhà nào trong hệ thống.</td>
+                                        <td colspan="6" class="p-8 text-center text-gray-400">Không tìm thấy tòa nhà nào trong hệ thống.</td>
                                     </tr>
                                 }
+                                <tr id="toaNhaEmptyFilterRow" class="hidden">
+                                    <td colspan="6" class="p-8 text-center text-gray-400 italic font-normal">Không tìm thấy kết quả phù hợp với bộ lọc.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -813,42 +903,34 @@
                                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Tên Tòa Nhà</label>
                                 <input type="text" name="tenToaNha" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Ví dụ: Tòa nhà Thanh Xuân A">
                             </div>
-
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Thuộc Khu vực (Cơ sở)</label>
                                 <select name="maCoSo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                                    @if (danhSachCoSo != null)
+                                    @if (ViewBag.DanhSachCoSo != null)
                                     {
-                                        foreach (var cs in danhSachCoSo)
+                                        foreach (var cs in ViewBag.DanhSachCoSo)
                                         {
                                             <option value="@cs.MaCoSo">@cs.TenCoSo</option>
                                         }
                                     }
                                 </select>
                             </div>
-
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Chủ trọ sở hữu / Quản lý</label>
                                 <select name="maChuTro" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required>
-                                    @if (danhSachChuTro != null && danhSachChuTro.Any())
+                                    @if (ViewBag.DanhSachChuTro != null)
                                     {
-                                        foreach (var chuTro in danhSachChuTro)
+                                        foreach (var chuTro in ViewBag.DanhSachChuTro)
                                         {
-                                            <option value="@chuTro.MaTaiKhoan">@chuTro.TenDangNhap (@(chuTro.Email ?? "Không có Email"))</option>
+                                            <option value="@chuTro.MaTaiKhoan">@chuTro.TenDangNhap</option>
                                         }
-                                    }
-                                    else
-                                    {
-                                        <option value="">-- Chưa có tài khoản chủ trọ nào --</option>
                                     }
                                 </select>
                             </div>
-
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Địa chỉ chi tiết</label>
                                 <input type="text" name="diaChi" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Ví dụ: Số 78 Bùi Xương Trạch">
                             </div>
-
                             <div class="flex justify-end space-x-3 pt-2 border-t">
                                 <button type="button" onclick="closeModal('modalThemToaNha')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition">Hủy bỏ</button>
                                 <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition">Lưu tòa nhà</button>
@@ -867,7 +949,18 @@
                     </button>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <!-- BỘ LỌC TÌM KIẾM JAVASCRIPT KHÔNG TẢI LẠI TRANG -->
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 space-y-3">
+                    <div class="flex flex-col sm:flex-row gap-3 justify-end items-center">
+                        <div class="relative w-full sm:w-72">
+                            <input type="text" id="chuTroSearchInput" onkeyup="searchChuTro()"
+                                   placeholder="Tìm theo mã, tên hoặc email..."
+                                   class="w-full pl-4 pr-4 py-2 bg-slate-50 border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:border-blue-400 focus:bg-white transition-all text-slate-700 placeholder-slate-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-[650px]">
                             <thead class="bg-gray-50 border-b border-gray-200 text-sm">
@@ -884,10 +977,12 @@
                                 {
                                     foreach (var tk in danhSachChuTro)
                                     {
-                                        <tr class="hover:bg-gray-50 transition">
-                                            <td class="p-4 font-medium text-gray-500">#@tk.MaTaiKhoan</td>
-                                            <td class="p-4 font-bold text-gray-900 break-words">@tk.TenDangNhap</td>
-                                            <td class="p-4 text-gray-600 break-words">@(tk.Email ?? "Chưa cập nhật")</td>
+                                        <!-- Đã thêm class chu-tro-row để nhận diện dòng -->
+                                        <tr class="hover:bg-gray-50 transition chu-tro-row">
+                                            <!-- Đã thêm class ct-id, ct-name, ct-email để JS lấy dữ liệu lọc -->
+                                            <td class="p-4 font-medium text-gray-500 ct-id">#@tk.MaTaiKhoan</td>
+                                            <td class="p-4 font-bold text-gray-900 break-words ct-name">@tk.TenDangNhap</td>
+                                            <td class="p-4 text-gray-600 break-words ct-email">@(tk.Email ?? "Chưa cập nhật")</td>
                                             <td class="p-4 text-center">
                                                 @if (tk.TrangThai == "Khóa")
                                                 {
@@ -907,10 +1002,9 @@
                                                     @if (tk.TrangThai == "Khóa")
                                                     {
                                                         <form asp-controller="Admin" asp-action="MoKhoaTaiKhoan" method="post" class="inline" onsubmit="return confirm('Bạn muốn mở khóa tài khoản này?')">
-                                                            <input type="hidden" name="id" value="@tk.MaTaiKhoan" />
-                                                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center">
+                                                            <a href="@Url.Action("MoKhoaChuTro", "Admin", new { id = tk.MaTaiKhoan })" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition inline-block">
                                                                 Mở khóa
-                                                            </button>
+                                                            </a>
                                                         </form>
                                                     }
                                                     else
@@ -936,11 +1030,16 @@
                                         </td>
                                     </tr>
                                 }
+                                <!-- Dòng hiển thị khi gõ tìm kiếm không ra kết quả nào -->
+                                <tr id="chuTroEmptyFilterRow" class="hidden">
+                                    <td colspan="5" class="p-8 text-center text-gray-400 italic font-normal">Không tìm thấy tài khoản phù hợp.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
+                <!-- Modal Thêm Chủ Trọ (Giữ nguyên gốc) -->
                 <div id="modalThemChuTro" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden justify-center items-center z-50 p-4">
                     <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
                         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 -mx-6 -mt-6 mb-4 text-white font-bold text-lg rounded-t-xl">
@@ -1027,8 +1126,8 @@
         const imgElement = document.getElementById('modalAnhChinh');
         imgElement.src = data.hinhAnh ? data.hinhAnh : '/images/default-room.jpg';
 
-        document.getElementById('modalPostIdDuyet').value = data.id;
-        document.getElementById('modalPostIdChan').value = data.id;
+        //document.getElementById('modalPostIdDuyet').value = data.id;
+        //document.getElementById('modalPostIdChan').value = data.id;
 
         const modal = document.getElementById('previewModal');
         const container = document.getElementById('modalContainer');
@@ -1118,6 +1217,118 @@
         }
         }
         }
+
+
+
+        let currentToaNhaStatus = 'Tất cả';
+
+        function filterToaNhaByStatus(status, btn) {
+        currentToaNhaStatus = status;
+
+        // Đổi class kích hoạt nút bấm giống hệt logic tab Bài đăng
+        const buttons = btn.parentNode.getElementsByTagName('button');
+        for (let b of buttons) {
+        b.className = "flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800";
+        }
+
+        if (status === 'Tất cả') btn.className = "flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm";
+        else if (status === 'Đang hoạt động') btn.className = "flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-emerald-600 shadow-sm";
+        else if (status === 'Ngừng hoạt động') btn.className = "flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-rose-500 shadow-sm";
+
+        applyToaNhaFilters();
+        }
+
+        function searchToaNhas() {
+        applyToaNhaFilters();
+        }
+
+        function applyToaNhaFilters() {
+        const keyword = document.getElementById('toaNhaSearchInput').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.toa-nha-row');
+        let totalVisible = 0;
+
+        rows.forEach(row => {
+        const status = row.getAttribute('data-status');
+
+        // Lấy văn bản thô để đối chiếu tìm kiếm (gồm Mã, Tên tòa nhà, Cơ sở, Địa chỉ)
+        const idText = row.querySelector('.tn-id').textContent.toLowerCase().replace('#', '');
+        const nameText = row.querySelector('.tn-name').textContent.toLowerCase();
+        const areaText = row.querySelector('.tn-area').textContent.toLowerCase();
+        const addressText = row.querySelector('.tn-address').textContent.toLowerCase();
+
+        const matchesStatus = (currentToaNhaStatus === 'Tất cả') || (status === currentToaNhaStatus);
+        const matchesKeyword = keyword === '' ||
+        idText.includes(keyword) ||
+        nameText.includes(keyword) ||
+        areaText.includes(keyword) ||
+        addressText.includes(keyword);
+
+        if (matchesStatus && matchesKeyword) {
+        row.classList.remove('hidden');
+        totalVisible++;
+        } else {
+        row.classList.add('hidden');
+        }
+        });
+
+        // Xử lý dòng thông báo rỗng
+        const emptyRow = document.getElementById('toaNhaEmptyFilterRow');
+        if (emptyRow) {
+        if (totalVisible === 0) emptyRow.classList.remove('hidden');
+        else emptyRow.classList.add('hidden');
+        }
+        }
+
+        function searchChuTro() {
+        const keyword = document.getElementById('chuTroSearchInput').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.chu-tro-row');
+        let totalVisible = 0;
+
+        rows.forEach(row => {
+        // Lấy nội dung thô từ các cột Mã, Tên đăng nhập và Email
+        const idText = row.querySelector('.ct-id').textContent.toLowerCase().replace('#', '');
+        const nameText = row.querySelector('.ct-name').textContent.toLowerCase();
+        const emailText = row.querySelector('.ct-email').textContent.toLowerCase();
+
+        // Nếu khớp từ khóa thì hiện, không thì ẩn
+        if (keyword === '' || idText.includes(keyword) || nameText.includes(keyword) || emailText.includes(keyword)) {
+        row.classList.remove('hidden');
+        totalVisible++;
+        } else {
+        row.classList.add('hidden');
+        }
+        });
+
+        // Xử lý dòng thông báo rỗng
+        const emptyRow = document.getElementById('chuTroEmptyFilterRow');
+        if (emptyRow) {
+        if (totalVisible === 0) emptyRow.classList.remove('hidden');
+        else emptyRow.classList.add('hidden');
+        }
+        }
+
+        // ==========================================
+        // CẬP NHẬT ĐỒNG HỒ THỜI GIAN THỰC
+        // ==========================================
+        setInterval(function() {
+        const clockElement = document.getElementById('realtimeClock');
+        if (clockElement) {
+        const now = new Date();
+
+        // Format Ngày/Tháng/Năm
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+
+        // Format Giờ:Phút:Giây
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+
+        // Ghi đè vào giao diện
+        clockElement.innerText = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+        }
+        }, 1000); // 1000ms = 1 giây chạy một lần
     </script>
 </body>
 </html>

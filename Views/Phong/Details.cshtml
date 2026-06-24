@@ -12,10 +12,6 @@
 }
 
 <div class="max-w-6xl mx-auto px-4 py-6">
-    <div class="mb-4">
-        <h1 class="text-2xl font-bold text-gray-800">Chi tiết phòng</h1>
-        <p class="text-gray-500 text-sm">Hệ thống quản lý vận hành tòa nhà</p>
-    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
@@ -26,13 +22,9 @@
                     {
                         <img id="mainImage" src="@anhChinh.ImagePath" class="w-full h-full object-cover" />
 
-                        <form asp-action="DeleteImage" method="post" class="absolute top-3 right-3" onsubmit="return confirm('Bạn có chắc muốn xóa ảnh này?');">
-                            <input type="hidden" name="maImage" value="@anhChinh.MaImage" />
-                            <input type="hidden" name="maPhong" value="@Model.MaPhong" />
-                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow transition-all">
-                                <i class="fas fa-trash text-sm"></i>
-                            </button>
-                        </form>
+                        <button type="button" onclick="moPopupXoaAnh(event, @anhChinh.MaImage, @Model.MaPhong)" class="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow transition-all focus:outline-none z-10">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
                     }
                     else
                     {
@@ -53,13 +45,9 @@
                              onclick="changeMainImage('@img.ImagePath', this)">
                             <img src="@img.ImagePath" class="w-full h-20 object-cover thumbnail-item" />
 
-                            <form asp-action="DeleteImage" method="post" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity" onsubmit="return confirm('Xóa ảnh này?');">
-                                <input type="hidden" name="maImage" value="@img.MaImage" />
-                                <input type="hidden" name="maPhong" value="@Model.MaPhong" />
-                                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center shadow">
-                                    <i class="fas fa-times text-[10px]"></i>
-                                </button>
-                            </form>
+                            <button type="button" onclick="moPopupXoaAnh(event, @img.MaImage, @Model.MaPhong)" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center shadow focus:outline-none z-10">
+                                <i class="fas fa-times text-[10px]"></i>
+                            </button>
                         </div>
                     }
                 </div>
@@ -123,11 +111,6 @@
                         <span class="text-gray-500 font-medium">Diện tích:</span>
                         <span class="font-bold text-gray-800">@Model.DienTich m²</span>
                     </div>
-                    <div class="flex justify-between py-2 border-b border-gray-100">
-                        <span class="text-gray-500 font-medium">Số người ở:</span>
-                        <span class="font-semibold text-gray-700">@(Model.SoLuongNguoiO ?? 2) người</span>
-                    </div>
-
                     <div class="flex justify-between py-2 border-b border-gray-100 items-start">
                         <span class="text-gray-500 font-medium shrink-0">Cơ sở vật chất:</span>
                         <span class="font-medium text-right text-xs text-gray-700 max-w-[65%] leading-relaxed">
@@ -177,7 +160,37 @@
     </div>
 </div>
 
+<div id="deleteImageModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <div id="deleteImageModalContent" class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
+        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base">Xác nhận xóa ảnh</h3>
+            <button type="button" onclick="dongPopupXoaAnh()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors focus:outline-none">
+                <i class="fas fa-times text-base"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 text-sm text-slate-600 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <i class="fas fa-trash-alt text-red-500 text-2xl"></i>
+            </div>
+            <p>Bạn có chắc chắn muốn xóa vĩnh viễn hình ảnh này khỏi phòng không?</p>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+            <button type="button" onclick="dongPopupXoaAnh()" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors focus:outline-none">
+                Hủy
+            </button>
+            <form asp-action="DeleteImage" method="post" id="formDeleteImageModal" class="m-0 p-0">
+                <input type="hidden" name="maImage" id="modalMaImage" value="" />
+                <input type="hidden" name="maPhong" id="modalMaPhong" value="" />
+                <button type="submit" id="btnConfirmDeleteImage" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-500/10 transition-colors flex items-center justify-center min-w-[100px]">
+                    Xác nhận
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+    // Hàm hoán đổi ảnh lớn trên giao diện chi tiết phòng
     function changeMainImage(src, element) {
         document.getElementById('mainImage').src = src;
 
@@ -189,4 +202,49 @@
         element.classList.remove('border-gray-200');
         element.classList.add('border-blue-500', 'ring-2', 'ring-blue-100');
     }
+
+    // Hàm mở popup modal xóa hình ảnh độc lập (Không bị lan click event)
+    function moPopupXoaAnh(e, maImage, maPhong) {
+        if (e) {
+            e.stopPropagation(); // Chặn hiện tượng lan sự kiện click
+            e.preventDefault();
+        }
+
+        document.getElementById('modalMaImage').value = maImage;
+        document.getElementById('modalMaPhong').value = maPhong;
+
+        const modal = document.getElementById('deleteImageModal');
+        const content = document.getElementById('deleteImageModalContent');
+
+        modal.classList.remove('hidden');
+
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            if (content) {
+                content.classList.remove('scale-95');
+            }
+        }, 10);
+    }
+
+    // Hàm ẩn popup modal xóa ảnh
+    function dongPopupXoaAnh() {
+        const modal = document.getElementById('deleteImageModal');
+        const content = document.getElementById('deleteImageModalContent');
+
+        modal.classList.add('opacity-0');
+        if (content) {
+            content.classList.add('scale-95');
+        }
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    // Thêm hiệu ứng loading spinner khi nhấn nút Xác nhận xóa
+    document.getElementById('formDeleteImageModal').addEventListener('submit', function() {
+        const btn = document.getElementById('btnConfirmDeleteImage');
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Đang xóa...';
+    });
 </script>

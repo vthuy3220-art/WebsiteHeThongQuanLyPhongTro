@@ -6,34 +6,39 @@
 
 <div class="space-y-6">
     <div class="flex justify-between items-center">
-        <a asp-action="Create" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all">
+        <a asp-action="Create" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm shadow-blue-600/20 transition-all flex items-center">
             <i class="fas fa-plus mr-2"></i> Thêm phòng mới
         </a>
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded">
-            <i class="fas fa-check-circle mr-2"></i> @TempData["Success"]
+        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center text-sm shadow-sm">
+            <i class="fas fa-check-circle text-green-500 mr-2.5 text-lg"></i> @TempData["Success"]
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
-            <i class="fas fa-exclamation-circle mr-2"></i> @TempData["Error"]
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center text-sm shadow-sm">
+            <i class="fas fa-exclamation-circle text-red-500 mr-2.5 text-lg"></i> @TempData["Error"]
         </div>
     }
 
-    <div class="bg-white rounded-xl shadow-md p-4">
-        <form method="get" class="flex gap-4">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+        <form method="get" class="flex flex-col md:flex-row gap-4">
             <div class="flex-1">
-                <input type="text" name="searchString" value="@ViewBag.SearchString"
-                       placeholder="Tìm kiếm theo tên phòng..."
-                       class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-slate-400"></i>
+                    </div>
+                    <input type="text" name="searchString" value="@ViewBag.SearchString"
+                           placeholder="Tìm kiếm theo tên phòng..."
+                           class="w-full pl-10 pr-4 py-2.5 text-sm text-slate-700 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors">
+                </div>
             </div>
-            <div>
-                <select name="trangThai" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="w-full md:w-48">
+                <select name="trangThai" class="w-full px-4 py-2.5 text-sm text-slate-700 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors appearance-none bg-white">
                     @foreach (var item in ViewBag.TrangThaiList)
                     {
                         if (ViewBag.TrangThai == item)
@@ -47,69 +52,76 @@
                     }
                 </select>
             </div>
-            <div>
-                <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-all">
-                    <i class="fas fa-search mr-2"></i> Tìm kiếm
+            <div class="w-full md:w-auto">
+                <button type="submit" class="w-full md:w-auto bg-slate-800 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-700 transition-all shadow-sm">
+                    Lọc dữ liệu
                 </button>
             </div>
         </form>
     </div>
 
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50/50 border-b border-slate-100">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã phòng</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên phòng</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Địa chỉ cụ thể</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cơ sở</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá phòng</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Diện tích</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Mã phòng</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tên phòng</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[200px]">Địa chỉ cụ thể</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Cơ sở</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Giá phòng</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Diện tích</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Trạng thái</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center whitespace-nowrap">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-slate-100 text-sm text-slate-600">
                     @foreach (var item in Model)
                     {
-                        <tr class="hover:bg-gray-50 transition-all">
-                            <td class="px-6 py-4">@item.MaPhong</td>
-                            <td class="px-6 py-4 font-medium">@item.TenPhong</td>
-                            <td class="px-6 py-4 text-slate-700">
-                                <i class="fas fa-map-marker-alt text-red-500 mr-1.5 text-xs"></i>@item.ToaNha?.DiaChi
+                        <tr class="hover:bg-slate-50/80 transition-colors duration-200">
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-slate-500">#@item.MaPhong</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-slate-800">@item.TenPhong</td>
+                            <td class="px-6 py-4 text-slate-600 leading-relaxed">
+                                <div class="flex items-start">
+                                    <i class="fas fa-map-marker-alt text-red-400 mt-1 mr-2 text-xs"></i>
+                                    <span>@item.ToaNha?.DiaChi</span>
+                                </div>
                             </td>
-                            <td class="px-6 py-4">@item.ToaNha?.CoSo?.TenCoSo</td>
-                            <td class="px-6 py-4 font-semibold text-slate-800">@item.GiaPhong.ToString("N0") đ</td>
-                            <td class="px-6 py-4">@item.DienTich m²</td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium border border-slate-200">
+                                    @item.ToaNha?.CoSo?.TenCoSo
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-blue-600">@item.GiaPhong.ToString("N0") đ</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-slate-700">@item.DienTich m²</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 @if (item.TrangThai == "Trống")
                                 {
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                                        <i class="fas fa-check-circle"></i> Trống
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                        <i class="fas fa-circle text-[8px] mr-1.5"></i> Trống
                                     </span>
                                 }
                                 else
                                 {
-                                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
-                                        <i class="fas fa-lock"></i> Đã thuê
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-100">
+                                        <i class="fas fa-lock text-[10px] mr-1.5"></i> Đã thuê
                                     </span>
                                 }
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="flex space-x-2">
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <div class="flex justify-center items-center space-x-3">
                                     <a asp-action="Details" asp-route-id="@item.MaPhong"
-                                       class="text-blue-500 hover:text-blue-700" title="Chi tiết">
+                                       class="text-slate-400 hover:text-blue-500 transition-colors" title="Chi tiết">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <a asp-action="Edit" asp-route-id="@item.MaPhong"
-                                       class="text-yellow-500 hover:text-yellow-700" title="Sửa">
+                                       class="text-slate-400 hover:text-amber-500 transition-colors" title="Sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <button type="button"
                                             onclick="moPopupXoaPhong('/Phong/Delete/@item.MaPhong', '@item.TenPhong', '@item.ToaNha?.TenToaNha', '@item.GiaPhong.ToString("N0")')"
-                                            class="text-red-500 hover:text-red-700 focus:outline-none" title="Xóa">
-                                        <i class="fas fa-trash"></i>
+                                            class="text-slate-400 hover:text-red-500 transition-colors focus:outline-none" title="Xóa">
+                                        <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </div>
                             </td>
@@ -121,53 +133,63 @@
 
         @if (!Model.Any())
         {
-            <div class="text-center py-12">
-                <i class="fas fa-inbox text-gray-300 text-5xl mb-3"></i>
-                <p class="text-gray-500">Không có dữ liệu phòng trọ</p>
-                <a asp-action="Create" class="inline-block mt-3 text-blue-500 hover:underline">Thêm phòng đầu tiên</a>
+            <div class="text-center py-16 px-4">
+                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                    <i class="fas fa-door-open text-slate-300 text-3xl"></i>
+                </div>
+                <h3 class="text-slate-800 font-bold mb-1">Chưa có phòng trọ nào</h3>
+                <p class="text-slate-500 text-sm mb-4">Hệ thống chưa ghi nhận dữ liệu phòng trọ nào của bạn.</p>
+                <a asp-action="Create" class="inline-flex items-center text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Thêm phòng đầu tiên
+                </a>
             </div>
         }
     </div>
 </div>
-<!-- ==================== KHỐI POPUP MODAL PHÒNG TRỌ CỠ LỚN (MAX-W-LG) SẠCH BÁCH ICON ==================== -->
+
 <div id="deletePhongModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
-        <!-- Header -->
-        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="font-bold text-slate-800 text-sm md:text-base">
-                Xác nhận gỡ bỏ phòng trọ khỏi hệ thống
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-slate-100">
+        <div class="p-5 bg-white border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center">
+                <div class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center mr-2.5">
+                    <i class="fas fa-exclamation-triangle text-xs"></i>
+                </div>
+                Xác nhận gỡ bỏ phòng trọ
             </h3>
-            <button onclick="dongPopupXoaPhong()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors focus:outline-none">
-                <i class="fas fa-times text-base"></i>
+            <button onclick="dongPopupXoaPhong()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none">
+                <i class="fas fa-times"></i>
             </button>
         </div>
-        <!-- Body -->
         <div class="p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
             <p>Bạn có chắc chắn muốn xóa vĩnh viễn phòng trọ này ra khỏi hệ thống danh sách không?</p>
 
-            <div class="bg-red-50/40 border border-red-100 rounded-xl p-4 space-y-2 text-slate-700 font-medium">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-gray-400 font-normal w-24 inline-block">Tên phòng:</span>
+            <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3 text-slate-700">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-200/60">
+                    <span class="text-slate-500 font-medium">Tên phòng:</span>
                     <span class="text-slate-900 font-bold text-base" id="popupRoomName">N/A</span>
                 </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="text-gray-400 font-normal w-24 inline-block">Thuộc tòa nhà:</span>
+                <div class="flex items-center justify-between pb-3 border-b border-slate-200/60">
+                    <span class="text-slate-500 font-medium">Thuộc tòa nhà:</span>
                     <span class="text-blue-600 font-bold" id="popupBuildingName">N/A</span>
                 </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="text-gray-400 font-normal w-24 inline-block">Giá niêm yết:</span>
-                    <span class="text-slate-800 font-bold" id="popupRoomPrice">0</span><span> đ/tháng</span>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500 font-medium">Giá niêm yết:</span>
+                    <div>
+                        <span class="text-slate-800 font-bold" id="popupRoomPrice">0</span><span class="text-slate-500"> đ/tháng</span>
+                    </div>
                 </div>
             </div>
 
-            <p class="text-xs text-slate-400 font-normal">Lưu ý: Khi xóa phòng, toàn bộ dữ liệu kiểm kê cơ sở vật chất thuộc phòng này sẽ bị xóa theo. Hệ thống sẽ báo lỗi nếu phòng đang có hợp đồng thuê còn hiệu lực.</p>
+            <p class="text-xs text-rose-500/80 bg-rose-50 p-3 rounded-xl border border-rose-100 font-medium flex items-start">
+                <i class="fas fa-info-circle mt-0.5 mr-2"></i>
+                <span>Lưu ý: Khi xóa phòng, toàn bộ dữ liệu kiểm kê cơ sở vật chất sẽ bị xóa theo. Hệ thống sẽ chặn nếu phòng đang có hợp đồng thuê còn hiệu lực.</span>
+            </p>
         </div>
-        <!-- Footer -->
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
-            <button onclick="dongPopupXoaPhong()" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors focus:outline-none">
-                Hủy
+        <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3">
+            <button onclick="dongPopupXoaPhong()" type="button" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-xl hover:bg-slate-50 transition-colors focus:outline-none shadow-sm">
+                Hủy bỏ
             </button>
-            <a id="btnConfirmDeletePhong" href="#" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-500/10 transition-colors flex items-center justify-center">
+            <a id="btnConfirmDeletePhong" href="#" class="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-xl shadow-sm shadow-red-500/20 transition-all flex items-center justify-center min-w-[120px]">
                 Xác nhận xóa
             </a>
         </div>
@@ -176,16 +198,13 @@
 
 <script>
     function moPopupXoaPhong(deleteUrl, roomName, buildingName, price) {
-        // Đổ dữ liệu động vào giao diện modal mẫu
         document.getElementById('popupRoomName').innerText = roomName;
         document.getElementById('popupBuildingName').innerText = buildingName ? buildingName : 'Chưa cập nhật';
         document.getElementById('popupRoomPrice').innerText = price;
 
-        // Gán link hành động xóa thực tế vào thẻ a của popup
         const confirmBtn = document.getElementById('btnConfirmDeletePhong');
         confirmBtn.setAttribute('href', deleteUrl);
 
-        // Hiển thị modal kèm hiệu ứng chuyển động mượt mà
         const modal = document.getElementById('deletePhongModal');
         modal.classList.remove('hidden');
         setTimeout(() => {
@@ -193,10 +212,9 @@
             modal.querySelector('.transform').classList.remove('scale-95');
         }, 10);
 
-        // Hiệu ứng đổi text nút bấm khi nhấn thực tế
         confirmBtn.onclick = function() {
             this.style.pointerEvents = 'none';
-            this.innerText = 'Đang xóa...';
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xóa...';
         };
     }
 
@@ -207,7 +225,6 @@
         setTimeout(() => modal.classList.add('hidden'), 300);
     }
 
-    // Nhấn phím Escape đóng nhanh cửa sổ modal
     window.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             dongPopupXoaPhong();

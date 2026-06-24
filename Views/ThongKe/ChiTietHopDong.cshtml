@@ -6,13 +6,33 @@
     int dangHieuLuc = ViewBag.DangHieuLuc ?? 0;
     int hetHan = ViewBag.HetHan ?? 0;
     int daHuy = ViewBag.DaHuy ?? 0;
+
+    var danhSachToaNha = ViewBag.DanhSachToaNha as IEnumerable<HeThongQuanLyPhongTro.Models.ToaNha>;
+    int? selectedMaToaNha = ViewBag.SelectedMaToaNha as int?;
 }
 
 <div class="bg-slate-50 min-h-screen p-6">
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 class="text-2xl font-bold text-gray-800">Thống kê trạng thái Hợp đồng</h1>
-        <div>
-            <a href="@Url.Action("XuatPDFChiTietHopDong", "ThongKe")" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition mr-2" style="text-decoration:none;">Xuất PDF</a>
+
+        <div class="flex gap-2 flex-wrap items-center">
+            <form method="get" asp-action="ChiTietHopDong" asp-controller="ThongKe" class="flex gap-2 items-center">
+                <select name="maToaNha" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm font-medium text-gray-700">
+                    <option value="">-- Tất cả tòa nhà --</option>
+                    @if (danhSachToaNha != null)
+                    {
+                        foreach (var t in danhSachToaNha)
+                        {
+                            <option value="@t.MaToaNha" selected="@(selectedMaToaNha == t.MaToaNha ? "selected" : null)">
+                                @t.TenToaNha
+                            </option>
+                        }
+                    }
+                </select>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">Lọc</button>
+            </form>
+
+            <a href="@Url.Action("XuatPDFChiTietHopDong", "ThongKe", new { maToaNha = selectedMaToaNha })" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition" style="text-decoration:none;">Xuất PDF</a>
             <a asp-action="Index" asp-controller="ThongKe" class="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 transition" style="text-decoration:none;">Quay lại Dashboard</a>
         </div>
     </div>
@@ -108,24 +128,24 @@
     <script>
         var ctx = document.getElementById('hopDongChart').getContext('2d');
         new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Đang hiệu lực', 'Hết hạn', 'Đã hủy'],
-                datasets: [{
-                    data: [@dangHieuLuc, @hetHan, @daHuy],
-                    backgroundColor: ['#14b8a6', '#9ca3af', '#f43f5e'], // Teal, Gray, Rose
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '65%',
-                plugins: {
-                    legend: { position: 'right' }
-                }
-            }
+        type: 'doughnut',
+        data: {
+        labels: ['Đang hiệu lực', 'Hết hạn', 'Đã hủy'],
+        datasets: [{
+        data: [@dangHieuLuc, @hetHan, @daHuy],
+        backgroundColor: ['#14b8a6', '#9ca3af', '#f43f5e'],
+        borderWidth: 2,
+        borderColor: '#ffffff'
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+        legend: { position: 'right' }
+        }
+        }
         });
     </script>
 }

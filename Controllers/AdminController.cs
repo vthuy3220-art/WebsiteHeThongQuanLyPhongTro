@@ -25,6 +25,34 @@ namespace HeThongQuanLyPhongTro.Controllers
             ViewBag.TotalPhong = await _context.Phong.CountAsync();
             ViewBag.PendingBaiDang = await _context.BaiDang.CountAsync(b => b.TrangThai == "Chờ duyệt");
 
+            // ===== BỔ SUNG: THỐNG KÊ SỐ LƯỢNG BÀI ĐĂNG 6 THÁNG QUA =====
+            var role = HttpContext.Session.GetString("Role");
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            var queryBaiDang = _context.BaiDang.AsQueryable();
+            var thongKeBaiDang = new List<object>();
+            for (int i = 5; i >= 0; i--)
+            {
+                var mThang = DateTime.Now.AddMonths(-i);
+
+                // Lấy đúng số lượng bài đăng thực tế theo từng tháng/năm
+                int soLuong = await queryBaiDang
+                    .Where(b => b.NgayDang.HasValue
+                             && b.NgayDang.Value.Month == mThang.Month
+                             && b.NgayDang.Value.Year == mThang.Year)
+                    .CountAsync();
+
+                thongKeBaiDang.Add(new
+                {
+                    thang = mThang.Month,
+                    nam = mThang.Year,
+                    soLuong = soLuong,
+                    nhan = $"T{mThang.Month}"
+                });
+            }
+            ViewBag.ThongKeBaiDang = thongKeBaiDang;
+
+
             // Khai báo danh sách bài đăng chuẩn
             var danhSachBaiDang = await _context.BaiDang
                 .Include(b => b.PhongNavigation)

@@ -1,29 +1,19 @@
 ﻿@model IEnumerable<HeThongQuanLyPhongTro.Models.ChiTietHopDongViewModel>
 @{
     Layout = null;
-    int tongSo = ViewBag.TongSo ?? 0;
-    int dangHieuLuc = ViewBag.DangHieuLuc ?? 0;
-    int hetHan = ViewBag.HetHan ?? 0;
-    int daHuy = ViewBag.DaHuy ?? 0;
-    // Kiểm tra đa tầng: Lấy từ ViewBag -> Lấy từ User hệ thống -> Lấy từ Session tài khoản
-    string tenNguoiXuat = "Admin";
 
-    if (ViewBag.Username != null && !string.IsNullOrWhiteSpace(ViewBag.Username.ToString()))
-    {
-        tenNguoiXuat = ViewBag.Username.ToString();
-    }
-    else if (User.Identity != null && !string.IsNullOrWhiteSpace(User.Identity.Name))
-    {
-        tenNguoiXuat = User.Identity.Name;
-    }
-    else if (Context.Session.GetString("UserName") != null)
-    {
-        tenNguoiXuat = Context.Session.GetString("UserName");
-    }
+    // ĐÃ SỬA: Đếm trực tiếp từ Model để không bao giờ bị rớt dữ liệu bằng 0 nữa
+    int tongSo = Model?.Count() ?? 0;
+    int dangHieuLuc = Model?.Count(x => x.TrangThai == "Đang hiệu lực") ?? 0;
+    int hetHan = Model?.Count(x => x.TrangThai == "Hết hạn") ?? 0;
+    int daHuy = Model?.Count(x => x.TrangThai == "Đã hủy") ?? 0;
 
-    // ĐÃ SỬA: Đổi mã màu # thành chữ (teal, gray, crimson) để trị dứt điểm lỗi đứt Link hình ảnh
-    string chartJson = $"{{type:'doughnut',data:{{labels:['Đang hiệu lực','Hết hạn','Đã hủy'],datasets:[{{data:[{dangHieuLuc},{hetHan},{daHuy}],backgroundColor:['teal','gray','crimson']}}]}}}}";
-    string chartUrl = "https://quickchart.io/chart?w=500&h=250&c=" + Uri.EscapeDataString(chartJson);
+    // Lấy tên người lập từ Controller truyền sang
+    string nguoiLap = ViewBag.Username as string ?? "...................................";
+
+    // Link tạo ảnh biểu đồ tự động
+    string chartJson = "{type:'doughnut',data:{labels:['Đang hiệu lực','Hết hạn','Đã hủy'],datasets:[{data:[" + dangHieuLuc + "," + hetHan + "," + daHuy + "],backgroundColor:['#0d9488','#94a3b8','#e11d48']}]}}";
+    string chartUrl = "https://quickchart.io/chart?w=450&h=220&c=" + Uri.EscapeDataString(chartJson);
 }
 <!DOCTYPE html>
 <html>
@@ -78,7 +68,7 @@
     <table style="border: none; margin-bottom: 20px;">
         <tr style="border: none;">
             <td style="border: none; text-align: left; width: 40%; vertical-align: top;">
-                <b>HỆ THỐNG QUẢN LÝ TRỌ</b><br />Người lập: @tenNguoiXuat
+                <b>HỆ THỐNG QUẢN LÝ TRỌ</b><br />Người lập: @nguoiLap
             </td>
             <td style="border: none; text-align: center; width: 60%;">
                 <b style="font-size: 16px;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br />
@@ -96,7 +86,7 @@
 
     <div class="chart-container">
         <h3 style="text-align: center; margin-bottom: 10px; font-size: 15px;">Biểu đồ phân bổ trạng thái hợp đồng</h3>
-        <img src="@chartUrl" style="max-width: 100%; height: auto;" />
+        <img src="@chartUrl" width="450" height="220" style="display: block; margin: 0 auto;" />
     </div>
 
     <table>
@@ -142,8 +132,9 @@
             <td style="border: none; width: 55%;"></td>
             <td style="border: none; width: 45%; text-align: center;">
                 <i>Ngày @DateTime.Now.Day tháng @DateTime.Now.Month năm @DateTime.Now.Year</i><br />
-                <b style="font-size: 15px;">Người lập biểu</b><br /><br /><br /><br />
-                <b>@tenNguoiXuat</b>
+                <b style="font-size: 15px;">Người lập biểu</b><br />
+                <i style="font-size: 12px; color: #555;">(Ký, ghi rõ họ tên)</i><br /><br /><br /><br />
+                <b style="font-size: 15px;">@nguoiLap</b>
             </td>
         </tr>
     </table>

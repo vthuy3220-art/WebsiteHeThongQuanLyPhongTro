@@ -583,7 +583,8 @@ namespace HeThongQuanLyPhongTro.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             var role = GetCurrentRole();
-            if (role != "Admin" && role != "SuperAdmin")
+            // Đã bổ sung thêm role ChuTro
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro")
             {
                 return RedirectToAction("Index", "Login");
             }
@@ -601,7 +602,8 @@ namespace HeThongQuanLyPhongTro.Controllers
         public async Task<IActionResult> Edit(int id, KhachHang khachHang)
         {
             var role = GetCurrentRole();
-            if (role != "Admin" && role != "SuperAdmin")
+            // Đã bổ sung thêm role ChuTro
+            if (role != "Admin" && role != "SuperAdmin" && role != "ChuTro")
             {
                 return RedirectToAction("Index", "Login");
             }
@@ -628,7 +630,7 @@ namespace HeThongQuanLyPhongTro.Controllers
             return View(khachHang);
         }
 
-        // ==================== XÓA TÀI KHOẢN KHÁCH  ====================
+        // ==================== XÓA KHÁCH HÀNG ====================
         public async Task<IActionResult> Delete(int? id)
         {
             var userId = GetCurrentUserId();
@@ -637,60 +639,72 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             if (id == null) return NotFound();
 
-            var taiKhoan = await _context.TaiKhoan.FindAsync(id);
-            if (taiKhoan == null) return NotFound();
+            // ✅ Tìm khách hàng theo MaKhachHang
+            var khachHang = await _context.KhachHang
+                .Include(k => k.TaiKhoanNavigation)
+                .FirstOrDefaultAsync(k => k.MaKhachHang == id);
 
-            // Thực hiện xóa liên kết với khách hàng trước
-            if (taiKhoan.VaiTro == "Khach")
+            if (khachHang == null) return NotFound();
+
+            // Kiểm tra hợp đồng hiệu lực
+            var hasActiveContract = await _context.HopDong
+                .AnyAsync(h => h.MaKhachHang == khachHang.MaKhachHang && h.TrangThai == "Hiệu lực");
+
+            if (hasActiveContract)
             {
-                var khachHang = await _context.KhachHang.FirstOrDefaultAsync(k => k.MaTaiKhoan == id);
-                if (khachHang != null)
-                {
-                    khachHang.MaTaiKhoan = null;
-                    _context.Update(khachHang);
-                    await _context.SaveChangesAsync();
-                }
+                ViewBag.HasContract = true;
+                ViewBag.Error = "Khách hàng này đang có hợp đồng hiệu lực, không thể xóa!";
+                return View(khachHang);
             }
 
-            // Xóa tài khoản khỏi DB
-            _context.TaiKhoan.Remove(taiKhoan);
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Xóa tài khoản người dùng thành công!";
-
-            // Tự động nhận diện vai trò để điều hướng về đúng trang danh sách đang xem
-            if (role == "ChuTro")
-            {
-                return RedirectToAction("DanhSachKhachHang");
-            }
-            return RedirectToAction("Index");
+            return View(khachHang);
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var userId = GetCurrentUserId();
             var role = GetCurrentRole();
-            if (role != "Admin" && role != "SuperAdmin")
+            if (userId == 0) return RedirectToAction("Index", "Login");
+
+            var khachHang = await _context.KhachHang
+                .Include(k => k.TaiKhoanNavigation)
+                .FirstOrDefaultAsync(k => k.MaKhachHang == id);
+
+            if (khachHang == null) return NotFound();
+
+            // ✅ Kiểm tra có hợp đồng không (BẤT KỲ TRẠNG THÁI NÀO)
+            var hasContract = await _context.HopDong
+                .AnyAsync(h => h.MaKhachHang == khachHang.MaKhachHang);
+
+            if (hasContract)
             {
-                return RedirectToAction("Index", "Login");
+                TempData["Error"] = "Không thể xóa khách hàng này vì đã có hợp đồng trong hệ thống!";
+                return RedirectToAction("QuanLy");
             }
 
-            var khachHang = await _context.KhachHang.FindAsync(id);
-            if (khachHang != null)
+            // Xóa tài khoản nếu có
+            if (khachHang.MaTaiKhoan.HasValue)
             {
-                var coHopDong = await _context.HopDong.AnyAsync(h => h.MaKhachHang == id);
-                if (coHopDong)
+                var taiKhoan = await _context.TaiKhoan
+                    .FirstOrDefaultAsync(t => t.MaTaiKhoan == khachHang.MaTaiKhoan);
+                if (taiKhoan != null)
                 {
-                    TempData["Error"] = "Không thể xóa khách hàng này vì đã có hợp đồng!";
-                    return RedirectToAction(nameof(QuanLy));
+                    _context.TaiKhoan.Remove(taiKhoan);
                 }
-
-                _context.KhachHang.Remove(khachHang);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "Xóa khách hàng thành công!";
             }
 
-            return RedirectToAction(nameof(QuanLy));
+            _context.KhachHang.Remove(khachHang);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Xóa khách hàng thành công!";
+
+            if (role == "ChuTro")
+            {
+                return RedirectToAction("QuanLy");
+            }
+            return RedirectToAction("Index");
         }
     }
 }

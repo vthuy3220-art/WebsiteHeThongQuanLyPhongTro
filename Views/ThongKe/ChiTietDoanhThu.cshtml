@@ -5,15 +5,35 @@
     decimal tongDoanhThu = ViewBag.TongDoanhThu ?? 0;
     decimal trungBinh = ViewBag.TrungBinh ?? 0;
     int soGiaoDich = ViewBag.SoGiaoDich ?? 0;
+
+    // Lấy thời gian thực từ biến hệ thống (hiện tại sẽ hiển thị 6/2026)
     int thang = ViewBag.Thang ?? DateTime.Now.Month;
     int nam = ViewBag.Nam ?? DateTime.Now.Year;
+
+    var danhSachToaNha = ViewBag.DanhSachToaNha as IEnumerable<HeThongQuanLyPhongTro.Models.ToaNha>;
+    int? selectedMaToaNha = ViewBag.SelectedMaToaNha as int?;
 }
+
 <div class="bg-slate-50 min-h-screen p-6">
     <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <h1 class="text-2xl font-bold text-gray-800">Chi tiết Doanh Thu - Tháng @thang/@nam</h1>
+        <h1 class="text-2xl font-bold text-gray-800">Tháng @thang/@nam</h1>
 
         <div class="flex gap-2 flex-wrap items-center">
-            <form method="get" asp-action="ChiTietDoanhThu" asp-controller="ThongKe" class="flex gap-2">
+            <form method="get" asp-action="ChiTietDoanhThu" asp-controller="ThongKe" class="flex gap-2 items-center">
+
+                <select name="maToaNha" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm font-medium text-gray-700">
+                    <option value="">-- Tất cả tòa nhà --</option>
+                    @if (danhSachToaNha != null)
+                    {
+                        foreach (var t in danhSachToaNha)
+                        {
+                            <option value="@t.MaToaNha" selected="@(selectedMaToaNha == t.MaToaNha ? "selected" : null)">
+                                @t.TenToaNha
+                            </option>
+                        }
+                    }
+                </select>
+
                 <select name="thang" class="border border-gray-300 rounded px-3 py-2 bg-white shadow-sm">
                     @for (int i = 1; i <= 12; i++)
                     {
@@ -28,7 +48,8 @@
                 </select>
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">Lọc</button>
             </form>
-            <a href="@Url.Action("XuatPDFBaoCao", "ThongKe", new { thang = thang, nam = nam })" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition" style="text-decoration:none;">Xuất PDF</a>
+
+            <a href="@Url.Action("XuatPDFBaoCao", "ThongKe", new { thang = thang, nam = nam, maToaNha = selectedMaToaNha })" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition" style="text-decoration:none;">Xuất PDF</a>
             <a asp-action="Index" asp-controller="ThongKe" class="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 transition" style="text-decoration:none;">Trở về</a>
         </div>
     </div>
@@ -123,7 +144,7 @@
         backgroundColor: 'rgba(13,148,136,0.1)',
         borderWidth: 2,
         fill: true,
-        tension: 0 // ĐÃ SỬA CHUẨN: Bằng 0 để đường đi miền bị gấp khúc thẳng tắp, không uốn cong phi thực tế
+        tension: 0
         }]
         },
         options: {
