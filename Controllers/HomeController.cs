@@ -96,22 +96,31 @@ namespace HeThongQuanLyPhongTro.Controllers
             var phong = await _context.Phong
                 .Include(p => p.ToaNha)
                     .ThenInclude(t => t.CoSo)
+                .Include(p => p.ChuTro)  // ✅ Lấy luôn thông tin chủ trọ
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.MaPhong == id);
 
             if (phong == null) return NotFound();
+
+            // ✅ Lấy bài đăng (chỉ lấy, không cần SoDienThoaiLienHe)
+            var baiDang = await _context.BaiDang
+                .Where(b => b.MaPhong == id)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+            ViewBag.BaiDang = baiDang;
+
+            // ✅ Lấy số điện thoại trực tiếp từ TaiKhoan của chủ trọ
+            var chuTro = await _context.TaiKhoan
+                .FirstOrDefaultAsync(t => t.MaTaiKhoan == phong.MaChuTro);
+
+            string soDienThoai = chuTro?.SoDienThoai ?? "Chưa cập nhật";
+            ViewBag.SoDienThoaiLienHe = soDienThoai;
 
             var images = await _context.PhongImage
                 .Where(i => i.MaPhong == id)
                 .AsNoTracking()
                 .ToListAsync();
             ViewBag.Images = images;
-
-            var baiDang = await _context.BaiDang
-                .Where(b => b.MaPhong == id)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
-            ViewBag.BaiDang = baiDang;
 
             var csvcList = await _context.CoSoVatChat
                 .Where(c => c.MaPhong == id)

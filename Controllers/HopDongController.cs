@@ -673,141 +673,278 @@ namespace HeThongQuanLyPhongTro.Controllers
 
             var sb = new StringBuilder();
             sb.Append(@"
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset='utf-8' />
-                <style>
-                    body { font-family: 'Times New Roman', Times, serif; font-size: 14pt; line-height: 1.5; margin: 0; padding: 0; color: #000; }
-                    .page { width: 210mm; min-height: 297mm; padding: 20mm 15mm 20mm 25mm; margin: auto; box-sizing: border-box; }
-                    .text-center { text-align: center; }
-                    .text-right { text-align: right; }
-                    .bold { font-weight: bold; }
-                    .italic { font-style: italic; }
-                    .underline { text-decoration: underline; }
-                    .header-title { font-size: 13pt; text-transform: uppercase; }
-                    .main-title { font-size: 16pt; font-weight: bold; margin-top: 30px; margin-bottom: 30px; text-transform: uppercase; }
-                    .section-title { font-weight: bold; text-transform: uppercase; margin-top: 15px; margin-bottom: 5px; }
-                    .indent { padding-left: 25px; }
-                    .table-sign { width: 100%; margin-top: 40px; border: none; }
-                    .table-sign td { width: 50%; text-align: center; vertical-align: top; border: none; }
-                    .sign-space { height: 100px; }
-                </style>
-            </head>
-            <body>
-                <div class='page'>
-                    <div class='text-center bold header-title'>CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-                    <div class='text-center bold underline' style='font-size: 14pt; margin-top: 5px;'>Độc lập – Tự do – Hạnh phúc</div>
-                    <div class='text-center' style='margin-top: 10px;'>---------------</div>
-                    
-                    <div class='text-center main-title'>HỢP ĐỒNG CHO THUÊ PHÒNG</div>
-                    
-                    <p class='italic'>Hôm nay, ngày " + ngayKy.Day + @" tháng " + ngayKy.Month + @" năm " + ngayKy.Year + @"</p>
-                    
-                    <p class='bold italic'>Chúng tôi gồm :</p>
-                    
-                    <div class='section-title'>I . BÊN CHO THUÊ ( BÊN A )</div>
-                    <div class='indent'>
-                        <p><span class='bold'>Ông ( Bà ) :</span> ............................................................ <span class='bold'>. ĐT :</span> ....................................</p>
-                        <p><span class='bold'>CCCD số :</span> ............................................................</p>
-                        <p><span class='bold'>TT tại :</span> .....................................................................................................................................</p>
-                        <p><span class='bold'>Là chủ sở hữu ngôi nhà số :</span> " + (hopDong.PhongNavigation?.ToaNha?.DiaChi ?? "........................................................................................") + @"</p>
-                    </div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='utf-8' />
+        <style>
+            body { font-family: 'Times New Roman', Times, serif; font-size: 13pt; line-height: 1.5; margin: 0; padding: 0; color: #000; }
+            .page { width: 210mm; min-height: 297mm; padding: 15mm; margin: auto; box-sizing: border-box; }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .bold { font-weight: bold; }
+            .italic { font-style: italic; }
+            .underline { text-decoration: underline; }
+            .header-title { font-size: 14pt; }
+            .main-title { font-size: 16pt; font-weight: bold; margin-top: 20px; margin-bottom: 20px; }
+            .indent { padding-left: 30px; }
+            .table-sign { width: 100%; margin-top: 30px; border: none; }
+            .table-sign td { width: 50%; text-align: center; vertical-align: top; border: none; }
+            .sign-space { height: 80px; }
+            table, th, td { border: 1px solid black; border-collapse: collapse; padding: 5px; }
+            th { text-align: center; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <div class='page'>
+            <div class='text-center bold header-title'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+            <div class='text-center italic' style='font-size: 13pt; margin-top: 5px;'>Độc lập - Tự do - Hạnh phúc</div>
+    <p class='text-right italic'>Hôm nay, ngày " + ngayKy.Day + @" tháng " + ngayKy.Month + @" năm " + ngayKy.Year + @"</p>
+        
+            <div class='text-center main-title'>HỢP ĐỒNG THUÊ PHÒNG</div>
+            
+<p class='bold italic'>Chúng tôi gồm :</p>
+            <p>BÊN A: BÊN CHO THUÊ</p>
+            <p>Họ và tên : ........................................................................................................................</p>
+            <p>CMND số : .................................... </p>
+            <p>Thường Trú: ........................................................................................................................</p>
+            <p>Số điện thoại : .....................................................................................................................</p>
+            
+            <p>BÊN B: BÊN THUÊ</p>
+            <p>Họ và tên : " + (hopDong.KhachHangNavigation?.HoTen ?? ".......................................................") + @"</p>
+            <p>CMND số : " + (hopDong.KhachHangNavigation?.CCCD ?? "....................................") + @" </p>
+            <p>Thường trú: " + (hopDong.KhachHangNavigation?.DiaChi ?? "........................................................................................................") + @"</p>
+            <p>Số điện thoại : " + (hopDong.KhachHangNavigation?.SoDienThoai ?? ".......................................................") + @"</p>
+            
+            <p>Sau khi thảo luận trên tinh thần dân chủ, cùng có lợi, Hai Bên thống nhất các nội dung sau:</p>
+            
+            <p class='bold'>Điều 1:</p>
+            <p>1.1. Bên A đồng ý cho Bên B thuê căn phòng để ở.</p>
+            <p>1.2. Bên A đồng ý cho Bên B thuê và Bên B cũng đồng ý thuê một căn phòng gắn liền với tòa nhà tại địa chỉ số " + (hopDong.PhongNavigation?.ToaNha?.DiaChi ?? "........................................................................................") + @" để sử dụng làm nơi để ở.</p>
+            <p>1.3. Bên A cam kết quyền sử dụng phòng và tòa nhà gắn liền trên đất trên là tài sản sở hữu hợp pháp của Bên A. Mọi tranh chấp phát sinh từ tài sản cho thuê trên Bên A hoàn toàn chịu trách nhiệm trước pháp luật.</p>
+            <p>1.4. Thời hạn của hợp đồng là " + thoiHanThang + @" tháng. Từ ngày " + (hopDong.NgayBatDau.HasValue ? hopDong.NgayBatDau.Value.ToString("dd/MM/yyyy") : "..../..../.......") + @" đến ngày " + (hopDong.NgayKetThuc.HasValue ? hopDong.NgayKetThuc.Value.ToString("dd/MM/yyyy") : "..../..../.......") + @"</p>
+            
+            <p class='bold'>Điều 2:</p>
+            <p>2.1. Giá thuê: " + (hopDong.PhongNavigation?.GiaPhong ?? 0).ToString("N0") + @" VNĐ</p>
+            <p>2.2. Chi phí dịch vụ hàng tháng:</p>
+            <p class='indent'>- Tiền điện: ........................ đ/kWh</p>
+            <p class='indent'>- Tiền nước: ........................ đ/khối</p>
+            <p class='indent'>- Phí dịch vụ: ........................ đ/tháng</p>
+            <p>2.3. Quá thời hạn 7 ngày mà bên B chưa thanh toán thì coi như bên B đã vi phạm hợp đồng, bên A có quyền thu hồi phòng, trục xuất đồ bên B, chấm dứt hợp đồng và không trả tiền đặt cọc.</p>
+            <p>2.4. Bên B đặt cọc " + (hopDong.TienCoc ?? 0).ToString("N0") + @" VNĐ tiền phòng cho bên A. Để nhận lại khoản cọc này, bên B cần tuân thủ các điều kiện sau đây:</p>
+            <p class='indent'>- Bên B phải đảm bảo tuân thủ các điều khoản quy định tại Điều 1;</p>
+            <p class='indent'>- Bên B phải chủ động thông báo cho bên A ít nhất trước 30 ngày trước khi kết thúc hợp đồng quy định tại điều 1. Nếu hết thời hạn hợp đồng mà bên B không thông báo trước 30 ngày thì sẽ bị phạt tiền đặt cọc.</p>
+            <p>2.5. Tiền cọc bên A sẽ hoàn trả lại cho bên B khi hết hạn hợp đồng + sau khi trừ chi phí sinh hoạt và thiệt hại do bên B gây ra (nếu có).</p>
+            <p>2.6. Bên B có 7 ngày làm việc sau thời điểm bàn giao phòng để kiểm tra và yêu cầu bên A đảm bảo các trang thiết bị trong phòng ở tình trạng tốt.</p>
+            
+            <p class='bold'>Điều 3: Quyền và trách nhiệm bên A</p>
+            <p>3.1. Giao phòng, trang thiết bị trong phòng cho bên B đúng ngày ký hợp đồng;</p>
+            <p>3.2. Thực hiện việc kiểm tra định kỳ với trang thiết bị trong phòng do bên A cung cấp.</p>
+            <p>3.3. Đảm bảo việc hoạt động của các trang thiết bị trong không gian chung của tòa nhà.</p>
+            <p>3.4. Cho phép bên B đăng ký tạm trú.</p>
+            <p>3.5. Trong thời gian ký hợp đồng mà bên A muốn lấy lại phòng, phải báo trước 01 tháng cho bên B và hoàn trả lại tiền cọc, không thu phí thuê phòng trong 01 tháng đó.</p>
 
-                    <div class='section-title'>II . BÊN THUÊ ( BÊN B )</div>
-                    <div class='indent'>
-                        <p><span class='bold'>Đại diện : Ông ( Bà ) :</span> " + (hopDong.KhachHangNavigation?.HoTen ?? "....................................") + @" <span class='bold'>. SN :</span> " + (hopDong.KhachHangNavigation?.NgaySinh.HasValue == true ? hopDong.KhachHangNavigation.NgaySinh.Value.ToString("dd/MM/yyyy") : "....................") + @"</p>
-                        <p><span class='bold'>CCCD số :</span> " + (hopDong.KhachHangNavigation?.CCCD ?? "....................................") + @"</p>
-                        <p><span class='bold'>HKTT :</span> " + (hopDong.KhachHangNavigation?.DiaChi ?? "........................................................................") + @"</p>
-                        <p><span class='bold'>ĐT :</span> " + (hopDong.KhachHangNavigation?.SoDienThoai ?? "....................................") + @"</p>
-                        <p><span class='bold'>Tổng số người ở :</span> " + (nguoiOList != null ? (nguoiOList.Count + 1).ToString() : "1") + @" Người</p>
-                        
-                        <p class='bold italic' style='margin-top: 10px; margin-bottom: 5px;'>Người Ở Cùng :</p>");
+            <div style=""page-break-before: always;""></div>
+
+
+            <p class='bold'>Điều 4: Quyền và trách nhiệm bên B</p>
+            <p>4.1. Trả tiền thuê phòng đúng hạn đã quy định tại điều 2.</p>
+            <p>4.2. Hàng tháng bên B có trách nhiệm thanh toán bằng tiền mặt hoặc chuyển khoản vào số tài khoản bên A cung cấp.</p>
+            <p>4.3. Chịu trách nhiệm và kinh phí sửa chữa với những đồ dùng, nội thất do bên B sử dụng (nếu có) và các khoản phí dịch vụ sử dụng tại phòng.</p>
+            <p>4.4. Sử dụng đúng mục đích thuê phòng, khi cần sửa chữa, cải tạo theo yêu cầu sử dụng riêng, đóng đinh, khoan, cắt, lắp đặt các thiết bị phải được sự đồng ý của bên A.</p>
+            <p>4.5. Đồ đạc trang thiết bị trong phòng phải có trách nhiệm bảo quản cẩn thận, hư hỏng do khách quan của thiết bị cần sửa chữa lại. Nếu hư hỏng do chủ quan mà không sửa chữa được cần bồi thường cho bên A bằng giá trị thị trường tại thời điểm hiện tại, hoặc mua thay thế giá trị ngang bằng hoặc cao hơn. Danh sách trang thiết bị sẽ được cung cấp cùng với hợp đồng.</p>
+            <p>4.6. Tự giữ gìn an ninh cho tài sản của bản thân, chịu trách nhiệm với những tài sản bị mất của bên A cũng như những người khác trong tòa nhà do lỗi chủ quan của bên B.</p>
+            <p>4.7. Nếu bên B có hành vi trộm cắp, bên A có quyền đơn phương chấm dứt hợp đồng, thu hồi phòng, không hoàn cọc và trình báo cơ quan có thẩm quyền xử lý.</p>
+            <p>4.8. Giữ gìn phòng ở và các không gian chung gọn gàng, sạch sẽ, đảm bảo an toàn cháy nổ.</p>
+            <p>4.9. Tự chịu trách nhiệm trước pháp luật về các vấn đề tự gây ra trong phòng của mình và không gian chung trong tòa nhà nếu có. Chịu trách nhiệm về các loại thuế, phí phát sinh theo yêu cầu của pháp luật (nếu có) trong phạm vi hợp đồng này.</p>
+            <p>4.10. Khi trả phòng bên B có trách nhiệm dọn dẹp vệ sinh, bàn giao phòng và đồ đạc nguyên trạng cho bên A. Bên A sẽ tính ít nhất 500.000 VNĐ phí dọn dẹp vệ sinh trong trường hợp căn phòng do bê B hoàn trả không được dọn dẹp.</p>
+            <p>4.11. Tuân thủ nội quy nơi ở. Nếu bên B cố tình không tuân thủ gây thiệt hại, ảnh hưởng nghiêm trọng đến căn phòng, tòa nhà và mọi người xung quanh thì bên B sẽ bị buộc chấm dứt hợp đồng và không hoàn cọc sau khi bên A thông báo.</p>
+            <p>4.12. Khai báo tạm trú với chính quyền. Người thân, quen cư trú qua đêm cần báo bên A và tự chịu trách nhiệm về các thông tin khai báo.</p>
+            <p>4.13. Việc người thân, quen đến chơi hay ở cùng cần đảm bảo tuyệt đối không làm ảnh hưởng đến các phòng và các nhà xung quanh.</p>
+            <p>4.14. Về muộn ban đêm phải đóng cổng chung lại ngay, trường hợp quên đóng cửa gây hậu quả nghiêm trọng cho bên A và các bên liên quan, phải tự bồi thường thiệt hại.</p>
+            
+            
+            <p class='bold'>Điều 5: Điều khoản chung</p>
+            <p>5.1. Bên A và bên B thực hiện đúng các điều khoản ghi trong hợp đồng.</p>
+            <p>5.2. Trường hợp tranh chấp hoặc một bên vi phạm hợp đồng thì hai bên cùng nhau bàn bạc giải quyết, nếu không giải quyết được thì yêu cầu cơ quan có thẩm quyền giải quyết.</p>
+            <p>5.3. Hợp đồng được lập thành 02 bản có giá trị ngang nhau, mỗi bên giữ 01 bản.</p>
+
+            <div class='text-right italic' style='margin-top: 20px;'>
+                Hà Nội, ngày " + ngayKy.Day + @" tháng " + ngayKy.Month + @" năm " + ngayKy.Year + @"
+            </div>
+
+            <table class='table-sign'>
+                <tr>
+                    <td>
+                        <div class='bold'>BÊN THUÊ</div>
+                        <div class='sign-space'></div>
+                        <div>" + (hopDong.KhachHangNavigation?.HoTen ?? "....................................") + @"</div>
+                    </td>
+                    <td>
+                        <div class='bold'>BÊN CHO THUÊ</div>
+                        <div class='sign-space'></div>
+                        <div>................................................</div>
+                    </td>
+                </tr>
+            </table>
+
+            <div style='page-break-before: always;'></div>
+            <div class='text-center main-title'>PHỤ LỤC</div>
+            
+            <p class='bold'>Tên các thành viên cùng thuê phòng:</p>
+            <table style='width: 100%; margin-bottom: 20px;'>
+                <thead>
+                    <tr>
+                        <th style='width: 10%;'>STT</th>
+                        <th style='width: 40%;'>Họ và tên</th>
+                        <th style='width: 25%;'>Số điện thoại</th> <th style='width: 25%;'>Số CMND/CCCD</th>
+                    </tr>
+                </thead>
+                <tbody>");
 
             if (nguoiOList != null && nguoiOList.Any())
             {
+                int stt = 1;
                 foreach (var no in nguoiOList)
                 {
-                    sb.Append("<p class='indent'>- <span class='bold'>Họ và tên :</span> " + no.HoTen + @" . <span class='bold'>CCCD :</span> " + (string.IsNullOrEmpty(no.CCCD) ? "...................." : no.CCCD) + @" . <span class='bold'>ĐT :</span> " + (string.IsNullOrEmpty(no.SoDienThoai) ? "...................." : no.SoDienThoai) + "</p>");
+                    // Kiểm tra nếu số điện thoại trống thì tự điền dấu chấm để điền tay
+                    string sdtStr = string.IsNullOrEmpty(no.SoDienThoai) ? "...................." : no.SoDienThoai;
+
+                    sb.Append(@"
+                    <tr>
+                        <td class='text-center'>" + stt++ + @"</td>
+                        <td>" + no.HoTen + @"</td>
+                        <td class='text-center'>" + sdtStr + @"</td> <td class='text-center'>" + (string.IsNullOrEmpty(no.CCCD) ? "...................." : no.CCCD) + @"</td>
+                    </tr>");
                 }
             }
             else
             {
-                sb.Append("<p class='indent italic'>Không có người ở cùng.</p>");
+                // Hiển thị một vài dòng trống nếu không có người ở cùng để điền tay
+                for (int i = 1; i <= 5; i++)
+                {
+                    sb.Append(@"
+                    <tr>
+                        <td class='text-center'>" + i + @"</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>");
+                }
             }
 
             sb.Append(@"
-                    </div>
+                </tbody>
+            </table>
+            
+            <p class='bold italic'>Theo hợp đồng thuê phòng bao gồm:</p>
+            <p class='bold'>DANH MỤC TRANG THIẾT BỊ, CSVC KHI NHẬN VÀ TRẢ PHÒNG</p>
+            <table style='width: 100%;'>
+                <thead>
+                    <tr>
+                        <th rowspan='2' style='width: 5%;'>STT</th>
+                        <th rowspan='2' style='width: 25%;'>Trang Thiết Bị, CSVC</th>
+                        <th rowspan='2' style='width: 35%;'>Nội Dung Kiểm Tra</th>
+                        <th colspan='3' style='width: 20%;'>Đánh giá chất lượng</th>
+                        <th rowspan='2' style='width: 15%;'>Ghi chú</th>
+                    </tr>
+                    <tr>
+                        <th>Tốt</th>
+                        <th>Khá</th>
+                        <th>TB</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class='text-center'>1</td>
+                        <td>...................</td>
+                        <td>........................................</td>
+			<td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>2</td>
+                        <td>.......................</td>
+                        <td>........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>3</td>
+                        <td>.......................</td>
+                        <td>.........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>4</td>
+                        <td>.......................</td>
+                        <td>........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>5</td>
+                        <td>.......................</td>
+                        <td>........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>6</td>
+                        <td>.......................</td>
+                        <td>........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>7</td>
+                        <td>.......................</td>
+                        <td>........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>8</td>
+                        <td>.......................</td>
+                        <td>........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>9</td>
+                        <td>.......................</td>
+                        <td>........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>11</td>
+                        <td>.......................</td>
+                        <td>........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                    <tr>
+                        <td class='text-center'>12</td>
+                        <td>.......................</td>
+                        <td>........................................</td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                </tbody>
+            </table>
 
-                    <p class='italic' style='margin-top: 20px;'><span class='bold'>Sau khi thoả thuận , hai Bên cùng kí hợp đồng với các điều khoản sau đây :</span></p>
-                    
-                    <div class='section-title'>ĐIỀU I : NỘI DUNG HỢP ĐỒNG</div>
-                    <div class='indent'>
-                        <p>- Bên A đồng ý cho Bên B thuê phòng <span class='bold'>" + (hopDong.PhongNavigation?.TenPhong ?? "....................") + @"</span></p>
-                        <p>- Trang thiết bị của phòng gồm có : Điều hoà + giường tủ + bình nóng lạnh + thiết bị vệ sinh .</p>
-                        <p>- Trang thiết bị dùng chung của ngôi nhà : Máy giặt .</p>
-                        <p>- Mục đích cho thuê : Để ở .</p>
-                        <p>- Hợp đồng có thời hạn : <span class='bold'>" + thoiHanThang + @"</span> tháng , tính từ ngày <span class='bold'>" + (hopDong.NgayBatDau.HasValue ? hopDong.NgayBatDau.Value.ToString("dd/MM/yyyy") : "..../..../.......") + @"</span> đến hết ngày <span class='bold'>" + (hopDong.NgayKetThuc.HasValue ? hopDong.NgayKetThuc.Value.ToString("dd/MM/yyyy") : "..../..../.......") + @"</span></p>
-                    </div>
+            <p style='margin-top: 20px;'>1. Sau 7 ngày kí hợp đồng, nếu không có ý kiến, chủ hợp đồng coi như đã đồng ý với nội dung trên.</p>
+            <p>2. Không dán giấy lên tường, cửa, khoan đục nếu không có sự cho phép của chủ trọ</p>
+            <p>3. Các mục trên mục nào đánh giá chất lượng không tốt, ghi vào mục ghi chú vì sao.</p>
 
-                    <div class='section-title'>ĐIỀU II : GIÁ CẢ , ĐẶT CỌC VÀ PHƯƠNG THỨC THANH TOÁN</div>
-                    <div class='indent'>
-                        <p>1. Giá thuê phòng là : <span class='bold'>" + (hopDong.PhongNavigation?.GiaPhong ?? 0).ToString("N0") + @" đ/1 tháng</span> .</p>
-                        <p>2. Giá thuê trên cố định trong 6 tháng đầu .</p>
-                        <p>3. Giá dịch vụ :</p>
-                        <p class='indent'>- Điện : ........đ/KWh</p>
-                        <p class='indent'>- Nước : ......đ/người.</p>
-                        <p class='indent'>- Dịch vụ chung ( Điện máy giặt + điện cầu thang + dọn vệ sinh ) : ......... / Người .</p>
-                        <p>4. Phương thức thanh toán :</p>
-                        <p class='indent'>- Bên B đặt cọc cho Bên A số tiền là : <span class='bold'>" + (hopDong.TienCoc ?? 0).ToString("N0") + @" đ</span> . Tiền đặt cọc sẽ được Bên A hoàn trả sau 07 ngày khi kết thúc HĐ . Số tiền đặt cọc này có thể được Bên A sử dụng để khắc phục sự cố hoặc vi phạm do Bên B gây ra , Bên B có trách nhiệm hoàn trả số tiền bồi thường này cho Bên A sau 02 ngày theo thông báo , nếu không thì Bên A có quyền đơn phương chấm dứt hợp đồng .</p>
-                        <p class='indent'>- Bên B thanh toán cho Bên A tiền thuê phòng : 1 tháng/lần . Thời hạn đóng tiền là chuyển khoản từ ngày 28 Đến ngày 03 hàng tháng . Nếu trả chậm bị tính 100.000đ/ngày . Thời gian chậm trả không quá 03 ngày , số lần chậm trả không quá 02 lần .</p>
-                        <p class='indent'>- Bên B thanh toán chi phí DV cố định ( nước + mạng + dv chung ) vào đầu tháng .</p>
-                        <p class='indent'>- Hình thức thanh toán : Tiền mặt hoặc chuyển khoản .</p>
-                    </div>
-
-                    <div class='section-title'>ĐIỀU III : QUYỀN VÀ TRÁCH NHIỆM CỦA BÊN B</div>
-                    <div class='indent'>
-                        <p>1. Sử dụng phòng tại Điều 1 đúng mục đích , đóng tiền theo thời hạn quy định trong hợp đồng .</p>
-                        <p>2. Sau 1 tuần đầu Bên A bàn giao trang thiết bị , trong quá trình sử dụng bị hư hỏng Bên B phải tự sửa chữa , thay thế , khắc phục hoặc bồi thường cho Bên A ( Bao gồm cả tắc đường thoát nước , cháy bóng đèn ) .</p>
-                        <p>3. Nghiêm cấm mọi hành vi tàng trữ , sử dụng các chất ma tuý , chất dễ cháy nổ , mại dâm , cờ bạc .... Mọi hành vi vi phạm pháp luật Bên B hoàn toàn chịu trách nhiệm .</p>
-                        <p>4. Không được đập phá tháo dỡ , không được thay đổi cấu trúc nhà , không đóng đinh , dán tranh ảnh , vẽ , bôi bẩn lên tường , cửa phòng .</p>
-                        <p>5. Bên B cam kết thực hiện hợp đồng với thời hạn nêu trên , nếu bên B chuyển trước thời hạn sẽ bị mất toàn bộ số tiền cọc .Nếu muốn kết thúc hợp đồng theo đúng thời hạn hai Bên thoả thuận thì Bên B phải báo cho bên A trước 30 ngày , nếu ko báo sẽ bị phạt 50% tiền đặt cọc .</p>
-                        <p>6. Các trường hợp thay đổi người ở hoặc chuyển nhượng phòng phải có sự đồng ý của Bên A .</p>
-                        <p>7. Tuân thủ tuyệt đối nội quy của toàn nhà : không cờ bạc mại dâm , không sử dụng tàng trữ ma tuý , vũ khí trái phép , không cho người lạ ngủ qua đêm , tụ tập rượu chè , gây rối trật tự , mất vệ sinh , ý thức kém , làm ảnh hưởng tới người xung quanh . <span class='bold'>Nếu vi phạm sẽ bị phạt theo nội quy của toà nhà , hoặc Bên A có quyền đơn phương chấm dứt hợp đồng . ( Bên B sẽ không nhận được tiền đặt cọc )</span></p>
-                        <p>8. Sau khi kết thúc Hợp đồng , Bên B có trách nhiệm thu dọn đồ đạc , trả lại phòng theo đúng nguyên trạng ban đầu và chịu chi phí 200.000đ để bên A thuê người dọn vệ sinh công nghiệp .</p>
-                        <p>9. Bên B trách nhiệm đi khai báo với công an khu vực để làm tạm trú , tạm vắng .</p>
-                        <p>10. Tuyệt đối đảm bảo an toàn PCCC , khóa gas , rút các thiết bị điện khi đi ra ngoài . Chịu hoàn toàn trách nhiệm nếu để xảy ra cháy nổ .</p>
-                        <p>11. Sau khi hết thời hạn thuê nhà mà hai bên không có thỏa thuận gì khác thì hợp đồng sẽ tự động gia hạn thêm 06 tháng mà không cần kí lại .</p>
-                    </div>
-
-                    <div class='section-title'>ĐIỀU IV : CÁC THOẢ THUẬN KHÁC</div>
-                    <div class='indent'>
-                        <p>1. Mọi tài sản của Bên B thì Bên B phải tự bảo quản , tự chịu trách nhiệm nếu xảy ra mất mát . Bên A không chịu trách nhiệm với các vấn đề trộm cắp , cháy nổ , tai nạn liên quan tới tính mạng con người của Bên B trong quá trình thuê phòng .</p>
-                        <p>2. Bên A có quyền chấm dứt hợp đồng trước hạn nếu Bên B vi phạm các điều khoản trong hợp đồng và Bên B không được nhận lại tiền đặt cọc .</p>
-                        <p>3. Mọi tranh chấp phát sinh liên quan tới hợp đồng này nếu không thể giải quyết thông qua thương lượng , hoà giải sẽ được đưa ra toà án có thẩm quyền để giải quyết theo quy định của pháp luật .</p>
-                        <p>4. Hợp đồng này được lập thành 02 bản , mỗi bên giữ 1 bản có giá trị như nhau . Hợp đồng này có hiệu lực kể từ ngày kí .</p>
-                        <p>5. Sau khi kí hợp đồng Bên B nộp lại cho bên A bản photo CMND/CCCD của tất cả những người ở phòng mình .</p>
-                    </div>
-
-                    <table class='table-sign'>
-                        <tr>
-                            <td>
-                                <div class='bold'>ĐẠI DIỆN BÊN A</div>
-                                <div class='italic'>(Kí ghi rõ họ tên)</div>
-                                <div class='sign-space'></div>
-                                <div class='bold' style='margin-top: 30px;'>................................................</div>
-                            </td>
-                            <td>
-                                <div class='bold'>ĐẠI DIỆN BÊN B</div>
-                                <div class='italic'>(Kí ghi rõ họ tên)</div>
-                                <div class='sign-space'></div>
-                                <div class='bold' style='margin-top: 30px;'>" + (hopDong.KhachHangNavigation?.HoTen ?? "....................................") + @"</div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </body>
-            </html>");
+            <table class='table-sign' style='margin-top: 50px;'>
+                <tr>
+                    <td>
+                        <div class='bold'>Đại diện bên A</div>
+                        <div class='sign-space'></div>
+                        <div>................................................</div>
+                    </td>
+                    <td>
+                        <div class='bold'>Đại diện bên B</div>
+                        <div class='sign-space'></div>
+                        <div>" + (hopDong.KhachHangNavigation?.HoTen ?? "....................................") + @"</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </body>
+    </html>");
 
             return sb.ToString();
         }

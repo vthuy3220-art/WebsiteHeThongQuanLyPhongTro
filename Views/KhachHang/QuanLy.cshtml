@@ -6,7 +6,6 @@
 }
 
 <div class="space-y-6">
- 
 
     <!-- Alert Messages -->
     @if (TempData["Success"] != null)
@@ -88,12 +87,7 @@
                                        class="text-yellow-500 hover:text-yellow-700 transition-colors" title="Sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <!-- Thay thế nút a bằng button gọi popup modal cùng kích cỡ và không chứa icon -->
-                                    <button type="button"
-                                            onclick="moPopupXoaKhachHang('/KhachHang/Delete/@item.MaKhachHang', '@item.HoTen', '@item.SoDienThoai', '@item.CCCD')"
-                                            class="text-red-500 hover:text-red-700 transition-colors focus:outline-none" title="Xóa">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+
                                 </div>
                             </td>
                         </tr>
@@ -113,88 +107,6 @@
     </div>
 </div>
 
-<!-- ==================== KHỐI POPUP MODAL CỠ LỚN (MAX-W-LG) SẠCH BÁCH ICON ĐỒNG BỘ ==================== -->
-<div id="deleteKhachHangModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-gray-100">
-        <!-- Header -->
-        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="font-bold text-slate-800 text-sm md:text-base">
-                Xác nhận gỡ bỏ hồ sơ khách hàng
-            </h3>
-            <button onclick="dongPopupXoaKhachHang()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors focus:outline-none">
-                <i class="fas fa-times text-base"></i>
-            </button>
-        </div>
-        <!-- Body -->
-        <div class="p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
-            <p>Bạn có chắc chắn muốn xóa tài khoản khách hàng này khỏi danh sách quản lý?</p>
 
-            <div class="bg-red-50/40 border border-red-100 rounded-xl p-4 space-y-2 text-slate-700 font-medium">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-gray-400 font-normal w-24 inline-block">Họ và tên:</span>
-                    <span class="text-slate-900 font-bold text-base" id="popupCustomerName">N/A</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="text-gray-400 font-normal w-24 inline-block">Số điện thoại:</span>
-                    <span class="text-slate-800 font-mono" id="popupCustomerPhone">N/A</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="text-gray-400 font-normal w-24 inline-block">Số CCCD:</span>
-                    <span class="text-slate-800 font-mono" id="popupCustomerCccd">N/A</span>
-                </div>
-            </div>
 
-            <p class="text-xs text-slate-400 font-normal">Hệ thống sẽ tự động chặn hành động xóa nếu khách hàng này đang có các giao dịch hoặc văn bản hợp đồng thuê phòng còn hiệu lực lưu trong hệ thống.</p>
-        </div>
-        <!-- Footer -->
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
-            <button onclick="dongPopupXoaKhachHang()" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition-colors focus:outline-none">
-                Hủy
-            </button>
-            <a id="btnConfirmDeleteKhachHang" href="#" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-xl shadow-md shadow-red-500/10 transition-colors flex items-center justify-center">
-                Xác nhận xóa
-            </a>
-        </div>
-    </div>
-</div>
 
-<script>
-    function moPopupXoaKhachHang(deleteUrl, customerName, phone, cccd) {
-        // Đổ toàn bộ thông tin động thu thập từ dòng table vào cấu trúc popup
-        document.getElementById('popupCustomerName').innerText = customerName;
-        document.getElementById('popupCustomerPhone').innerText = phone ? phone : 'Chưa cập nhật SĐT';
-        document.getElementById('popupCustomerCccd').innerText = cccd ? cccd : 'Chưa cập nhật CCCD';
-
-        // Gán địa chỉ URL xóa vào nút xác nhận
-        const confirmBtn = document.getElementById('btnConfirmDeleteKhachHang');
-        confirmBtn.setAttribute('href', deleteUrl);
-
-        // Mở popup kèm hiệu ứng
-        const modal = document.getElementById('deleteKhachHangModal');
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.classList.remove('opacity-0');
-            modal.querySelector('.transform').classList.remove('scale-95');
-        }, 10);
-
-        // Hiệu ứng đổi text nút bấm khi nhấn
-        confirmBtn.onclick = function() {
-            this.style.pointerEvents = 'none';
-            this.innerText = 'Đang xóa...';
-        };
-    }
-
-    function dongPopupXoaKhachHang() {
-        const modal = document.getElementById('deleteKhachHangModal');
-        modal.classList.add('opacity-0');
-        modal.querySelector('.transform').classList.add('scale-95');
-        setTimeout(() => modal.classList.add('hidden'), 300);
-    }
-
-    // Đóng nhanh bằng phím Esc ngoài màn hình
-    window.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            dongPopupXoaKhachHang();
-        }
-    });
-</script>

@@ -7,14 +7,6 @@
     var role = ViewBag.Role ?? Context.Session.GetString("Role");
 }
 
-<div class="flex justify-end space-x-3 mb-4">
-    <a href="@Url.Action("XuatPdf", "HopDong", new { id = Model.MaHopDong })"
-       target="_blank"
-       class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all">
-        <i class="fas fa-file-pdf mr-2"></i> Xuất PDF hợp đồng
-    </a>
-</div>
-
 <div class="max-w-6xl mx-auto">
     <div class="bg-white rounded-xl shadow-md overflow-hidden">
         <!-- Header -->
@@ -49,23 +41,23 @@
             <!-- ========== THÔNG TIN HỢP ĐỒNG ========== -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-gray-500 text-sm">🔢 Mã hợp đồng</p>
+                    <p class="text-gray-500 text-sm">Mã hợp đồng</p>
                     <p class="font-bold text-lg text-blue-600">@Model.MaHopDong</p>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-gray-500 text-sm">📅 Ngày bắt đầu</p>
+                    <p class="text-gray-500 text-sm">Ngày bắt đầu</p>
                     <p class="font-semibold">@(Model.NgayBatDau?.ToString("dd/MM/yyyy") ?? "Chưa có")</p>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-gray-500 text-sm">📅 Ngày kết thúc</p>
+                    <p class="text-gray-500 text-sm">Ngày kết thúc</p>
                     <p class="font-semibold">@(Model.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "Chưa có")</p>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-gray-500 text-sm">💰 Tiền cọc</p>
+                    <p class="text-gray-500 text-sm">Tiền cọc</p>
                     <p class="font-semibold text-green-600">@(Model.TienCoc?.ToString("N0") ?? "0") đ</p>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-gray-500 text-sm">📋 Trạng thái</p>
+                    <p class="text-gray-500 text-sm">Trạng thái</p>
                     @if (Model.TrangThai == "Hiệu lực")
                     {
                         <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
@@ -80,15 +72,15 @@
                     }
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-gray-500 text-sm">🏠 Phòng</p>
+                    <p class="text-gray-500 text-sm">Phòng</p>
                     <p class="font-semibold">@(Model.PhongNavigation?.TenPhong ?? "N/A")</p>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-gray-500 text-sm">🏢 Tòa nhà</p>
+                    <p class="text-gray-500 text-sm">Tòa nhà</p>
                     <p class="font-semibold">@(Model.PhongNavigation?.ToaNha?.TenToaNha ?? "N/A")</p>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-gray-500 text-sm">👤 Chủ trọ</p>
+                    <p class="text-gray-500 text-sm">Chủ trọ</p>
                     <p class="font-semibold">@(Model.PhongNavigation?.ToaNha?.MaChuTro ?? 0)</p>
                 </div>
             </div>
@@ -96,7 +88,6 @@
             <!-- ========== THÔNG TIN KHÁCH HÀNG ========== -->
             <div class="border rounded-lg p-4 mb-6">
                 <h3 class="font-bold text-lg mb-3 flex items-center">
-                    <i class="fas fa-user-circle text-blue-500 mr-2"></i>
                     Thông tin khách hàng (Người đại diện)
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -111,7 +102,6 @@
             <!-- ========== DANH SÁCH NGƯỜI Ở ========== -->
             <div class="border rounded-lg p-4 mb-6">
                 <h3 class="font-bold text-lg mb-3 flex items-center">
-                    <i class="fas fa-users text-green-500 mr-2"></i>
                     Danh sách người ở
                 </h3>
                 @if (nguoiOList != null && nguoiOList.Any())
@@ -156,7 +146,6 @@
             <!-- ========== DANH SÁCH HÓA ĐƠN (CHỈ 1 BẢNG DUY NHẤT) ========== -->
             <div class="border rounded-lg p-4">
                 <h3 class="font-bold text-lg mb-3 flex items-center">
-                    <i class="fas fa-receipt text-purple-500 mr-2"></i>
                     Danh sách hóa đơn
                 </h3>
                 @if (hoaDons != null && hoaDons.Any())

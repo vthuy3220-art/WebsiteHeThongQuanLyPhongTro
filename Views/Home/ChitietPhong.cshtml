@@ -206,7 +206,28 @@
                                 <div class="bg-yellow-50 rounded-xl p-4 border border-yellow-100 mt-2">
                                     <p class="text-yellow-800 flex items-center font-medium text-sm">
                                         <i class="fas fa-phone-alt mr-2 text-yellow-600"></i>
-                                        Liên hệ ngay: <strong class="ml-1 text-gray-900">0869 189 018</strong>
+                                        Liên hệ ngay:@{
+                                        var soDienThoai = ViewBag.SoDienThoaiLienHe as string ?? "Chưa cập nhật";
+                                    }
+
+                                    <!-- Liên hệ ngay -->
+                                    <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                                        <h4 class="font-bold text-green-800 mb-2">
+                                            <i class="fas fa-phone-alt mr-2"></i> Liên hệ ngay
+                                        </h4>
+                                        @if (!string.IsNullOrEmpty(soDienThoai) && soDienThoai != "Chưa cập nhật")
+                                        {
+                                            <p class="text-2xl font-bold text-green-600">
+                                                @soDienThoai
+                                            </p>
+                                            <p class="text-sm text-green-500 mt-1">Chủ trọ - Liên hệ để xem phòng</p>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-gray-500">Chưa có thông tin liên hệ</p>
+                                            <p class="text-sm text-gray-400">Vui lòng liên hệ qua email để được hỗ trợ</p>
+                                        }
+                                    </div>
                                     </p>
                                 </div>
                             </div>
